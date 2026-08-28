@@ -16926,6 +16926,30 @@ create trigger trg_platform_google_oauth_updated_at
   before update on public.platform_google_oauth
   for each row execute function public.fn_set_updated_at();
 
+-- ---- elegibilidade da IA por origem do lead (migration 0202) ----
+--
+-- Gate OPT-IN por canal (`channel_sessions.metadata.ai_gate = 'allowlist'`):
+-- ausente / 'open' = comportamento de hoje (a IA responde todo inbound quando há
+-- agente publicado), nenhum self-hoster afetado. Com 'allowlist', a IA só
+-- responde quando o CONTATO está autorizado, e é isto que estas colunas guardam.
+-- Contact-level como `force_human` (a trava oposta). Aditiva e idempotente:
+-- colunas anuláveis, sem default, sem constraint — nenhuma linha existente viola
+-- nada. RLS de `contacts` já cobre (row-level); coluna nova não precisa policy.
+
+alter table public.contacts
+  add column if not exists ai_authorized_at timestamptz;
+
+alter table public.contacts
+  add column if not exists ai_authorized_reason text;
+
+comment on column public.contacts.ai_authorized_at is
+  'Elegibilidade da IA (gate opt-in channel_sessions.metadata.ai_gate=allowlist): quando o contato foi autorizado a ser atendido automaticamente. NULL = não autorizado, a IA não responde. Renovado a cada turno autorizado enquanto a conversa está viva.';
+
+comment on column public.contacts.ai_authorized_reason is
+  'Origem da autorização de IA: respondi:<form>:<submission> | campanha:<id> | automacao:<rule> | retomada_manual.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ ESTE BLOCO É, DE PROPÓSITO, O ÚLTIMO DO ARQUIVO. Apêndice novo entra ANTES

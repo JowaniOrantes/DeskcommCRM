@@ -529,6 +529,58 @@ ambiente e2e; falta a passada do harness no CI.
 
 ---
 
+## J14 — A IA só atende quem tem origem elegível (gate opt-in por canal) `[P0]`
+
+**Por que P0:** achado pelo dono do produto num número que é também o WhatsApp
+pessoal/comercial dele — a IA respondeu automaticamente para cliente atual, dono
+de incorporadora, contato pessoal, fornecedor e conversa antiga. O
+DeskcommCRM responde `allow by default` (publicou agente para a sessão → atende
+todo inbound); num número compartilhado com gente isso é a IA assumindo conversa
+que não era dela.
+
+**Contexto do código:** gate OPT-IN por canal —
+`channel_sessions.metadata.ai_gate = 'allowlist'` (ausente / `'open'` =
+comportamento de hoje). Com o gate, a IA só responde quando
+`contacts.ai_authorized_at` está setado (por uma origem elegível) e dentro da
+janela `AI_ALLOWLIST_TTL_DAYS`. A decisão é `lib/ai/elegibilidade/gate.ts`
+(pura), consultada pelo drain (`lib/agent-engine/edge/crm/drain.ts`, decide
+enfileirar) e pelo turno (`lib/agent-engine/agent/inbound-turn.ts`, decide
+rodar). Origens que autorizam: webhook do Respondi
+(`app/api/v1/webhooks/in/[token]`), match de campanha na ingestão
+(`lib/channels/pos-entrada.ts` × `organizations.settings.campanhas_whatsapp`),
+ação `send_ai_message`, retomada manual (`lib/escalacao/retomada.ts`).
+
+| # | Caso | Expectativa | Cobertura |
+|---|---|---|---|
+| J14.1 | Cliente atual manda "boa noite" (gate allowlist, contato não autorizado) | IA NÃO responde; conversa fica humana | **UNIT** — `gate.test.ts` "teste 1/3/4/9", `drain.test.ts` "gate allowlist + contato NÃO autorizado" |
+| J14.2 | Cliente atual com conversa aberta, não autorizado | IA NÃO responde (estado da conversa não pesa) | **UNIT** — `gate.test.ts` "teste 2" |
+| J14.3 | Contato pessoal manda mensagem | IA NÃO responde | **UNIT** — coberto por J14.1 (mesma regra) |
+| J14.4 | Fornecedor manda proposta comercial | IA NÃO responde automaticamente | **UNIT** — coberto por J14.1 |
+| J14.5 | Conversa antiga de 3 dias; publicar agente | publicar NÃO dispara nada (`ai_agent.published` não tem consumidor) + o drain pula evento superado por inbound mais recente | **UNIT** — `drain.test.ts` "evento superado por inbound mais recente"; **CÓDIGO** — grep: zero consumidor de `ai_agent.published` |
+| J14.6 | Nova submissão Respondi → o contato fica elegível | IA pode responder o retorno do lead | **UNIT** — webhook seta `ai_authorized_reason='respondi:<form>:<sub>'`; **E2E PENDENTE** |
+| J14.7 | Segundo turno do Respondi (dias depois, conversa viva) | IA continua atendendo (keep-alive renova o carimbo) | **UNIT** — `gate.test.ts` "teste 6/7"; keep-alive em `inbound-turn.ts` |
+| J14.8 | Nova mensagem de campanha com identificador autorizado | IA pode assumir | **UNIT** — `campanha.test.ts` "teste 8" |
+| J14.9 | Nova mensagem genérica "oi" | IA NÃO responde | **UNIT** — `campanha.test.ts` "teste 9" + `gate.test.ts` |
+| J14.10 | Conversa marcada human_only (`force_human`) | IA nunca responde até reativação explícita | **UNIT** — `gate.test.ts` "teste 10", `drain.test.ts` "force_human" |
+| J14.11 | Follow-up em lead Respondi elegível | funciona | **CÓDIGO** — silence-sweep só barra quem o gate barra |
+| J14.12 | Follow-up em cliente atual (não autorizado, gate allowlist) | NÃO enrola | **CÓDIGO** — `silence-sweep.ts` `loadSilentContactIds` pula `gateAllowlist && !autorizado`; **E2E PENDENTE** |
+| J14.13 | Reinício do worker com backlog de eventos pending | zero disparos: cada evento cujo inbound já foi superado vira `done` sem job | **UNIT** — `drain.test.ts` "evento superado por inbound mais recente" |
+| J14.14 | Submissão antiga (fora do TTL) | NÃO reativa a IA sozinha | **UNIT** — `gate.test.ts` "submissão antiga (fora da janela)", `drain.test.ts` "autorização EXPIRADA" |
+
+**Sabotagem que confirma:** removendo o veto `sem_autorizacao` de
+`decidirElegibilidade`, `gate.test.ts` e `drain.test.ts` reprovam (2 failed / 24
+passed); restaurado, 26 passed.
+
+**O que falta (E2E, ambiente fresco estilo VPS):** provar pela tela, com WAHA +
+Respondi reais, os casos J14.6 e J14.12 — a submissão que autoriza e o
+follow-up que respeita. O gate em si (`open` × `allowlist`) precisa de um
+invariante em `tests/invariants/` que suba duas conversas (autorizada / não) e
+rode `drainTick` contra Postgres real. **A tela do knob `ai_gate` e do editor de
+`campanhas_whatsapp` ainda não existe** — hoje se liga por script/SQL, como o
+`roteamento_de_formulario`. É a dívida declarada desta entrega.
+
+---
+
 ## J7 — Exploração completa `[P2]`
 
 Andar por TODAS as rotas navegáveis logado como admin e como agent: settings, contacts,
