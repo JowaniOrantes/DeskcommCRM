@@ -14,6 +14,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { audit } from "@/lib/audit";
 import { sincronizarSaudeDaConexao } from "@/lib/channels/health";
 import { aplicarEfeitosPosEntrada } from "@/lib/channels/pos-entrada";
+import { pausarIaPorAtendimentoManual } from "@/lib/escalacao/atendimento-manual";
 import { acelerarPipelineDeEventos } from "@/lib/dev/kick-local-pipeline";
 import { canonicalPhoneBR } from "@/lib/channels/phone-variants";
 import { estamparAtribuicaoDoContato } from "@/lib/leads/atribuicao-de-anuncio";
@@ -789,6 +790,17 @@ async function handleOutboundFromUserPhone(
   }
 
   await markConversation(admin, session.organization_id, conversationId, "outbound", previewFromMessage(p), now);
+
+  // Uma PESSOA respondeu este cliente pelo celular — a IA para nesta conversa
+  // para não responder junto. Silêncio DURÁVEL (a volta é explícita, pela tela);
+  // NÃO mexe em `contacts.ai_authorized_at` — a origem do lead é outro estado.
+  // Só as mensagens genuínas do celular chegam aqui: o eco do nosso próprio
+  // envio (IA ou composer) já saiu no `jaRegistrada` acima.
+  await pausarIaPorAtendimentoManual(admin, {
+    organizationId: session.organization_id,
+    conversationId,
+    canal: "waha",
+  });
 
   await audit({
     action: "message.sent",
