@@ -5,7 +5,7 @@
  * humano; aplicar cria uma versão NOVA do agente (publish-por-ponteiro).
  */
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ export function ProposalsPanel({
   active: boolean;
   readOnly?: boolean;
 }) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading } = useAgentProposals(agentId, active);
   const apply = useApplyProposal(agentId);
@@ -78,7 +79,7 @@ export function ProposalsPanel({
       {items.map((p) => {
         const when = formatDistanceToNowStrict(new Date(p.proposed_at), {
           addSuffix: true,
-          locale: ptBR,
+          locale,
         });
         return (
           <li key={p.id} className="flex items-start gap-3 px-4 py-3" data-testid="proposal-item">

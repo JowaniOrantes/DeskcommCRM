@@ -1,6 +1,7 @@
 "use client";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { useT } from "@/hooks/i18n/useT";
 import { Phone, Robot } from "@/lib/ui/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -64,14 +65,14 @@ function initials(name: string | null | undefined, fallback: string): string {
   return (first + last).toUpperCase();
 }
 
-function relativeTime(iso: string | null): string {
+function relativeTime(iso: string | null, locale: Locale): string {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
   if (sameDay) return format(d, "HH:mm");
   const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-  if (diff < 7) return formatDistanceToNowStrict(d, { addSuffix: false, locale: ptBR });
+  if (diff < 7) return formatDistanceToNowStrict(d, { addSuffix: false, locale });
   return format(d, "dd/MM");
 }
 
@@ -79,10 +80,11 @@ function relativeTime(iso: string | null): string {
 function waitingLabel(
   conversation: ConversationWithContact,
   t: (texto: string) => string = (texto) => texto,
+  locale: Locale,
 ): string {
   const since = conversation.last_inbound_at ?? conversation.created_at;
   if (!since) return t("Aguardando");
-  return `${t("Aguardando")} ${formatDistanceToNowStrict(new Date(since), { addSuffix: true, locale: ptBR })}`;
+  return `${t("Aguardando")} ${formatDistanceToNowStrict(new Date(since), { addSuffix: true, locale })}`;
 }
 
 export function ConversationListItem({
@@ -94,6 +96,7 @@ export function ConversationListItem({
   mostrarAtendente,
   automaticoDaOrg,
 }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const c = conversation.contacts ?? null;
   const displayName = rotuloDoContato(c);
@@ -103,7 +106,7 @@ export function ConversationListItem({
   const overflow = tags.length - visibleTags.length;
   const preview = conversation.last_message_preview?.trim() || t("Sem mensagens");
   const truncated = preview.length > 60 ? `${preview.slice(0, 60)}…` : preview;
-  const time = relativeTime(conversation.last_message_at);
+  const time = relativeTime(conversation.last_message_at, locale);
   const unread = conversation.unread_count_for_assignee ?? 0;
   const dot = STATUS_DOT[conversation.status] ?? STATUS_DOT.open;
 
@@ -179,7 +182,7 @@ export function ConversationListItem({
               {queuePosition}º
             </span>
             <span className="text-[10px] text-muted-foreground">
-              {waitingLabel(conversation, t)}
+              {waitingLabel(conversation, t, locale)}
             </span>
           </div>
         )}

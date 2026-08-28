@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNow, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,19 +50,19 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-function relativeDate(iso: string | null): string {
+function relativeDate(iso: string | null, locale: Locale): string {
   if (!iso) return "—";
   try {
-    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: ptBR });
+    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale });
   } catch {
     return iso;
   }
 }
 
-function absoluteDate(iso: string | null): string {
+function absoluteDate(iso: string | null, locale: Locale): string {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "dd/MM/yyyy HH:mm", { locale: ptBR });
+    return format(new Date(iso), "dd/MM/yyyy HH:mm", { locale });
   } catch {
     return iso;
   }
@@ -76,6 +77,7 @@ interface UserDetailClientProps {
 }
 
 export function UserDetailClient({ id }: UserDetailClientProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading, isError } = useAdminUser(id);
 
@@ -142,15 +144,15 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-xs text-muted-foreground mb-0.5">{t("Email confirmado")}</dt>
-              <dd>{user.email_confirmed_at ? absoluteDate(user.email_confirmed_at) : <Badge variant="warning">{t("Pendente")}</Badge>}</dd>
+              <dd>{user.email_confirmed_at ? absoluteDate(user.email_confirmed_at, locale) : <Badge variant="warning">{t("Pendente")}</Badge>}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground mb-0.5">{t("Último acesso")}</dt>
-              <dd className="text-sm">{relativeDate(user.last_sign_in_at)}</dd>
+              <dd className="text-sm">{relativeDate(user.last_sign_in_at, locale)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground mb-0.5">{t("Criado em")}</dt>
-              <dd className="text-sm">{absoluteDate(user.created_at)}</dd>
+              <dd className="text-sm">{absoluteDate(user.created_at, locale)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground mb-0.5">MFA</dt>
@@ -216,7 +218,7 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                       <RoleBadge role={m.role} />
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {absoluteDate(m.accepted_at)}
+                      {absoluteDate(m.accepted_at, locale)}
                     </TableCell>
                     <TableCell>
                       {m.revoked_at ? (
@@ -257,7 +259,7 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                       </span>
                       <span className="text-muted-foreground/60">
                         {format(new Date(entry.created_at), "dd/MM HH:mm:ss", {
-                          locale: ptBR,
+                          locale,
                         })}
                       </span>
                     </div>

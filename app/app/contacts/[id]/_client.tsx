@@ -1,9 +1,9 @@
 "use client";
 
 import { useT } from "@/hooks/i18n/useT";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { useState } from "react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { ShieldCheck, PencilSimple } from "@/lib/ui/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,7 @@ interface Props {
 }
 
 export function ContactDetailClient({ contactId }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const q = useContact(contactId);
   const { user, activeOrg } = useAuth();
@@ -72,7 +73,7 @@ export function ContactDetailClient({ contactId }: Props) {
           <span>
             Contato anonimizado (LGPD)
             {contact.anonymized_at &&
-              ` em ${format(new Date(contact.anonymized_at), "dd/MM/yyyy", { locale: ptBR })}`}
+              ` em ${format(new Date(contact.anonymized_at), "dd/MM/yyyy", { locale })}`}
             {t(" — edição bloqueada.")}
           </span>
         </div>
@@ -154,7 +155,7 @@ export function ContactDetailClient({ contactId }: Props) {
                 <dd className="mt-1">
                   {contact.last_activity_at
                     ? format(new Date(contact.last_activity_at), "dd/MM/yyyy HH:mm", {
-                        locale: ptBR,
+                        locale,
                       })
                     : "—"}
                 </dd>
@@ -162,7 +163,7 @@ export function ContactDetailClient({ contactId }: Props) {
               <div>
                 <dt className="text-xs uppercase text-muted-foreground">Criado em</dt>
                 <dd className="mt-1">
-                  {format(new Date(contact.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                  {format(new Date(contact.created_at), "dd/MM/yyyy", { locale })}
                 </dd>
               </div>
               <div>
@@ -196,7 +197,7 @@ export function ContactDetailClient({ contactId }: Props) {
                 <p className="text-sm text-muted-foreground">
                   {t("Este contato já foi anonimizado")}
                   {contact.anonymized_at &&
-                    ` em ${format(new Date(contact.anonymized_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}`}
+                    ` em ${format(new Date(contact.anonymized_at), "dd/MM/yyyy HH:mm", { locale })}`}
                   .
                 </p>
               ) : (

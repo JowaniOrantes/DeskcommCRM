@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import * as React from "react";
 
 import { AgendaCarregando, AgendaComErro } from "@/components/agenda/estados";
@@ -47,6 +47,7 @@ function Secao({
 }
 
 export function VitrineDaAgenda() {
+  const locale = useLocaleDeData();
   const [visao, setVisao] = React.useState<VisaoDaAgenda>("semana");
   const [isolada, setIsolada] = React.useState<string | null>(null);
   const { theme, setTheme } = useTheme();
@@ -123,7 +124,7 @@ export function VitrineDaAgenda() {
               </Button>
             </div>
             <span data-testid="periodo" className="text-sm font-semibold first-letter:uppercase">
-              {format(ANCORA, "MMMM 'de' yyyy", { locale: ptBR })}
+              {format(ANCORA, "MMMM 'de' yyyy", { locale })}
             </span>
           </div>
 

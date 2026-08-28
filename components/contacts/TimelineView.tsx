@@ -1,7 +1,8 @@
 "use client";
 import { useMemo } from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { format, isToday, isYesterday } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useT } from "@/hooks/i18n/useT";
 import { ChatCircle, Users, Storefront, Robot, Gear } from "@/lib/ui/icons";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
@@ -26,10 +27,10 @@ const ICON_MAP: Record<string, PhosphorIcon> = {
   system: Gear,
 };
 
-function dayHeader(d: Date, t: (texto: string) => string = (texto) => texto): string {
+function dayHeader(d: Date, t: (texto: string) => string = (texto) => texto, locale: Locale): string {
   if (isToday(d)) return t("Hoje");
   if (isYesterday(d)) return t("Ontem");
-  return format(d, "dd/MM/yyyy", { locale: ptBR });
+  return format(d, "dd/MM/yyyy", { locale });
 }
 
 /**
@@ -49,6 +50,7 @@ function summarizePayload(p: Record<string, unknown>): string {
 }
 
 export function TimelineView({ contactId, types }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const q = useTimeline(contactId, types);
 
@@ -101,7 +103,7 @@ export function TimelineView({ contactId, types }: Props) {
         return (
           <section key={key} className="space-y-2">
             <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {dayHeader(date, t)}
+              {dayHeader(date, t, locale)}
             </h3>
             <ul className="space-y-2">
               {items.map((it) => {
@@ -117,7 +119,7 @@ export function TimelineView({ contactId, types }: Props) {
                   },
                   t,
                 );
-                const time = format(new Date(it.performed_at), "HH:mm", { locale: ptBR });
+                const time = format(new Date(it.performed_at), "HH:mm", { locale });
                 return (
                   <li
                     key={it.id}

@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { useT } from "@/hooks/i18n/useT";
 import { ClockCountdown } from "@/lib/ui/icons";
 import type { AuditTrailEntry } from "@/hooks/useLgpdRequest";
@@ -11,6 +11,7 @@ interface AuditTrailProps {
 }
 
 export function AuditTrail({ entries }: AuditTrailProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (entries.length === 0) {
     return (
@@ -33,7 +34,7 @@ export function AuditTrail({ entries }: AuditTrailProps) {
             <div className={`pb-3 min-w-0 flex-1 ${isLast ? "pb-0" : ""}`}>
               <p className="text-sm font-mono font-medium truncate">{entry.action}</p>
               <p className="text-xs text-muted-foreground">
-                {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
+                {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm:ss", { locale })}
                 {entry.actor_user_id && (
                   <span className="ml-2 opacity-60">
                     {t("por")} {entry.actor_user_id.slice(0, 8)}…

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useT } from "@/hooks/i18n/useT";
 import { CaretLeft } from "@/lib/ui/icons";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,7 @@ const STATUS_VARIANT: Record<
 };
 
 export function LgpdRequestDetail({ id }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading, error } = useLgpdRequest(id);
 
@@ -103,12 +104,12 @@ export function LgpdRequestDetail({ id }: Props) {
 
         <p className="text-sm text-muted-foreground">
           {t("Recebido em")}{" "}
-          {format(new Date(request.received_at), `dd/MM/yyyy '${t("às")}' HH:mm`, { locale: ptBR })}
+          {format(new Date(request.received_at), `dd/MM/yyyy '${t("às")}' HH:mm`, { locale })}
           {request.due_at && (
             <>
               {" · "}
               {t("Vence em")}{" "}
-              {format(new Date(request.due_at), "dd/MM/yyyy", { locale: ptBR })}
+              {format(new Date(request.due_at), "dd/MM/yyyy", { locale })}
             </>
           )}
         </p>
@@ -177,7 +178,7 @@ export function LgpdRequestDetail({ id }: Props) {
             {request.completed_at && (
               <Row
                 label={t("Concluído em")}
-                value={format(new Date(request.completed_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                value={format(new Date(request.completed_at), "dd/MM/yyyy HH:mm", { locale })}
               />
             )}
             {request.error_message && (

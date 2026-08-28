@@ -1,7 +1,8 @@
 "use client";
 import * as React from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,13 @@ import { CreateSourceDialog } from "./CreateSourceDialog";
 import { SourceDetail } from "./SourceDetail";
 import { useT } from "@/hooks/i18n/useT";
 
-function lastReceivedLabel(iso: string | null, t: (texto: string) => string): string {
+function lastReceivedLabel(iso: string | null, t: (texto: string) => string, locale: Locale): string {
   if (!iso) return t("nunca recebeu");
-  return `${t("último recebimento")} ${formatDistanceToNowStrict(new Date(iso), { addSuffix: true, locale: ptBR })}`;
+  return `${t("último recebimento")} ${formatDistanceToNowStrict(new Date(iso), { addSuffix: true, locale })}`;
 }
 
 export function SourcesTab() {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading } = useWebhookSources();
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -89,7 +91,7 @@ export function SourcesTab() {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                {lastReceivedLabel(s.last_received_at, t)}
+                {lastReceivedLabel(s.last_received_at, t, locale)}
               </p>
               {/* Desligada, ela para de receber contatos e ninguém do outro lado
                   é avisado — então quem a desligou entra na leitura do card. */}

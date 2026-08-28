@@ -1,6 +1,6 @@
 "use client";
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { useT } from "@/hooks/i18n/useT";
 import { ArrowsClockwise, Scales, ShieldCheck } from "@/lib/ui/icons";
 import { retentionCopy, type RetentionKind } from "@/lib/inbox/retention-copy";
@@ -25,6 +25,7 @@ const KIND_CLASS: Record<RetentionKind, string> = {
  * traduzido em pt-br leigo acima do composer. Sem veto recente → não renderiza.
  */
 export function RetentionNotice({ conversationId }: { conversationId: string }) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data } = useRetention(conversationId);
   const latest = data?.retentions[0];
@@ -34,7 +35,7 @@ export function RetentionNotice({ conversationId }: { conversationId: string }) 
   const Icon = KIND_ICON[copy.kind];
   const when = formatDistanceToNowStrict(new Date(latest.created_at), {
     addSuffix: true,
-    locale: ptBR,
+    locale,
   });
 
   return (

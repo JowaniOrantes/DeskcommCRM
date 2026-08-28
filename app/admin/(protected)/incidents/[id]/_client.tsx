@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNow, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,7 @@ interface IncidentDetailClientProps {
 }
 
 export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading, error } = useAdminIncident(id);
 
@@ -117,11 +118,11 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
             {t("Criado")}{" "}
             {formatDistanceToNow(new Date(incident.created_at), {
               addSuffix: true,
-              locale: ptBR,
+              locale,
             })}
             {" · "}
             {format(new Date(incident.created_at), "dd/MM/yyyy HH:mm", {
-              locale: ptBR,
+              locale,
             })}
           </p>
         </div>
@@ -173,7 +174,7 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
                       </span>
                       <span className="ml-2 text-muted-foreground/70">
                         {format(new Date(entry.created_at), "dd/MM HH:mm:ss", {
-                          locale: ptBR,
+                          locale,
                         })}
                       </span>
                     </div>
@@ -199,7 +200,7 @@ export function IncidentDetailClient({ id }: IncidentDetailClientProps) {
               <p className="text-xs text-muted-foreground">
                 {t("Resolvido em")}{" "}
                 {format(new Date(incident.resolved_at), "dd/MM/yyyy HH:mm", {
-                  locale: ptBR,
+                  locale,
                 })}
               </p>
             )}

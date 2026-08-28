@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,13 +64,13 @@ function StatusBadge({ status }: { status: IncidentStatus }) {
   );
 }
 
-function relativeDate(iso: string): string {
+function relativeDate(iso: string, locale: Locale): string {
   // date-fns lança RangeError em data inválida, e isso derrubava a página
   // inteira no error boundary — o usuário via só um digest no lugar da tabela.
   // Uma célula com "—" é melhor do que perder a tela por um timestamp ausente.
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return formatDistanceToNow(d, { addSuffix: true, locale: ptBR });
+  return formatDistanceToNow(d, { addSuffix: true, locale });
 }
 
 // ---------------------------------------------------------------------------
@@ -124,6 +125,7 @@ export function IncidentsTable({
   isFetchingNextPage,
   onLoadMore,
 }: IncidentsTableProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (data.length === 0) {
     return (
@@ -155,7 +157,7 @@ export function IncidentsTable({
             {data.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                  {relativeDate(row.created_at)}
+                  {relativeDate(row.created_at, locale)}
                 </TableCell>
                 <TableCell className="font-mono text-xs">{row.type}</TableCell>
                 <TableCell>

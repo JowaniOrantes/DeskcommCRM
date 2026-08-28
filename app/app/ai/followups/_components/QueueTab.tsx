@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import Link from "next/link";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -91,10 +91,11 @@ function QueueStatusBadge({ status }: { status: string }) {
 }
 
 function NextFireCell({ iso }: { iso: string | null }) {
+  const locale = useLocaleDeData();
   if (!iso) return <span className="text-text-muted">—</span>;
   const d = new Date(iso);
-  const relative = formatDistanceToNowStrict(d, { addSuffix: true, locale: ptBR });
-  const absolute = format(d, "dd/MM/yyyy HH:mm", { locale: ptBR });
+  const relative = formatDistanceToNowStrict(d, { addSuffix: true, locale });
+  const absolute = format(d, "dd/MM/yyyy HH:mm", { locale });
   return (
     <div title={absolute} className="flex flex-col">
       <span className="text-sm">{relative}</span>

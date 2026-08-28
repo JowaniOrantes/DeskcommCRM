@@ -1,9 +1,10 @@
 "use client";
 import * as React from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import Link from "next/link";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,11 +75,12 @@ async function copy(text: string, label: string, t: (texto: string) => string): 
   else toast.error(t("Não foi possível copiar — selecione e copie manualmente."));
 }
 
-function relativeReceivedAt(iso: string): string {
-  return formatDistanceToNowStrict(new Date(iso), { addSuffix: true, locale: ptBR });
+function relativeReceivedAt(iso: string, locale: Locale): string {
+  return formatDistanceToNowStrict(new Date(iso), { addSuffix: true, locale });
 }
 
 export function SourceDetail({ source, open, onOpenChange }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const update = useUpdateWebhookSource();
   const del = useDeleteWebhookSource();
@@ -233,7 +235,7 @@ export function SourceDetail({ source, open, onOpenChange }: Props) {
                         ev.valid_signature === false ? "bg-error" : "bg-success",
                       )}
                     />
-                    <span className="text-muted-foreground">{relativeReceivedAt(ev.created_at)}</span>
+                    <span className="text-muted-foreground">{relativeReceivedAt(ev.created_at, locale)}</span>
                     {ev.valid_signature === false ? (
                       <span className="text-xs text-error">{t("assinatura inválida")}</span>
                     ) : null}

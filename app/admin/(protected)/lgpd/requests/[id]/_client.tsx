@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { CaretLeft } from "@/lib/ui/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ interface SlaTimelineProps {
 }
 
 function SlaTimelineInline({ received_at, due_at, request_type }: SlaTimelineProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   const receivedAt = new Date(received_at);
   const dueAt = new Date(due_at);
@@ -103,7 +104,7 @@ function SlaTimelineInline({ received_at, due_at, request_type }: SlaTimelinePro
                   D+{m.day} — {m.label}
                 </p>
                 <p className="text-xs text-muted-foreground opacity-70">
-                  {format(milestoneDate, "dd 'de' MMM yyyy", { locale: ptBR })}
+                  {format(milestoneDate, "dd 'de' MMM yyyy", { locale })}
                 </p>
               </div>
             </li>
@@ -126,6 +127,7 @@ interface AuditEntry {
 }
 
 function AuditTrailInline({ entries }: { entries: AuditEntry[] }) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (entries.length === 0) {
     return (
@@ -153,7 +155,7 @@ function AuditTrailInline({ entries }: { entries: AuditEntry[] }) {
             <div className={`pb-3 min-w-0 flex-1 ${isLast ? "pb-0" : ""}`}>
               <p className="text-sm font-mono font-medium truncate">{entry.action}</p>
               <p className="text-xs text-muted-foreground">
-                {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
+                {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm:ss", { locale })}
                 {entry.actor_user_id && (
                   <span className="ml-2 opacity-60">
                     {t("por")} {entry.actor_user_id.slice(0, 8)}…
@@ -219,6 +221,7 @@ interface Props {
 }
 
 export function LgpdRequestAdminDetail({ id }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading, error } = useAdminLgpdRequest(id);
 
@@ -277,11 +280,11 @@ export function LgpdRequestAdminDetail({ id }: Props) {
 
         <p className="text-sm text-muted-foreground">
           {t("Recebido em")}{" "}
-          {format(new Date(request.received_at), `dd/MM/yyyy '${t("às")}' HH:mm`, { locale: ptBR })}
+          {format(new Date(request.received_at), `dd/MM/yyyy '${t("às")}' HH:mm`, { locale })}
           {request.due_at && (
             <>
               {" · "}
-              {t("Vence em")} {format(new Date(request.due_at), "dd/MM/yyyy", { locale: ptBR })}
+              {t("Vence em")} {format(new Date(request.due_at), "dd/MM/yyyy", { locale })}
             </>
           )}
         </p>
@@ -339,7 +342,7 @@ export function LgpdRequestAdminDetail({ id }: Props) {
               <Row
                 label={t("Concluído em")}
                 value={format(new Date(request.completed_at), "dd/MM/yyyy HH:mm", {
-                  locale: ptBR,
+                  locale,
                 })}
               />
             )}

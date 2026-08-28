@@ -1,8 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import Link from "next/link";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -51,17 +52,17 @@ const PAUSAVEL = new Set(["active", "waiting_reply"]);
 /** Pausado por uma pessoa também se cancela — sem ter de retomar antes só para encerrar. */
 const CANCELAVEL = new Set(["active", "waiting_reply", "paused_handoff", "paused_manual"]);
 
-function absoluta(iso: string | null): string {
+function absoluta(iso: string | null, locale: Locale): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : format(d, "dd/MM/yyyy HH:mm", { locale: ptBR });
+  return Number.isNaN(d.getTime()) ? "—" : format(d, "dd/MM/yyyy HH:mm", { locale });
 }
 
-function relativa(iso: string | null): string | null {
+function relativa(iso: string | null, locale: Locale): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return formatDistanceToNowStrict(d, { addSuffix: true, locale: ptBR });
+  return formatDistanceToNowStrict(d, { addSuffix: true, locale });
 }
 
 /** O valor que o `<input type="datetime-local">` entende, no fuso de quem olha. */
@@ -98,6 +99,7 @@ function LinhaDoTempo({
   autores: Record<string, string>;
   truncado: boolean;
 }) {
+  const locale = useLocaleDeData();
   const t = useT();
   const porId = useMemo(() => Object.fromEntries(nos.map((n) => [n.id, n])), [nos]);
 
@@ -137,7 +139,7 @@ function LinhaDoTempo({
                 {lido.detalhe && <p className="mt-0.5 text-xs text-text-muted">{lido.detalhe}</p>}
                 <p className="mt-0.5 text-[11px] text-text-muted">
                   {lido.onde}
-                  {nome ? ` · ${nome}` : ""} · {absoluta(evento.created_at)}
+                  {nome ? ` · ${nome}` : ""} · {absoluta(evento.created_at, locale)}
                 </p>
               </div>
             </li>
@@ -149,6 +151,7 @@ function LinhaDoTempo({
 }
 
 export function DossieDoFollowup({ id, canWrite }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const { data, isLoading, isError } = useFollowupEnrollment(id);
   const intervir = useIntervirNoFollowup();
@@ -208,7 +211,7 @@ export function DossieDoFollowup({ id, canWrite }: Props) {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Campo rotulo={t("Fluxo")}>{data.flow.name ?? t("Fluxo removido")}</Campo>
           <Campo rotulo={t("Agente")}>{data.agent_name ?? t("Nenhum agente fixado")}</Campo>
-          <Campo rotulo={t("Começou")}>{absoluta(data.started_at)}</Campo>
+          <Campo rotulo={t("Começou")}>{absoluta(data.started_at, locale)}</Campo>
           <Campo rotulo={t("Passos dados")}>{data.steps_taken}</Campo>
         </div>
       </header>
@@ -235,11 +238,11 @@ export function DossieDoFollowup({ id, canWrite }: Props) {
           <p className="flex items-center gap-1.5 text-sm text-text-muted" data-testid="dossie-proximo-passo">
             <Clock size={14} aria-hidden />
             {data.next_eval_at
-              ? `${t("Volta a andar")} ${relativa(data.next_eval_at)} (${absoluta(data.next_eval_at)})`
+              ? `${t("Volta a andar")} ${relativa(data.next_eval_at, locale)} (${absoluta(data.next_eval_at, locale)})`
               : data.status === "paused_manual"
                 ? t("Parado até alguém retomar")
                 : data.completed_at
-                  ? `${t("Encerrado em")} ${absoluta(data.completed_at)}`
+                  ? `${t("Encerrado em")} ${absoluta(data.completed_at, locale)}`
                   : t("Sem próximo passo agendado")}
           </p>
           {data.outcome && (
@@ -357,7 +360,7 @@ export function DossieDoFollowup({ id, canWrite }: Props) {
       <PlanoDeTempoBloco
         plano={data.plano_de_tempo}
         nos={data.nos}
-        decididoRelativo={relativa(data.plano_de_tempo?.decidido_em ?? null)}
+        decididoRelativo={relativa(data.plano_de_tempo?.decidido_em ?? null, locale)}
       />
 
       <section className="rounded-md border border-border p-4">

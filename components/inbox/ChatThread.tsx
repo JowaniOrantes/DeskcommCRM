@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useMemo, useRef } from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { useT } from "@/hooks/i18n/useT";
 import { format, isToday, isYesterday } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
@@ -38,13 +39,14 @@ export function mergeThreadItems(messages: Message[], notes: Note[]): ThreadItem
   return items;
 }
 
-function dayLabel(d: Date, t: (texto: string) => string = (texto) => texto): string {
+function dayLabel(d: Date, t: (texto: string) => string = (texto) => texto, locale: Locale): string {
   if (isToday(d)) return t("Hoje");
   if (isYesterday(d)) return t("Ontem");
-  return format(d, "dd/MM/yyyy", { locale: ptBR });
+  return format(d, "dd/MM/yyyy", { locale });
 }
 
 export function ChatThread({ conversationId, onResponder }: Props) {
+  const locale = useLocaleDeData();
   const t = useT();
   const q = useMessagesRealtime(conversationId);
   const notes = useConversationNotes(conversationId);
@@ -216,7 +218,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
           <div key={g.key} className="space-y-1">
             <div className="sticky top-0 z-10 flex justify-center py-1">
               <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground backdrop-blur">
-                {dayLabel(g.date, t)}
+                {dayLabel(g.date, t, locale)}
               </span>
             </div>
             {g.items.map((item) =>

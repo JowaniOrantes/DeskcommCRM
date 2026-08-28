@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,10 @@ import {
 import { Check, X } from "@/lib/ui/icons";
 import { useT } from "@/hooks/i18n/useT";
 
-function quando(iso: string): string {
+function quando(iso: string, locale: Locale): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return formatDistanceToNowStrict(d, { addSuffix: true, locale: ptBR });
+  return formatDistanceToNowStrict(d, { addSuffix: true, locale });
 }
 
 export function ProposalsList({ canDecide }: { canDecide: boolean }) {
@@ -69,6 +70,7 @@ function Pendentes({
   pending: boolean;
   onDecidir: (leadId: string, decision: "approve" | "dismiss", seq: number) => void;
 }) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (itens.length === 0) {
     return (
@@ -98,7 +100,7 @@ function Pendentes({
             {/* Há quanto tempo espera é a informação que decide a ORDEM de quem
                 olha — por isso fica na linha do título, não escondida embaixo. */}
             <span className="text-xs text-muted-foreground">
-              {t("proposta")} {quando(p.proposed_at)}
+              {t("proposta")} {quando(p.proposed_at, locale)}
             </span>
           </div>
 
@@ -132,6 +134,7 @@ function Pendentes({
 }
 
 function Historico({ itens }: { itens: DecisaoPassada[] }) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (itens.length === 0) {
     return (
@@ -157,7 +160,7 @@ function Historico({ itens }: { itens: DecisaoPassada[] }) {
             </Badge>
             <span className="text-sm font-medium">{d.lead_title}</span>
             <span className="text-xs text-muted-foreground">
-              {t("por")} {d.decided_by ?? "—"} · {quando(d.decided_at)}
+              {t("por")} {d.decided_by ?? "—"} · {quando(d.decided_at, locale)}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">{d.next_action}</p>

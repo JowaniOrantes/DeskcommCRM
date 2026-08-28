@@ -1,6 +1,7 @@
 "use client";
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,9 +25,9 @@ import { useT } from "@/hooks/i18n/useT";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function relativeDate(iso: string): string {
+function relativeDate(iso: string, locale: Locale): string {
   try {
-    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: ptBR });
+    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale });
   } catch {
     return iso;
   }
@@ -125,6 +126,7 @@ interface PlatformAdminsTableProps {
 }
 
 export function PlatformAdminsTable({ data }: PlatformAdminsTableProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (data.length === 0) return <EmptyState />;
 
@@ -165,7 +167,7 @@ export function PlatformAdminsTable({ data }: PlatformAdminsTableProps) {
 
                 {/* Granted At */}
                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                  {relativeDate(row.granted_at)}
+                  {relativeDate(row.granted_at, locale)}
                 </TableCell>
 
                 {/* Granted By */}

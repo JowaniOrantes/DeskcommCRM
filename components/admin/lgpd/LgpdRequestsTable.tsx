@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import type { Locale } from "date-fns";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,9 +31,9 @@ function shortId(id: string): string {
   return id.slice(0, 8);
 }
 
-function relativeDate(iso: string): string {
+function relativeDate(iso: string, locale: Locale): string {
   try {
-    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: ptBR });
+    return formatDistanceToNow(new Date(iso), { addSuffix: true, locale });
   } catch {
     return iso;
   }
@@ -163,6 +164,7 @@ export function LgpdRequestsTable({
   isFetchingNextPage,
   onLoadMore,
 }: LgpdRequestsTableProps) {
+  const locale = useLocaleDeData();
   const t = useT();
   if (data.length === 0) return <EmptyState />;
 
@@ -201,7 +203,7 @@ export function LgpdRequestsTable({
                   )}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                  {relativeDate(row.received_at)}
+                  {relativeDate(row.received_at, locale)}
                 </TableCell>
                 <TableCell className="text-xs whitespace-nowrap">
                   {countdownLabel(row.due_at, row.status, t)}

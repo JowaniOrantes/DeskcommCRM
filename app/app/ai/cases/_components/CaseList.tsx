@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useLocaleDeData } from "@/lib/i18n/locale-de-data";
 import { formatDistanceToNowStrict } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -76,8 +76,9 @@ function CaseRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const locale = useLocaleDeData();
   const t = useT();
-  const when = formatDistanceToNowStrict(new Date(item.opened_at), { addSuffix: true, locale: ptBR });
+  const when = formatDistanceToNowStrict(new Date(item.opened_at), { addSuffix: true, locale });
   return (
     <li>
       <button
