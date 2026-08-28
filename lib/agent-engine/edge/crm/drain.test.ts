@@ -238,3 +238,19 @@ it("gate 'allowlist' + force_human: turno pulado mesmo com autorização", async
   );
   expect(calls.some((s) => s.includes('job_queue'))).toBe(false);
 });
+
+/**
+ * R7 — a consulta da "última inbound" (anti-backlog) desempata por recência
+ * REAL, nunca por `id` (uuid aleatório). `order by sent_at desc nulls last, id
+ * desc` elegia a mensagem ANTIGA por sorteio quando dois inbound tinham o mesmo
+ * `sent_at`. A cerca guarda a cláusula seguindo o padrão do repo (migration
+ * 0027): `coalesce(sent_at, created_at)`.
+ */
+it("anti-backlog: ordena a última inbound por coalesce(sent_at, created_at), não por id sozinho", async () => {
+  const calls: string[] = [];
+  await drainTick(poolElegibilidade(calls), knobs, log);
+  const consultaUltima = calls.find((s) => s.includes("direction = 'inbound'"));
+  expect(consultaUltima).toBeDefined();
+  expect(consultaUltima).toContain('coalesce(sent_at, created_at) desc');
+  expect(consultaUltima).not.toContain('nulls last');
+});

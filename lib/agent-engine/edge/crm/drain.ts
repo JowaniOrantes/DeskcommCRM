@@ -229,10 +229,19 @@ async function processEvent(
   // ficou parado (deploy, OOM na VPS) acorda e drena o backlog em ordem de
   // `created_at`, disparando um turno para CADA mensagem antiga — a IA
   // respondendo conversa de dias atrás. Vira done, sem job, sem gasto.
+  //
+  // R7: o desempate. `order by sent_at desc, id desc` cai no `id` — uuid
+  // aleatório, não cronológico — sempre que dois inbound compartilham `sent_at`
+  // (relógio do provider repetido, ou duas mensagens na mesma janela sem
+  // timestamp). "A última" saía por sorteio e podia eleger a ANTIGA, disparando
+  // o turno dela. `coalesce(sent_at, created_at)` (defensivo — `sent_at` é
+  // `not null default now()` hoje, mas o padrão do repo, ver migration 0027, não
+  // confia nisso) com desempate por `created_at` (ordem de INGESTÃO, uma
+  // mensagem por webhook) dá recência determinística.
   const { rows: ultimaInbound } = await pool.query<{ id: string }>(
     `select id from messages
      where organization_id = $1 and conversation_id = $2 and direction = 'inbound'
-     order by sent_at desc nulls last, id desc
+     order by coalesce(sent_at, created_at) desc, created_at desc, id desc
      limit 1`,
     [event.organization_id, p.conversation_id],
   );
