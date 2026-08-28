@@ -763,19 +763,19 @@ ação `send_ai_message`, retomada manual (`lib/escalacao/retomada.ts`).
 | J19.3 | Contato pessoal manda mensagem | IA NÃO responde | **UNIT** — coberto por J19.1 (mesma regra) |
 | J19.4 | Fornecedor manda proposta comercial | IA NÃO responde automaticamente | **UNIT** — coberto por J19.1 |
 | J19.5 | Conversa antiga de 3 dias; publicar agente | publicar NÃO dispara nada (`ai_agent.published` não tem consumidor) + o drain pula evento superado por inbound mais recente | **UNIT** — `drain.test.ts` "evento superado por inbound mais recente"; **CÓDIGO** — grep: zero consumidor de `ai_agent.published` |
-| J19.6 | Nova submissão Respondi → o contato fica elegível | IA pode responder o retorno do lead | **UNIT** — webhook seta `ai_authorized_reason='respondi:<form>:<sub>'`; **E2E PENDENTE** |
+| J19.6 | Nova submissão Respondi → o contato fica elegível | IA pode responder o retorno do lead | **UNIT** — webhook seta `ai_authorized_reason='respondi:<form>:<sub>'`; **E2E** — `tests/e2e/j19-elegibilidade-respondi.spec.ts` (submissão real na URL da fonte → `ai_authorized_at` carimbado → o retorno pelo WhatsApp gera `job_queue` `inbound_turn`; CONTROLE: número sem Respondi no mesmo canal → evento `done` sem job) |
 | J19.7 | Segundo turno do Respondi (dias depois, conversa viva) | IA continua atendendo (keep-alive renova o carimbo) | **UNIT** — `gate.test.ts` "teste 6/7"; keep-alive em `inbound-turn.ts` |
 | J19.8 | Nova mensagem de campanha com identificador autorizado | IA pode assumir | **UNIT** — `campanha.test.ts` "teste 8" |
 | J19.9 | Nova mensagem genérica "oi" | IA NÃO responde | **UNIT** — `campanha.test.ts` "teste 9" + `gate.test.ts` |
 | J19.10 | Conversa marcada human_only (`force_human`) | IA nunca responde até reativação explícita | **UNIT** — `gate.test.ts` "teste 10", `drain.test.ts` "force_human" |
 | J19.11 | Follow-up em lead Respondi elegível | funciona | **CÓDIGO** — silence-sweep só barra quem o gate barra |
-| J19.12 | Follow-up em cliente atual (não autorizado, gate allowlist) | NÃO enrola | **CÓDIGO** — `silence-sweep.ts` `loadSilentContactIds` pula `gateAllowlist && !autorizado`; **E2E PENDENTE** |
+| J19.12 | Follow-up em cliente atual (não autorizado, gate allowlist) | NÃO enrola | **CÓDIGO** — `silence-sweep.ts` `loadSilentContactIds` pula `gateAllowlist && !autorizado`; **E2E** — `tests/e2e/j19-elegibilidade-followup.spec.ts` (fluxo de silêncio publicado pela API + cron real: silencioso autorizado → nasce `followup_enrollments`; silencioso NÃO autorizado, mesmo canal → nenhum enrollment) |
 | J19.13 | Reinício do worker com backlog de eventos pending | zero disparos: cada evento cujo inbound já foi superado vira `done` sem job | **UNIT** — `drain.test.ts` "evento superado por inbound mais recente" |
 | J19.14 | Submissão antiga (fora do TTL) | NÃO reativa a IA sozinha | **UNIT** — `gate.test.ts` "submissão antiga (fora da janela)", `drain.test.ts` "autorização EXPIRADA" |
 | J19.15 | Org SEM versão de agente publicada (caminho legado `ai-response-worker`), gate allowlist, contato não autorizado | IA NÃO responde por este caminho tampouco | **UNIT** — `ai-response-worker-elegibilidade.test.ts` (skip `nao_elegivel_para_ia` antes de ler mensagem/agente; fail-closed em erro de leitura) |
 | J19.16 | Follow-up de TEXTO FIXO drenado inline (`enviarTextoFixoPendente`, sem worker), contato não autorizado | NÃO envia; job vira `done` | **UNIT** — `enviar-texto-fixo.test.ts` "conversa NÃO elegível" (+ fail-closed volta pra `pending`) |
 | J19.17 | Cliente antigo irritado (gate allowlist, não autorizado) → worker de sentimento dispara `low_sentiment` | `triggerHandoff` NÃO dispara: sem "um humano vai te atender", sem mexer no estado da conversa | **UNIT** — `handoff-orchestrator-elegibilidade.test.ts` (`bloqueioPorAllowlist` e `conversa_silenciada` barram; fail-closed em erro) |
-| J19.18 | Eu respondo o cliente à mão pelo meu WhatsApp numa conversa autorizada | IA para naquela conversa (silêncio durável + `last_handoff_reason`), SEM apagar `ai_authorized_at`; volta só por "devolver ao automático" | **UNIT** — `atendimento-manual.test.ts` (helper: idempotente, não toca autorização/force_human/status) + `waha-ingest-atendimento-manual.test.ts` (via `dispatchWahaEvent` real; eco do próprio envio NÃO pausa) + guarda de fonte no Zernio |
+| J19.18 | Eu respondo o cliente à mão pelo meu WhatsApp numa conversa autorizada | IA para naquela conversa (silêncio durável + `last_handoff_reason`), SEM apagar `ai_authorized_at`; volta só por "devolver ao automático" | **UNIT** — `atendimento-manual.test.ts` (helper: idempotente, não toca autorização/force_human/status) + `waha-ingest-atendimento-manual.test.ts` (via `dispatchWahaEvent` real; eco do próprio envio NÃO pausa) + guarda de fonte no Zernio; **E2E** — `tests/e2e/j19-elegibilidade-atendimento-manual.spec.ts` (webhook `fromMe` genuíno → `bot_silenced_until='infinity'` + rastro; `ai_authorized_at` intacto; 2ª mensagem não re-carimba; tela mostra o selo; "devolver ao automático" solta a trava e a autorização continua) |
 | J19.19 | Worker parado acorda com backlog; dois inbound antigos com o MESMO `sent_at` | a "última inbound" é a mais RECENTE (por `created_at`), nunca a de maior uuid — o evento antigo é pulado | **INVARIANTE** — `tests/invariants/drain-recencia-inbound.test.ts` (Postgres real) + `drain.test.ts` guarda a cláusula `coalesce(sent_at, created_at)` |
 
 **Sabotagem que confirma:** removendo o veto `sem_autorizacao` de
@@ -791,11 +791,20 @@ de resposta automática: drain + turno do agent-engine (`consulta-pg.ts`),
 (`consulta-supabase.ts`). `send_ai_message` é origem elegível (autoriza e então
 envia). Todos fail-closed: erro de leitura da elegibilidade → não responde.
 
-**O que falta (E2E, ambiente fresco estilo VPS):** provar pela tela, com WAHA +
-Respondi reais, os casos J19.6 e J19.12 — a submissão que autoriza e o
-follow-up que respeita — e J19.18 (resposta pelo celular pausa a IA). **A tela do
-knob `ai_gate` e do editor de `campanhas_whatsapp` ainda não existe** — hoje se
-liga por script/SQL (`scripts/ativar-gate-elegibilidade-ia.ts`), como o
+**E2E (ambiente fresco estilo VPS):** J19.6, J19.12 e J19.18 têm spec própria
+(`tests/e2e/j19-elegibilidade-*.spec.ts`), rodando no job `e2e` do CI. Seed
+compartilhado `scripts/seed-e2e-elegibilidade.ts` (canal com `ai_gate='allowlist'`
++ credencial validada + fonte de captação); helpers de SQL cru
+`scripts/e2e-elegibilidade-helpers.ts` (roda 1 tick do `drainTick` real — a suíte
+não sobe worker —, lê `job_queue`/`event_log`/`followup_enrollments`, semeia os
+dois estados de partida do gate). A submissão do Respondi e as mensagens do WAHA
+entram pelas rotas REAIS do app (`/api/v1/webhooks/in/:token`,
+`/api/v1/webhooks/waha/:token`). O agente publicado é SETUP via helper porque
+`POST /api/v1/ai/agents` exige role `admin`/MFA e o agente não é o que está sob
+teste.
+
+**A tela do knob `ai_gate` e do editor de `campanhas_whatsapp` ainda não existe**
+— hoje se liga por script/SQL (`scripts/ativar-gate-elegibilidade-ia.ts`), como o
 `roteamento_de_formulario`. É a dívida declarada desta entrega.
 
 **Dívida no `campanhas_whatsapp`:** o campo `agent_id` de uma campanha é aceito
