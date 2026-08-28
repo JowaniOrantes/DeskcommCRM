@@ -27,12 +27,16 @@
  * um redirect esconderia um 401/403 do audit.
  */
 
+import { randomBytes } from "node:crypto";
+
 import { NextResponse, type NextRequest } from "next/server";
 
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
-import { configuracaoDoGoogle } from "@/lib/agenda/google/config";
+import { CAMINHO_DO_CALLBACK, configuracaoDoGoogle } from "@/lib/agenda/google/config";
 import { emitirEstado } from "@/lib/agenda/google/estado";
+import { assinarVinculo, NOME_DO_VINCULO, VALIDADE_DO_VINCULO_S } from "@/lib/agenda/google/vinculo";
+import { cookieSecure } from "@/lib/supabase/cookie-secure";
 import { montarUrlDeConsentimento } from "@/lib/agenda/google/oauth";
 import { env } from "@/lib/env";
 
@@ -58,11 +62,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return voltarComErro("google_nao_configurado");
   }
 
+  // O nonce é gerado AQUI (em vez de deixar `emitirEstado` sortear) porque ele
+  // precisa ser conhecido duas vezes: vai dentro do `state`, que viaja pela URL
+  // do Google, e assina o cookie de vínculo, que fica no navegador. É o par que
+  // prova, na volta, que quem voltou é quem saiu.
+  const nonce = randomBytes(16).toString("base64url");
+
   let state: string;
   try {
     state = emitirEstado(
       { organizationId: org.orgId, userId: user.id },
-      { segredo: env.INTERNAL_SECRET, agora: new Date() },
+      { segredo: env.INTERNAL_SECRET, agora: new Date(), nonce },
     );
   } catch {
     // `emitirEstado` recusa segredo curto de propósito: com chave fraca o
@@ -88,5 +98,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     metadata: { user_id: user.id },
   });
 
-  return NextResponse.redirect(url);
+  const resposta = NextResponse.redirect(url);
+
+  // ⚠️ `sameSite: "lax"` É O PONTO DESTE COOKIE, e trocá-lo por "strict" volta a
+  // quebrar o fluxo inteiro. Lax é enviado em navegação top-level GET vinda de
+  // outro site — que é exatamente a volta do consentimento. Strict não é, e foi
+  // por isso que a sessão nunca chegou ao callback (ver `vinculo.ts`).
+  //
+  // `secure` sai de `cookieSecure()`, NUNCA `true` literal: um self-host servido
+  // por `http://` — e essa população existe, está medida — teria o cookie
+  // descartado pelo navegador, e o conserto viraria o defeito que ele conserta.
+  resposta.cookies.set(NOME_DO_VINCULO, assinarVinculo(nonce, env.INTERNAL_SECRET), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: cookieSecure(),
+    path: CAMINHO_DO_CALLBACK,
+    maxAge: VALIDADE_DO_VINCULO_S,
+  });
+
+  return resposta;
 }

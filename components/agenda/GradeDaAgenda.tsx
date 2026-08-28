@@ -10,7 +10,19 @@ import {
   startOfWeek,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as React from "react";
 
+import {
+  PASSO_DA_CELULA_MIN,
+  alvoDoArraste,
+  celulaQueContem,
+  horarioNaCelula,
+  minutoSobY,
+  publicadoVizinho,
+  razaoDoBloco,
+  type HorarioPublicado,
+  type MotivoDaGradeTravada,
+} from "@/lib/agenda/grade-interativa";
 import { cn } from "@/lib/utils";
 
 import { corDaTrilha, fundoDaTrilha } from "./paleta";
@@ -36,6 +48,59 @@ const HORAS = Array.from(
   (_, i) => PRIMEIRA_HORA + i,
 );
 
+/**
+ * O que transforma a grade de DESENHO em AGENDA.
+ *
+ * A prop inteira é opcional, e isto não é cortesia: a vitrine
+ * (`/vitrine-agenda`) monta a mesma grade sem rota nenhuma por trás, e uma
+ * grade que exigisse disponibilidade para renderizar deixaria de ser julgável
+ * ali. Sem `interacao` a grade é exatamente o que era — só leitura.
+ *
+ * `horariosPorDia` vem da MESMA rota que o painel de marcação e o agente usam
+ * (`GET /api/v1/agenda/horarios-livres`). A grade não recalcula jornada,
+ * exceção nem buffer: ela posiciona a resposta. Ver o cabeçalho de
+ * `lib/agenda/grade-interativa.ts` para o porquê disso ser uma barreira e não
+ * uma preferência.
+ */
+export interface InteracaoDaGrade {
+  /** `yyyy-MM-dd` → horários publicados naquele dia. */
+  horariosPorDia: Record<string, HorarioPublicado[]>;
+  /** Por que a grade inteira está travada, quando está. */
+  motivo: MotivoDaGradeTravada | null;
+  /** Duração do tipo escolhido — o tamanho do bloco que se está marcando. */
+  duracaoMin: number;
+  /** Clique num bloco livre. Recebe o instante PUBLICADO, nunca um calculado. */
+  onMarcarEm: (instante: string) => void;
+  /**
+   * Um card foi solto (ou movido pelo teclado). `instante` nulo quer dizer que
+   * o destino está fora da disponibilidade — quem recebe RECUSA e diz `razao`,
+   * em vez de remarcar em silêncio ou aproximar para o horário mais perto.
+   */
+  onArrastarPara?: (entrada: { id: string; instante: string | null; razao: string }) => void;
+}
+
+/** Onde um card arrastado está sendo proposto — o mesmo estado para ponteiro e teclado. */
+interface PropostaDeRemarcacao {
+  id: string;
+  /** `yyyy-MM-dd` da coluna sob o ponteiro. */
+  dia: string;
+  /** Minuto do dia onde o fantasma é DESENHADO — já encaixado, quando encaixa. */
+  minuto: number;
+  /**
+   * O minuto pedido, ANTES do encaixe.
+   *
+   * Os dois são diferentes de propósito: o desenho tem de mostrar onde o card
+   * vai cair de verdade, e o próximo passo do teclado tem de partir de onde o
+   * usuário pediu. Partir do encaixado é o que fazia a seta travar — somar meia
+   * hora a um horário publicado empata entre ele e o seguinte, e o empate volta
+   * para ele.
+   */
+  minutoBruto: number;
+  /** O horário publicado que aceita, ou `null` — a proposta continua visível. */
+  instante: string | null;
+  razao: string;
+}
+
 function minutosDesdeOTopo(d: Date): number {
   return (d.getHours() - PRIMEIRA_HORA) * 60 + d.getMinutes();
 }
@@ -43,6 +108,31 @@ function minutosDesdeOTopo(d: Date): number {
 function pixelsDe(minutos: number): number {
   return (minutos / 60) * ALTURA_DA_HORA;
 }
+
+/** A chave do dia — o mesmo formato que `horariosPorDia` usa. */
+function chaveDoDia(d: Date): string {
+  return format(d, "yyyy-MM-dd");
+}
+
+/**
+ * O instante de parede de um minuto do dia.
+ *
+ * `setHours` e não aritmética sobre a meia-noite: somar minutos a um timestamp
+ * atravessa a virada do horário de verão errado por uma hora, e o erro aparece
+ * duas vezes por ano num único dia — que é o pior formato de defeito para
+ * reproduzir.
+ */
+function instanteDoMinuto(dia: Date, minuto: number): Date {
+  const d = new Date(dia);
+  d.setHours(Math.floor(minuto / 60), minuto % 60, 0, 0);
+  return d;
+}
+
+/** Os começos de célula que a camada de marcação desenha, em minutos do dia. */
+const CELULAS = Array.from(
+  { length: ((ULTIMA_HORA - PRIMEIRA_HORA + 1) * 60) / PASSO_DA_CELULA_MIN },
+  (_, i) => PRIMEIRA_HORA * 60 + i * PASSO_DA_CELULA_MIN,
+);
 
 function diasDaSemanaDe(ancora: Date): Date[] {
   const inicio = startOfWeek(ancora, { weekStartsOn: 0 });
@@ -104,6 +194,87 @@ function repartirSobrepostos(agendamentos: Agendamento[]): Posicionado[] {
 }
 
 /**
+ * OS BLOCOS VAZIOS — a camada que faz a grade aceitar um clique.
+ *
+ * Um botão por meia hora, e cada um resolve a MESMA pergunta que o painel de
+ * marcação resolve por dia: existe horário publicado aqui? Se existe, o botão
+ * abre a marcação NAQUELE instante — o que a rota devolveu, não um que a tela
+ * calculou. Se não existe, ele nasce `disabled` **e diz por quê**.
+ *
+ * ⚠️ O "diz por quê" é o ponto, e é dívida que esta tela já pagou uma vez.
+ * `PainelDeMarcacao` apagava os dias por uma conta e explicava por outra, então
+ * havia estado em que a grade travava em silêncio — 42 dias mortos, aviso
+ * nenhum. Aqui a frase sai de `razaoDoBloco`, alimentada pela MESMA entrada que
+ * desabilita o botão: por construção os dois não voltam a divergir.
+ *
+ * A razão vai no `aria-label` E no `title`, como o painel faz — e o motivo
+ * global também aparece em TEXTO acima da grade, porque atributo de hover não
+ * existe para quem usa toque, que é o dono de clínica no celular.
+ */
+function CamadaDeMarcacao({
+  dia,
+  agora,
+  agendamentosDoDia,
+  interacao,
+}: {
+  dia: Date;
+  agora: Date;
+  agendamentosDoDia: Agendamento[];
+  interacao: InteracaoDaGrade;
+}) {
+  const chave = chaveDoDia(dia);
+  const publicados = interacao.horariosPorDia[chave] ?? [];
+
+  return (
+    <>
+      {CELULAS.map((minuto) => {
+        const livre = horarioNaCelula(publicados, minuto);
+        const inicio = instanteDoMinuto(dia, minuto);
+        const fim = instanteDoMinuto(dia, minuto + PASSO_DA_CELULA_MIN);
+        const ocupado = agendamentosDoDia.some(
+          (a) =>
+            a.situacao !== "cancelled" &&
+            new Date(a.comeca) < fim &&
+            new Date(a.termina) > inicio,
+        );
+        const passado = fim.getTime() <= agora.getTime();
+        const rotulo = format(inicio, "HH:mm");
+        const razao = razaoDoBloco({ motivo: interacao.motivo, ocupado, passado });
+
+        return (
+          <button
+            key={minuto}
+            type="button"
+            data-testid={`bloco-${chave}-${rotulo}`}
+            data-livre={livre !== null}
+            disabled={livre === null}
+            aria-label={
+              livre
+                ? `Marcar às ${livre.rotulo} de ${format(dia, "d 'de' MMMM", { locale: ptBR })}`
+                : `${format(dia, "d 'de' MMMM", { locale: ptBR })} às ${rotulo} — ${razao}`
+            }
+            title={livre ? undefined : razao}
+            onClick={livre ? () => interacao.onMarcarEm(livre.instante) : undefined}
+            className={cn(
+              "absolute inset-x-0 z-0 transition-colors duration-fast ease-out",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-500",
+              livre
+                ? "cursor-pointer hover:bg-accent-soft"
+                : // Sem cor de bloqueio: pintar o vazio indisponível encheria a
+                  // grade de faixas cinzas e faria o que ESTÁ livre desaparecer
+                  // no meio. O sinal fica na ausência de resposta ao passar o
+                  // mouse, no cursor e no motivo escrito.
+                  "cursor-default",
+            )}
+            style={{ top: pixelsDe(minuto - PRIMEIRA_HORA * 60), height: pixelsDe(PASSO_DA_CELULA_MIN) }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/**
  * O bloco de um agendamento dentro de um dia.
  *
  * A faixa lateral tem 3px, e não os 2px do card do funil, porque ali a cor diz
@@ -117,12 +288,30 @@ function BlocoDeAgendamento({
   onAbrir,
   coluna,
   colunas,
+  arraste,
 }: {
   agendamento: Agendamento;
   pessoa: Pessoa | undefined;
   onAbrir?: (id: string) => void;
   coluna: number;
   colunas: number;
+  /**
+   * O gesto de remarcar — ponteiro e teclado pelo MESMO caminho.
+   *
+   * Drag-and-drop puro exclui quem usa teclado, e a saída aqui não é uma
+   * segunda funcionalidade: `Alt+↑/↓` alimenta a mesma proposta que o arraste
+   * alimenta, e `Enter` a consuma pelo mesmo `onArrastarPara`. Dois gestos, um
+   * mecanismo — o que impede o caminho por teclado de apodrecer é ele não ter
+   * código próprio para apodrecer.
+   */
+  arraste?: {
+    /** Este card está com uma proposta aberta. */
+    ativo: boolean;
+    aoApontar: (e: React.PointerEvent<HTMLButtonElement>, a: Agendamento) => void;
+    aoTeclar: (e: React.KeyboardEvent<HTMLButtonElement>, a: Agendamento) => void;
+    /** Houve arraste de verdade: o clique que vem a seguir não deve abrir nada. */
+    moveu: () => boolean;
+  };
 }) {
   const comeca = new Date(agendamento.comeca);
   const termina = new Date(agendamento.termina);
@@ -144,7 +333,21 @@ function BlocoDeAgendamento({
       // clique disponível prometeria uma ação que não existe — o defeito do
       // "controle decorativo" que esta base já pagou uma vez.
       disabled={doGoogle}
-      onClick={doGoogle ? undefined : () => onAbrir?.(agendamento.id)}
+      data-arrastavel={arraste !== undefined && !doGoogle && !cancelado}
+      data-arrastando={arraste?.ativo === true}
+      // ⚠️ O CLIQUE QUE FECHA UM ARRASTE NÃO ABRE O COMPROMISSO.
+      //
+      // `pointerup` dispara `click` logo em seguida, sempre. Sem esta guarda,
+      // arrastar um card para outro horário abriria o painel de remarcação por
+      // cima da confirmação que o arraste acabou de pedir — duas perguntas na
+      // tela ao mesmo tempo, e a de baixo é a que o usuário pediu.
+      onClick={doGoogle ? undefined : () => { if (!arraste?.moveu()) onAbrir?.(agendamento.id); }}
+      onPointerDown={
+        arraste && !doGoogle && !cancelado ? (e) => arraste.aoApontar(e, agendamento) : undefined
+      }
+      onKeyDown={
+        arraste && !doGoogle && !cancelado ? (e) => arraste.aoTeclar(e, agendamento) : undefined
+      }
       // "com" nesta tela significa QUEM SERÁ ATENDIDO — é o vocabulário do
       // próprio subtítulo ("O que está marcado, com quem, e quem atende"). O
       // rótulo dizia `, com ${pessoa.nome}`, que é o ATENDENTE: quem usa leitor
@@ -159,7 +362,30 @@ function BlocoDeAgendamento({
         "absolute flex flex-col items-start overflow-hidden rounded-sm px-1.5 py-0.5 text-left",
         "border border-border/60 transition-colors duration-fast ease-out",
         doGoogle ? "cursor-default" : "cursor-pointer hover:border-border-strong",
-        cancelado && "opacity-55",
+        // `grab` só quando remarcar é possível: o cursor é a única pista de que
+        // o card se move, e prometê-la num card que não se move (ocupação do
+        // Google, compromisso cancelado) é o controle decorativo de novo.
+        arraste && !doGoogle && !cancelado && "cursor-grab active:cursor-grabbing touch-none",
+        // ⚠️ CANCELADO NÃO INTERCEPTA O PONTEIRO — e isto é conserto de produto,
+        // achado pela spec em tela.
+        //
+        // O card é `absolute` e fica por cima da camada de blocos vazios.
+        // Cancelar DEVOLVE o horário (`cancelled` está em `SITUACOES_QUE_LIBERAM`,
+        // e a rota volta a oferecê-lo), então o bloco embaixo nasce clicável — e
+        // o clique morria no card cancelado. Medido: `locator.click` esperando
+        // 150s porque `<button data-situacao="cancelled">` recebia o evento
+        // "from" o bloco livre. Numa clínica com uma semana de cancelamentos, o
+        // horário reaberto vira inalcançável pela grade.
+        //
+        // O card continua VISÍVEL — ele é a memória do que houve ali, e some-lo
+        // faria o horário parecer que nunca teve nada. O que ele perde é o
+        // clique, que já existe na aba "Cancelados" do histórico logo acima. A
+        // ação viva naquele espaço é marcar; o cancelado é registro.
+        cancelado && "pointer-events-none opacity-55",
+        // Enquanto a proposta está aberta o card original esmaece e o fantasma
+        // mostra onde ele cairia. Sumir com o original faria perder a
+        // referência de onde ele estava — que é o que se desfaz ao cancelar.
+        arraste?.ativo && "opacity-40",
       )}
       style={{
         top: pixelsDe(minutosDesdeOTopo(comeca)),
@@ -236,6 +462,51 @@ function ColunaDeHoras() {
   );
 }
 
+/**
+ * ONDE O CARD VAI CAIR — o fantasma.
+ *
+ * Ele existe porque o arraste precisa responder à pergunta "para que horário?"
+ * ANTES de consumar, e um card que só acompanha o ponteiro responde "para onde
+ * o seu dedo está", que não é a mesma coisa: o instante de destino é encaixado
+ * na disponibilidade publicada, e o encaixe é justamente o que o usuário não
+ * consegue prever olhando o cursor.
+ *
+ * Ele também é o que dá ao gesto uma versão INVÁLIDA visível: solto fora da
+ * disponibilidade, o fantasma aparece em vermelho com o motivo, em vez de o
+ * card simplesmente voltar sem explicação.
+ */
+function FantasmaDoArraste({
+  proposta,
+  duracaoMin,
+}: {
+  proposta: PropostaDeRemarcacao;
+  duracaoMin: number;
+}) {
+  const valido = proposta.instante !== null;
+  return (
+    <div
+      data-testid="fantasma-do-arraste"
+      data-instante={proposta.instante ?? ""}
+      data-valido={valido}
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute inset-x-0.5 z-20 rounded-sm border-2 border-dashed px-1.5 py-0.5",
+        valido ? "border-accent bg-accent-soft" : "border-error bg-error-bg",
+      )}
+      style={{
+        top: pixelsDe(proposta.minuto - PRIMEIRA_HORA * 60),
+        height: Math.max(pixelsDe(duracaoMin) - 2, 18),
+      }}
+    >
+      <span className="truncate text-[10px] font-semibold leading-4 text-text">
+        {valido
+          ? format(new Date(proposta.instante!), "HH:mm", { locale: ptBR })
+          : proposta.razao}
+      </span>
+    </div>
+  );
+}
+
 function ColunaDeDia({
   dia,
   agora,
@@ -243,6 +514,9 @@ function ColunaDeDia({
   pessoas,
   onAbrir,
   destacado,
+  interacao,
+  proposta,
+  arrasteDoCard,
 }: {
   dia: Date;
   agora: Date;
@@ -250,6 +524,13 @@ function ColunaDeDia({
   pessoas: Pessoa[];
   onAbrir?: (id: string) => void;
   destacado: boolean;
+  interacao?: InteracaoDaGrade;
+  proposta?: PropostaDeRemarcacao | null;
+  arrasteDoCard?: {
+    aoApontar: (e: React.PointerEvent<HTMLButtonElement>, a: Agendamento) => void;
+    aoTeclar: (e: React.KeyboardEvent<HTMLButtonElement>, a: Agendamento) => void;
+    moveu: () => boolean;
+  };
 }) {
   const doDia = agendamentos.filter((c) => isSameDay(new Date(c.comeca), dia));
   const ehHoje = isSameDay(dia, agora);
@@ -280,7 +561,18 @@ function ColunaDeDia({
         </span>
       </div>
 
-      <div className="relative" style={{ height: HORAS.length * ALTURA_DA_HORA }}>
+      <div
+        className="relative"
+        // O ALVO DO ARRASTE, e ele é lido por GEOMETRIA e não por hit-testing.
+        //
+        // `document.elementFromPoint` devolveria o card arrastado ou o fantasma
+        // conforme a ordem de pintura, e o `setPointerCapture` desliga o hit
+        // test de qualquer forma. Comparar `getBoundingClientRect()` de cada
+        // corpo de dia é determinístico e independe do que está desenhado por
+        // cima — que é exatamente o que muda durante um arraste.
+        data-corpo-do-dia={chaveDoDia(dia)}
+        style={{ height: HORAS.length * ALTURA_DA_HORA }}
+      >
         {HORAS.map((h) => (
           <div
             key={h}
@@ -288,6 +580,14 @@ function ColunaDeDia({
             style={{ height: ALTURA_DA_HORA }}
           />
         ))}
+        {interacao && (
+          <CamadaDeMarcacao
+            dia={dia}
+            agora={agora}
+            agendamentosDoDia={doDia}
+            interacao={interacao}
+          />
+        )}
         {repartirSobrepostos(doDia).map(({ agendamento, coluna, colunas }) => (
           <BlocoDeAgendamento
             key={agendamento.id}
@@ -296,8 +596,16 @@ function ColunaDeDia({
             onAbrir={onAbrir}
             coluna={coluna}
             colunas={colunas}
+            arraste={
+              arrasteDoCard
+                ? { ...arrasteDoCard, ativo: proposta?.id === agendamento.id }
+                : undefined
+            }
           />
         ))}
+        {proposta && proposta.dia === chaveDoDia(dia) && (
+          <FantasmaDoArraste proposta={proposta} duracaoMin={interacao?.duracaoMin ?? 30} />
+        )}
         {ehHoje && <ReguaDoAgora agora={agora} />}
       </div>
     </div>
@@ -407,6 +715,7 @@ export function GradeDaAgenda({
   pessoas,
   agendamentos,
   onAbrirAgendamento,
+  interacao,
   className,
 }: {
   visao: VisaoDaAgenda;
@@ -423,9 +732,210 @@ export function GradeDaAgenda({
   pessoas: Pessoa[];
   agendamentos: Agendamento[];
   onAbrirAgendamento?: (id: string) => void;
+  /** Ausente = grade só de leitura, como a vitrine a monta. Ver `InteracaoDaGrade`. */
+  interacao?: InteracaoDaGrade;
   className?: string;
 }) {
   const dias = visao === "dia" ? [ancora] : diasDaSemanaDe(ancora);
+
+  const gradeRef = React.useRef<HTMLDivElement>(null);
+  const [proposta, setProposta] = React.useState<PropostaDeRemarcacao | null>(null);
+  /**
+   * O gesto em curso vive numa REF, não no estado.
+   *
+   * Ele muda a cada `pointermove` — sessenta vezes por segundo — e nada na tela
+   * depende dele diretamente (quem a tela desenha é a `proposta`, que só muda
+   * quando o encaixe muda). Em estado, cada pixel de movimento re-renderizaria
+   * a semana inteira.
+   */
+  const gesto = React.useRef<{
+    id: string;
+    x0: number;
+    y0: number;
+    /** Onde dentro do card o ponteiro pegou — o que faz o TOPO seguir o dedo. */
+    deslocamentoNoCard: number;
+    moveu: boolean;
+  } | null>(null);
+
+  const limites = { primeiro: PRIMEIRA_HORA * 60, ultimo: (ULTIMA_HORA + 1) * 60 };
+
+  /** A proposta para um instante — a mesma conta para o ponteiro e para o teclado. */
+  const montarProposta = React.useCallback(
+    (id: string, chave: string, minutoBruto: number): PropostaDeRemarcacao => {
+      const publicados = interacao?.horariosPorDia[chave] ?? [];
+      const alvo = alvoDoArraste(publicados, minutoBruto);
+      const dia = new Date(`${chave}T12:00:00`);
+      const minutoCelula = celulaQueContem(minutoBruto);
+      const inicio = instanteDoMinuto(dia, minutoCelula);
+      const fim = instanteDoMinuto(dia, minutoCelula + PASSO_DA_CELULA_MIN);
+      const ocupado = agendamentos.some(
+        (a) =>
+          a.id !== id &&
+          a.situacao !== "cancelled" &&
+          new Date(a.comeca) < fim &&
+          new Date(a.termina) > inicio,
+      );
+      return {
+        id,
+        dia: chave,
+        // O fantasma gruda no horário PUBLICADO quando há um; sem ele, na
+        // célula sob o ponteiro — que é onde a recusa precisa ser mostrada.
+        minuto: alvo
+          ? new Date(alvo.instante).getHours() * 60 + new Date(alvo.instante).getMinutes()
+          : minutoCelula,
+        minutoBruto,
+        instante: alvo?.instante ?? null,
+        razao: razaoDoBloco({
+          motivo: interacao?.motivo ?? null,
+          ocupado,
+          passado: fim.getTime() <= agora.getTime(),
+        }),
+      };
+    },
+    [agendamentos, agora, interacao],
+  );
+
+  /** Que coluna e que minuto estão sob um ponto da tela. */
+  const propostaSobPonto = React.useCallback(
+    (id: string, clientX: number, clientYDoTopo: number): PropostaDeRemarcacao | null => {
+      const corpos = Array.from(
+        gradeRef.current?.querySelectorAll<HTMLElement>("[data-corpo-do-dia]") ?? [],
+      );
+      if (corpos.length === 0) return null;
+      // A coluna sob o ponteiro; fora de todas, a mais próxima na horizontal —
+      // arrastar até a beirada não deve fazer a proposta desaparecer.
+      const escolhido =
+        corpos.find((el) => {
+          const r = el.getBoundingClientRect();
+          return clientX >= r.left && clientX <= r.right;
+        }) ??
+        corpos.reduce((melhor, el) => {
+          const d = (r: DOMRect) => Math.min(Math.abs(clientX - r.left), Math.abs(clientX - r.right));
+          return d(el.getBoundingClientRect()) < d(melhor.getBoundingClientRect()) ? el : melhor;
+        });
+      const chave = escolhido.dataset.corpoDoDia;
+      if (!chave) return null;
+      const r = escolhido.getBoundingClientRect();
+      const bruto = minutoSobY({
+        y: clientYDoTopo - r.top,
+        alturaDaHoraPx: ALTURA_DA_HORA,
+        primeiraHora: PRIMEIRA_HORA,
+      });
+      return montarProposta(
+        id,
+        chave,
+        Math.min(Math.max(bruto, limites.primeiro), limites.ultimo - PASSO_DA_CELULA_MIN),
+      );
+    },
+    [montarProposta, limites.primeiro, limites.ultimo],
+  );
+
+  const aoApontar = React.useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>, a: Agendamento) => {
+      if (e.button !== 0 || !interacao?.onArrastarPara) return;
+      const el = e.currentTarget;
+      const g = {
+        id: a.id,
+        x0: e.clientX,
+        y0: e.clientY,
+        deslocamentoNoCard: e.clientY - el.getBoundingClientRect().top,
+        moveu: false,
+      };
+      gesto.current = g;
+      el.setPointerCapture(e.pointerId);
+
+      const mover = (ev: PointerEvent) => {
+        // Limiar de 4px: sem ele, o tremor de um clique comum já criaria uma
+        // proposta e o card abriria a confirmação em vez do compromisso.
+        if (!g.moveu && Math.abs(ev.clientY - g.y0) < 4 && Math.abs(ev.clientX - g.x0) < 4) return;
+        g.moveu = true;
+        setProposta(propostaSobPonto(g.id, ev.clientX, ev.clientY - g.deslocamentoNoCard));
+      };
+      const soltar = (ev: PointerEvent) => {
+        window.removeEventListener("pointermove", mover);
+        window.removeEventListener("pointerup", soltar);
+        window.removeEventListener("pointercancel", soltar);
+        const houve = g.moveu;
+        const p = houve ? propostaSobPonto(g.id, ev.clientX, ev.clientY - g.deslocamentoNoCard) : null;
+        setProposta(null);
+        // A ref só zera no tique seguinte: o `click` que o `pointerup` dispara
+        // ainda não aconteceu, e é ele que precisa consultar `moveu()`.
+        setTimeout(() => {
+          gesto.current = null;
+        }, 0);
+        if (p) interacao.onArrastarPara?.({ id: g.id, instante: p.instante, razao: p.razao });
+      };
+      window.addEventListener("pointermove", mover);
+      window.addEventListener("pointerup", soltar);
+      window.addEventListener("pointercancel", soltar);
+    },
+    [interacao, propostaSobPonto],
+  );
+
+  /**
+   * O MESMO gesto, pelo teclado — `Alt` + setas move a proposta, `Enter`
+   * consuma, `Esc` desfaz.
+   *
+   * `Alt` e não a seta pura porque a grade rola: seta pura dentro de um
+   * contêiner com rolagem é a rolagem, e roubá-la quebraria a navegação de quem
+   * usa só o teclado para chegar ao card seguinte.
+   */
+  const aoTeclar = React.useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, a: Agendamento) => {
+      if (!interacao?.onArrastarPara) return;
+      const atual = proposta?.id === a.id ? proposta : null;
+      const comeca = new Date(a.comeca);
+
+      if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        e.preventDefault();
+        const dia = atual?.dia ?? chaveDoDia(comeca);
+        const base = atual ? atual.minutoBruto : comeca.getHours() * 60 + comeca.getMinutes();
+        const direcao = e.key === "ArrowDown" ? 1 : -1;
+        // A seta salta de VAGA em VAGA, não de meia em meia hora: é a
+        // informação que o arraste dá pelos olhos e o teclado não tem como ver.
+        // Sem vaga adiante, ela ainda anda — e o fantasma inválido é o que diz
+        // que não há para onde ir, em vez de a tecla ficar muda.
+        const vizinho = publicadoVizinho(interacao.horariosPorDia[dia] ?? [], base, direcao);
+        const alvo = vizinho
+          ? new Date(vizinho.instante).getHours() * 60 + new Date(vizinho.instante).getMinutes()
+          : base + direcao * PASSO_DA_CELULA_MIN;
+        setProposta(
+          montarProposta(
+            a.id,
+            dia,
+            Math.min(Math.max(alvo, limites.primeiro), limites.ultimo - PASSO_DA_CELULA_MIN),
+          ),
+        );
+        return;
+      }
+      if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        e.preventDefault();
+        const base = atual ? atual.minutoBruto : comeca.getHours() * 60 + comeca.getMinutes();
+        const diaAtual = new Date(`${atual?.dia ?? chaveDoDia(comeca)}T12:00:00`);
+        setProposta(
+          montarProposta(a.id, chaveDoDia(addDays(diaAtual, e.key === "ArrowRight" ? 1 : -1)), base),
+        );
+        return;
+      }
+      if (atual && e.key === "Enter") {
+        // `preventDefault` porque `Enter` num `<button>` vira `click`, e o
+        // clique abriria o painel por cima da confirmação que estamos pedindo.
+        e.preventDefault();
+        setProposta(null);
+        interacao.onArrastarPara?.({ id: a.id, instante: atual.instante, razao: atual.razao });
+        return;
+      }
+      if (atual && e.key === "Escape") {
+        e.preventDefault();
+        setProposta(null);
+      }
+    },
+    [interacao, proposta, montarProposta, limites.primeiro, limites.ultimo],
+  );
+
+  const arrasteDoCard = interacao?.onArrastarPara
+    ? { aoApontar, aoTeclar, moveu: () => gesto.current?.moveu === true }
+    : undefined;
 
   return (
     <div
@@ -442,7 +952,7 @@ export function GradeDaAgenda({
         // A rolagem mora AQUI dentro, e não na página: `html, body` têm
         // `overflow-x: hidden` no globals.css, então uma grade que estourasse a
         // largura simplesmente sumiria pela direita, sem barra para trazê-la de volta.
-        <div className="flex min-h-0 flex-1 overflow-auto">
+        <div ref={gradeRef} className="flex min-h-0 flex-1 overflow-auto">
           <ColunaDeHoras />
           <div className="flex min-w-0 flex-1">
             {dias.map((d) => (
@@ -454,6 +964,9 @@ export function GradeDaAgenda({
                 pessoas={pessoas}
                 onAbrir={onAbrirAgendamento}
                 destacado={visao === "semana" && isSameDay(d, agora)}
+                interacao={interacao}
+                proposta={proposta}
+                arrasteDoCard={arrasteDoCard}
               />
             ))}
           </div>

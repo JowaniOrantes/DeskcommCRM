@@ -32,6 +32,7 @@ import type { AgendamentoParaGoogle } from "@/lib/agenda/google/evento";
 import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { PROVEDOR_GOOGLE } from "@/lib/agenda/tipos";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptWebhookSecret } from "@/lib/webhooks/secrets";
 
@@ -118,7 +119,12 @@ async function executar(req: NextRequest): Promise<Response> {
       .select("id, status, oauth_access_token_encrypted, account_email")
       .eq("organization_id", linha.organization_id)
       .eq("user_id", linha.owner_user_id as string)
-      .eq("provider", "google")
+      // A CONSTANTE. Era `"google"`, que o CHECK proíbe: o worker achava o
+      // compromisso pendente, não achava conexão nenhuma, contava `semConexao` e
+      // seguia. A ida CRM→Google nunca aconteceu em instalação alguma — e sem
+      // rastro, porque rodada sem efeito não audita (o que é doutrina e está
+      // certo: o defeito era não haver efeito, não a ausência de log).
+      .eq("provider", PROVEDOR_GOOGLE)
       .eq("status", "healthy")
       .limit(1);
 

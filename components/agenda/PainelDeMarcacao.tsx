@@ -41,7 +41,9 @@ export function PainelDeMarcacao({
   fusoSuposto = false,
   fontesDefasadas,
   quemSeraAtendido,
+  horarioInicial,
   onConfirmar,
+  onVerNaAgenda,
   className,
 }: {
   ancora: Date;
@@ -108,13 +110,60 @@ export function PainelDeMarcacao({
    * decisão; o produto não avisar que não ia mandar é um bug.
    */
   quemSeraAtendido?: { nome: string; aceitaMensagem: boolean };
+  /**
+   * Levar a grade até o compromisso recém-marcado.
+   *
+   * Recebe o INSTANTE, e não só um pedido de fechar: quem marca para 8 de
+   * setembro e volta para a grade na semana corrente não vê nada — e "não
+   * acontece nada" passa a ser literalmente verdade na tela. Quem sabe mover a
+   * âncora é o `_client`, que é dono dela; este painel só sabe QUANDO é.
+   */
+  onVerNaAgenda?: (instante: string) => void;
+
+  /**
+   * O horário JÁ ESCOLHIDO — quem abriu o painel clicando num bloco da grade
+   * não deve ser obrigado a escolher de novo o que acabou de apontar.
+   *
+   * Ele salta os dois primeiros tempos da máquina (`escolhendo-dia` e
+   * `escolhendo-horario`) e abre direto em `confirmando`, com o mini-calendário
+   * no mês certo e o dia marcado — voltar continua possível pelo botão
+   * "Voltar", que é o que devolve a escolha a quem se enganou no bloco.
+   *
+   * O instante vem da MESMA rota que alimenta a coluna de horários, então não
+   * há como o painel abrir confirmando um horário que ele próprio não
+   * ofereceria.
+   */
+  horarioInicial?: HorarioLivre;
   onConfirmar?: (instante: string) => void | Promise<unknown>;
   className?: string;
 }) {
-  const [dia, setDia] = React.useState<Date | null>(null);
-  const [horario, setHorario] = React.useState<HorarioLivre | null>(null);
+  const [dia, setDia] = React.useState<Date | null>(
+    horarioInicial ? new Date(horarioInicial.instante) : null,
+  );
+  const [horario, setHorario] = React.useState<HorarioLivre | null>(horarioInicial ?? null);
   const [marcado, setMarcado] = React.useState<HorarioLivre | null>(null);
-  const [mes, setMes] = React.useState(() => startOfMonth(ancora));
+  const [mes, setMes] = React.useState(() =>
+    startOfMonth(horarioInicial ? new Date(horarioInicial.instante) : ancora),
+  );
+
+  /**
+   * O painel pode continuar montado entre duas aberturas (o `Sheet` decide
+   * isso, não nós), e aí o estado inicial acima não roda de novo — clicar num
+   * segundo bloco abriria o painel no horário do primeiro.
+   *
+   * A dependência é o INSTANTE e não o objeto: `horarioInicial` é literal do
+   * chamador, novo a cada render dele, e um efeito com o objeto na lista
+   * dispararia para sempre.
+   */
+  const instanteInicial = horarioInicial?.instante;
+  React.useEffect(() => {
+    if (!instanteInicial) return;
+    const d = new Date(instanteInicial);
+    setDia(d);
+    setHorario({ instante: instanteInicial, rotulo: format(d, "HH:mm") });
+    setMes(startOfMonth(d));
+    setMarcado(null);
+  }, [instanteInicial]);
 
   const tempo: TempoDaMarcacao = marcado
     ? "marcado"
@@ -225,7 +274,31 @@ export function PainelDeMarcacao({
             <Button variant="outline" size="sm" onClick={() => { setMarcado(null); setHorario(null); setDia(null); }}>
               Marcar outro
             </Button>
-            <Button size="sm" data-testid="ver-na-agenda">Ver na agenda</Button>
+            {/*
+              ⚠️ ESTE BOTÃO NÃO TINHA `onClick` NENHUM.
+
+              Não ficava cinza — parecia perfeitamente ativo, com cursor de
+              mãozinha —, e o clique não fazia nada. O dono do produto marcou um
+              compromisso na v1.8.0, clicou aqui, e o relato foi exatamente
+              "nada acontece": ele não tinha o que reportar além disso.
+
+              É a SEGUNDA forma de controle decorativo, e a varredura que esta
+              base tem para essa classe (`tests/unit/controle-decorativo.test.ts`)
+              era cega para ela: procurava `disabled={!callback}`, e botão mudo
+              não tem `disabled`. A varredura passou a cobrir as duas.
+
+              Sem `onVerNaAgenda` ele some, em vez de ficar decorativo: um
+              caminho que não existe não deve ser oferecido.
+            */}
+            {onVerNaAgenda && (
+              <Button
+                size="sm"
+                data-testid="ver-na-agenda"
+                onClick={() => onVerNaAgenda(marcado.instante)}
+              >
+                Ver na agenda
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -246,7 +319,24 @@ export function PainelDeMarcacao({
         //
         // No celular continua ocupando tudo: lá não há para onde crescer, e os
         // três tempos empilham.
-        "flex min-h-[450px] flex-col overflow-hidden rounded-lg border border-border bg-surface md:w-fit md:flex-row",
+        // ⚠️ `lg:` E NÃO `md:` — a conta, que nunca tinha sido feita.
+        //
+        // As três colunas somam 980px (280 + 420 + 280). Em `md` o container é
+        // um Sheet de 768px, então elas transbordavam 239px e o
+        // `overflow-hidden` logo abaixo cortava EM SILÊNCIO: sem barra de
+        // rolagem, sem aviso. Medido em 1280, 1440 e 1920 — o mesmo transbordo
+        // nas três, porque o Sheet é fixo e ancorado à direita. O defeito não
+        // "sumia em tela grande"; ele nunca dependeu da tela.
+        //
+        // De `lg` para cima o Sheet abre para 1040px (`_client.tsx`) e as três
+        // colunas cabem com folga. Abaixo disso o painel EMPILHA — os horários
+        // viram uma seção sob o calendário, que é o que o cal.com faz e o que
+        // esta base já fazia no celular.
+        // `lg:min-h-0` junto do piso: em janela larga e BAIXA (menos de ~560px
+        // de altura) um `min-h-[450px]` sem teto estoura o Sheet e o
+        // `overflow-hidden` corta em silêncio — o mesmo modo de falha que este
+        // painel já teve na horizontal.
+        "flex min-h-[450px] flex-col overflow-hidden rounded-lg border border-border bg-surface lg:min-h-0 lg:w-fit lg:flex-row",
         className,
       )}
     >
@@ -254,7 +344,7 @@ export function PainelDeMarcacao({
           formulário cego: a pessoa escolhe um horário sem lembrar de quê. */}
       <aside
         data-testid="contexto-da-marcacao"
-        className="shrink-0 border-b border-border bg-surface-elevated/50 p-4 md:w-[240px] md:border-b-0 md:border-r lg:w-[280px]"
+        className="shrink-0 border-b border-border bg-surface-elevated/50 p-4 lg:w-[280px] lg:border-b-0 lg:border-r"
       >
         <div className="flex items-center gap-2">
           <AvatarDaPessoa pessoa={responsavel} tamanho="sm" />
@@ -284,7 +374,7 @@ export function PainelDeMarcacao({
           `min-width` e não largura fixa, porque no celular a coluna ocupa tudo. */}
       <div
         data-testid="corpo-da-marcacao"
-        className="flex min-w-0 flex-1 flex-col p-4 md:min-w-[420px]"
+        className="flex min-w-0 flex-1 flex-col p-4 lg:min-w-[420px]"
       >
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-semibold first-letter:uppercase">
@@ -534,17 +624,33 @@ export function PainelDeMarcacao({
       <div
         data-testid="coluna-de-horarios"
         data-aberta={tempo !== "escolhendo-dia"}
-        // `shrink-0` só a partir de `md`: no celular a coluna ocupa a largura
-        // toda e precisa PODER encolher, senão ela empurra o painel para fora
-        // da tela — e o `overflow-x: hidden` do `globals.css` corta o excedente
-        // em silêncio, sem barra de rolagem.
-        className="agenda-coluna-horarios md:shrink-0"
+        // `shrink-0` só a partir de `lg`, que é onde ela É uma coluna. Abaixo
+        // disso ela ocupa a largura toda EMPILHADA e precisa poder encolher,
+        // senão empurra o painel para fora — e o `overflow-hidden` corta o
+        // excedente em silêncio, sem barra de rolagem.
+        //
+        // Era `md:`, e é o que punha 980px de colunas dentro de um Sheet de
+        // 768px em toda tela de notebook.
+        className="agenda-coluna-horarios lg:shrink-0"
       >
-        <div className="flex h-full w-[240px] flex-col p-3 lg:w-[280px]">
+        {/* `w-full` empilhado, largura fixa só quando é coluna de verdade. A
+            largura fixa em qualquer breakpoint era o que impedia o painel de
+            caber: o conteúdo segurava 240px mesmo quando o pai não os tinha. */}
+        <div className="flex h-full w-full flex-col p-3 lg:w-[280px]">
           <p className="mb-2 shrink-0 text-xs font-semibold text-text-muted first-letter:uppercase">
             {dia ? format(dia, "EEEE, d 'de' MMM", { locale: ptBR }) : ""}
           </p>
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+          {/*
+            `data-testid` para a lista poder ser MEDIDA, e não só vista. O
+            `overflow-y-auto` aqui sempre esteve certo e era INERTE: um
+            `overflow-y-auto` cujo pai tem altura `auto` não rola, porque o filho
+            cresce e `scrollHeight === clientHeight`. Quem fecha a cadeia é o
+            `_client.tsx`, que dá teto ao Sheet.
+          */}
+          <div
+            data-testid="lista-de-horarios"
+            className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1"
+          >
             {doDia.map((h) => (
               <button
                 key={h.instante}

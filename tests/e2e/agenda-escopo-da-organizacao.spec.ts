@@ -94,9 +94,22 @@ async function trocarPara(page: import("@playwright/test").Page, orgId: string, 
   await page.getByTestId("tenant-switcher").click();
   await page.getByTestId(`tenant-switcher-item-${orgId}`).click();
   if (nome) {
-    await expect(page.getByTestId("tenant-switcher"), `a troca para "${nome}" não pegou`).toContainText(nome, {
-      timeout: 20_000,
-    });
+    const seletor = page.getByTestId("tenant-switcher");
+    // ESPERAR A TRANSIÇÃO TERMINAR ANTES DE LER O TEXTO. A troca é uma server
+    // action dentro de `useTransition`, e enquanto ela roda o botão fica
+    // `disabled` mostrando o nome ANTIGO. Ler o texto nesse meio-tempo mede a
+    // velocidade da máquina, não a troca — e reprova com a acusação errada,
+    // "a troca não pegou", quando o certo seria "a troca ainda não terminou".
+    //
+    // Medido no CI: esta parte da suíte levou 16,9 min numa rodada contra 8,6
+    // min em outra, no mesmo repositório. O teto de 20s era do tamanho dessa
+    // variação, então o resultado dependia de quão carregado o runner estava.
+    //
+    // A propriedade medida NÃO afrouxa: depois que o botão volta a ficar
+    // habilitado, o nome TEM de ser o da organização nova. Troca que não
+    // acontece continua reprovando — só deixa de reprovar troca que demora.
+    await expect(seletor, `a troca para "${nome}" não terminou`).toBeEnabled({ timeout: 60_000 });
+    await expect(seletor, `a troca para "${nome}" não pegou`).toContainText(nome, { timeout: 20_000 });
   }
 }
 

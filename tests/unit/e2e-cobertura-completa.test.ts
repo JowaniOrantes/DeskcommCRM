@@ -131,9 +131,20 @@ describe("cobertura do e2e no CI", () => {
   it("as listas são de fato passadas ao Playwright", () => {
     // A terceira ponta. Declarar não é executar: sem o consumo, acrescentar o nome
     // à variável deixa este gate verde e a spec continua fora do run.
-    expect(yml).toMatch(/playwright test --workers=1 \$SPECS_PARTE_1/);
-    expect(yml).toMatch(/playwright test --workers=1 \$SPECS_PARTE_2/);
+    //
+    // As partes passaram a rodar em PARALELO (matrix), e o comando deixou de
+    // citar a variável direto: ele escolhe a lista pela `matrix.parte`. A
+    // propriedade que este caso guarda não mudou, então ele cobra a CADEIA
+    // inteira em vez de uma linha literal — as duas variáveis chegam a `LISTA`,
+    // e é `LISTA` que vai ao Playwright. Cobrar só o `--workers=1 $LISTA`
+    // deixaria passar um workflow onde `LISTA` nunca é atribuída.
+    expect(yml, "SPECS_PARTE_1 não alimenta a variável que roda").toMatch(/LISTA="\$SPECS_PARTE_1"/);
+    expect(yml, "SPECS_PARTE_2 não alimenta a variável que roda").toMatch(/LISTA="\$SPECS_PARTE_2"/);
+    expect(yml, "a lista escolhida não é passada ao Playwright").toMatch(
+      /playwright test --workers=1 \$LISTA/,
+    );
     // E FORA_DO_CI nunca é passada a um run — ela existe para NÃO rodar.
     expect(yml).not.toMatch(/playwright test[^\n]*\$FORA_DO_CI/);
+    expect(yml).not.toMatch(/LISTA="\$FORA_DO_CI"/);
   });
 });

@@ -26,6 +26,21 @@ export const ROLE_RANK: Record<Role, number> = {
   admin: 5,
 };
 
+/**
+ * Compara um role (possivelmente vindo solto de uma consulta, não tipado)
+ * contra um mínimo. NÃO é gate de rota — isso é `requireRole()`
+ * (`lib/auth/require-role.ts`), o único lugar que decide 403 e aplica o gate
+ * de MFA. Este helper existe para os usos legítimos que sobram depois de uma
+ * rota já ter passado por `requireRole()`: computar um campo informativo no
+ * payload (ex.: `podeEditar`) ou uma regra de escopo adicional sobre o MESMO
+ * role já resolvido (ex.: "autor OU manager+"). Em ambos a decisão de ACESSO
+ * À ROTA já foi tomada; isto só lê o rank — nunca decide 401/403 sozinho.
+ */
+export function roleAtLeast(role: string | null | undefined, min: Role): boolean {
+  const rank = role ? (ROLE_RANK[role as Role] ?? 0) : 0;
+  return rank >= ROLE_RANK[min];
+}
+
 /** Papéis que uma PESSOA pode ter. Espelha `user_organizations_role_check`. */
 export const PAPEIS_HUMANOS: ReadonlyArray<Role> = ["viewer", "agent", "manager", "admin"];
 

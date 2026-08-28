@@ -19,7 +19,7 @@ import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { classificarLeadInicial, type ResultadoClassificacaoInicial } from "@/lib/leads/classificacao-inicial";
 import type { CreateLeadInput } from "@/lib/schemas";
 import { mapInboundPayload, verifyInboundSignature, type FieldMap } from "@/lib/webhooks/inbound";
-import { phoneLookupVariants } from "@/lib/channels/phone-variants";
+import { encontrarContatoPorTelefoneComNome } from "@/lib/channels/contato-por-telefone";
 import {
   buildContactConsentGrant,
   buildContactConsentDenial,
@@ -324,23 +324,30 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<NextRespons
   // a reconciliação abaixo existe só para quem JÁ era contato.
   let contatoNasceuAqui = false;
   if (mapped.phone) {
-    const variantes = phoneLookupVariants(mapped.phone);
-    const selectActiveByPhone = () =>
-      admin
-        .from("contacts")
-        .select("id, name")
-        .eq("organization_id", source.organization_id)
-        .in("phone_number", variantes)
-        .is("is_merged_into", null)
-        .limit(1)
-        .maybeSingle();
+    /** O que os dois caminhos (telefone e e-mail) devolvem — um tipo só. */
+    type ContatoAchado = { data: { id: string; name: string | null } | null };
+
+    // ⚠️ QUAL GRAFIA VENCE é decidido por `escolherContatoCanonico`, e não pelo
+    // banco. Isto era `.in(variantes).limit(1)` SEM `order by`: com as duas
+    // grafias do mesmo celular ainda vivas — estado que a migration `0198`
+    // admite ao chamar o próprio passo 3 de "piso de segurança para o unique" —
+    // o Postgres devolvia qualquer uma das duas. A resposta do cliente entrava
+    // no cadastro errado, o follow-up não a reconhecia, e a mesma pergunta saía
+    // de novo.
+    const selectActiveByPhone = async (): Promise<ContatoAchado> => ({
+      data: await encontrarContatoPorTelefoneComNome(
+        admin,
+        source.organization_id,
+        mapped.phone!,
+      ),
+    });
 
     // uniq_contacts_org_email (baseline.sql) é um SEGUNDO índice único parcial,
     // independente de uniq_contacts_org_phone — um INSERT pode colidir nele
     // mesmo com telefone inédito (mesma pessoa manda e-mail repetido, telefone
     // novo). email_normalized é coluna GERADA (`lower(trim(email))`), então a
     // comparação replica exatamente essa normalização — não `email` bruto.
-    const selectActiveByEmail = (): ReturnType<typeof selectActiveByPhone> | null => {
+    const selectActiveByEmail = (): PromiseLike<ContatoAchado> | null => {
       if (!mapped.email) return null;
       return admin
         .from("contacts")

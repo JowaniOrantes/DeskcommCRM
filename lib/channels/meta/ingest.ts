@@ -25,6 +25,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { ARCHIVED_AT, queryTolerantToMissingArchived } from "../archived";
 import { aplicarEfeitosPosEntrada } from "../pos-entrada";
+import { encontrarContatoPorTelefone } from "../contato-por-telefone";
 import { canonicalPhoneBR, phoneLookupVariants } from "../phone-variants";
 import type { ChannelTenantScope } from "../types";
 import type { InboundMessageEvent } from "./webhook";
@@ -89,21 +90,19 @@ async function sessionByPhoneNumberId(
  * Contato já existente sob QUALQUER variante do número. Só depois de não achar é que
  * deixamos o upsert criar — assim o cadastro nasce uma vez só.
  */
+/**
+ * Delega para `encontrarContatoPorTelefone`, que decide QUAL grafia vence.
+ *
+ * Era uma cópia local com `.in(variantes).limit(1)` — sem `order by`, e sem o
+ * filtro de contato fundido. Três funções idênticas viviam assim no repo; a
+ * regra agora mora num lugar só.
+ */
 async function findContactByVariants(
   admin: Admin,
   orgId: string,
   waId: string,
 ): Promise<{ id: string; phone_number: string } | null> {
-  const variantes = phoneLookupVariants(waId);
-  if (variantes.length === 0) return null;
-  const { data } = await admin
-    .from("contacts")
-    .select("id, phone_number")
-    .eq("organization_id", orgId)
-    .in("phone_number", variantes)
-    .limit(1)
-    .maybeSingle();
-  return data ?? null;
+  return encontrarContatoPorTelefone(admin as never, orgId, waId);
 }
 
 /** Prévia curta para a lista de conversas. Mídia vira rótulo, nunca URL. */

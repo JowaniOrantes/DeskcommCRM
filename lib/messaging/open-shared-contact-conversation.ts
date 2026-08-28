@@ -5,6 +5,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { ensureConversation, sessaoProntaParaEnvio } from "@/lib/automation/start-conversation";
+import { encontrarContatoPorTelefone } from "@/lib/channels/contato-por-telefone";
 import { phoneLookupVariants, canonicalPhoneBR } from "@/lib/channels/phone-variants";
 import { parseDialablePhone } from "@/lib/messaging/contact-card";
 
@@ -22,21 +23,16 @@ export interface OpenSharedContactResult {
   contact_id: string;
 }
 
+/**
+ * Delega para `encontrarContatoPorTelefone` — ver o cabeçalho de
+ * `escolherContatoCanonico`. Era cópia local com `.limit(1)` e sem `order by`.
+ */
 async function findContactByPhoneVariants(
   admin: Admin,
   orgId: string,
   rawPhone: string,
 ): Promise<{ id: string; phone_number: string } | null> {
-  const variantes = phoneLookupVariants(rawPhone);
-  if (variantes.length === 0) return null;
-  const { data } = await admin
-    .from("contacts")
-    .select("id, phone_number")
-    .eq("organization_id", orgId)
-    .in("phone_number", variantes)
-    .limit(1)
-    .maybeSingle();
-  return data ?? null;
+  return encontrarContatoPorTelefone(admin as never, orgId, rawPhone);
 }
 
 async function resolveContactId(

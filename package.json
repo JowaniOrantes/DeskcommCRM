@@ -27,9 +27,10 @@
     "test:shell": "bash tests/shell/update-guard.test.sh && bash tests/shell/dono-do-projeto.test.sh && bash tests/shell/scheduler-entrypoint.test.sh && bash hostgator-setup-kit/test-validators.sh",
     "test:invariants": "bash scripts/test-db.sh",
     "lint:channels": "tsx scripts/lint-channels.ts",
+    "lint:role-rank": "tsx scripts/lint-role-rank.ts",
     "release:conferir": "tsx scripts/cortar-release.ts",
     "release:cortar": "tsx scripts/cortar-release.ts --escrever",
-    "gov:verify": "pnpm typecheck && pnpm lint && pnpm lint:channels && pnpm test:unit",
+    "gov:verify": "pnpm typecheck && pnpm lint && pnpm lint:channels && pnpm lint:role-rank && pnpm test:unit",
     "worker": "tsx --env-file=.env --env-file=.env.local workers/agent-worker/main.ts",
     "dev:crons": "tsx --env-file=.env --env-file=.env.local scripts/dev-crons.ts",
     "flywheel:judge": "tsx --env-file=.env --env-file=.env.local scripts/flywheel-judge-live.ts"

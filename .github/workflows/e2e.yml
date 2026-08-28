@@ -57,9 +57,36 @@ permissions:
   contents: read
 
 jobs:
-  e2e:
+  # AS DUAS PARTES RODAM EM PARALELO, e o motivo é medido, não estético.
+  #
+  # Elas rodavam como dois passos do MESMO job, então somavam contra um único
+  # teto de 30 min. Medido no run 33125422531, o último verde antes deste
+  # conserto: parte 2 = 16,3 min, parte 1 = 8,2 min, setup (build + Supabase +
+  # browser) ≈ 4,5 min — total ≈ 29 min, com 1 min de folga. A folga acabou:
+  # dois runs da própria `main` foram CANCELADOS em 30 min exatos (23:30→00:00
+  # e 23:26→23:56 de 2026-08-27), e um PR de UM arquivo foi cancelado junto.
+  #
+  # Em paralelo, cada parte paga o setup uma vez e tem o teto inteiro para si:
+  # o job mais longo passa a ser ≈ 21 min em vez de ≈ 29.
+  #
+  # E há um ganho que não era o objetivo: a razão de existirem duas partes é
+  # "processo novo, contador de login zerado" — o teto por IP. Runners de
+  # matrix são máquinas diferentes, com IPs diferentes, então a separação
+  # deixa de depender de reiniciar o processo.
+  #
+  # O teto de 30 min FICA. Ele é o que denuncia a suíte crescendo de novo;
+  # subi-lo seria trocar um vermelho honesto por um CI que demora mais a cada
+  # mês sem ninguém perceber.
+  e2e-parte:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      # Sem fail-fast: se a parte 1 quebrar, ainda quero saber se a 2 também.
+      # Com ele ligado, o primeiro vermelho esconde o outro e o conserto vira
+      # uma rodada por parte.
+      fail-fast: false
+      matrix:
+        parte: [1, 2]
     # ─────────────────────────────────────────────────────────────────────────
     # A COBERTURA DEIXA DE SER PROSA DIGITADA À MÃO.
     #
@@ -150,6 +177,7 @@ jobs:
         wizard-do-funcionario.spec.ts mfa-opcional.spec.ts inbox-responder-citando.spec.ts
         agenda-tela-do-produto.spec.ts
         notificacoes-diz-o-que-falta.spec.ts
+        relogio-http-cron-externo.spec.ts
       # ⚠️ A ORDEM DESTA LISTA NÃO DECIDE A ORDEM DE EXECUÇÃO. O Playwright
       # ordena os arquivos por CAMINHO, não pela ordem em que são passados na
       # linha de comando. Medido no run 31838253496: `marca-logo.spec.ts` estava
@@ -198,9 +226,25 @@ jobs:
       # dizia de quem era o compromisso. Entra na PARTE_2 e não na 1 porque é AQUI que mora
       # o molde dela, `agente-organiza-operacao`; o comentário antigo dizia PARTE_1 e estava
       # errado sobre o próprio vizinho.
+      # `relogio-http-cron-externo` entrou na PARTE_1 em 2026-08-28, e a escolha da
+      # parte é o cuidado que ela exige: o tick que ela dispara é GLOBAL por
+      # natureza — ele roda as tarefas de minuto da instalação inteira, não só as
+      # da fixture dela. Um enrollment de outra spec que esteja vencido naquele
+      # instante É processado.
+      #
+      # Por que isso não quebra ninguém, medido e não presumido: as specs que
+      # criam enrollment e depois conferem `current_node_id` são
+      # `followup-journey`, `followup-queue` e `followup-dossie` (PARTE_2, outro
+      # processo, depois) e `followup-ramos` (PARTE_1). A ordem de execução é por
+      # CAMINHO — ver o bloco acima —, e `followup-ramos` < `relogio-http-...`,
+      # então ela já terminou quando o tick roda. Nenhuma spec posterior da
+      # PARTE_1 depende de enrollment parado.
+      #
+      # Se um dia uma spec de follow-up entrar na PARTE_1 com nome depois de
+      # `relogio-`, é aqui que se olha: ou ela vai para a PARTE_2, ou esta vai.
       SPECS_PARTE_2: >-
         agente-marca-consulta.spec.ts agenda-marcar-pela-tela.spec.ts agenda-remarcar-e-cancelar.spec.ts
-        agenda-tipos-de-agendamento.spec.ts
+        agenda-tipos-de-agendamento.spec.ts agenda-grade-interativa.spec.ts
         agente-novo-e-uso.spec.ts agente-organiza-operacao.spec.ts
         central-de-avisos-capacidades.spec.ts escalacao-ciclo.spec.ts
         navegacao.spec.ts olhar-telas-do-epico.spec.ts pipelines-gestao.spec.ts
@@ -220,8 +264,13 @@ jobs:
         acervo-de-conhecimento.spec.ts
         agenda-kit-visual.spec.ts
         agenda-conectar-google.spec.ts
+        agenda-painel-cabe-na-tela.spec.ts
+        agenda-ver-na-agenda.spec.ts
         agenda-escopo-da-organizacao.spec.ts
+        troca-de-organizacao-tem-volta.spec.ts
         agenda-caminho-ate-os-horarios.spec.ts
+        agenda-google-volta-do-consentimento.spec.ts
+        agenda-google-volta-nao-desloga.spec.ts
       # Cada item aqui tem o motivo MEDIDO, não presumido — e o gate cobra que a
       # lista exista e some com as outras duas.
       #
@@ -576,54 +625,98 @@ jobs:
       # workers, dois specs gerando o mesmo código no mesmo intervalo de 30s
       # fazem o segundo ser recusado como replay. Foi o que derrubava a
       # `reset-password-mfa` (issue #80): ela passa sozinha e falha em paralelo.
-      - name: E2E — parte 1 de 2
-        run: pnpm exec playwright test --workers=1 $SPECS_PARTE_1
-        env:
-          # Só o que NÃO vem do `.env.e2e`: isto é ajuste de CI, não config do
-          # produto. CI = 1 IP para todos os specs, e o teto de produção
-          # (60/5min) é irreal aqui. O teto por CONTA (5 falhas) NÃO muda — é
-          # ele que barra brute force.
-          AUTH_RATE_LIMIT_LOGIN_IP: "1000"
-          # ver o comentário do passo de build: vazio NÃO desliga.
-          SENTRY_DSN: "off"
-
-      - name: E2E — parte 2 de 2 (processo novo, contador de login zerado)
-        run: pnpm exec playwright test --workers=1 $SPECS_PARTE_2
-        env:
-          # Só o que NÃO vem do `.env.e2e`: isto é ajuste de CI, não config do
-          # produto. CI = 1 IP para todos os specs, e o teto de produção
-          # (60/5min) é irreal aqui. O teto por CONTA (5 falhas) NÃO muda — é
-          # ele que barra brute force.
-          AUTH_RATE_LIMIT_LOGIN_IP: "1000"
-          # ver o comentário do passo de build: vazio NÃO desliga.
-          SENTRY_DSN: "off"
-
-      - name: Declarar o que este job ainda NÃO cobre
-        if: always()
+      - name: E2E — parte ${{ matrix.parte }} de 2
         run: |
-          # CONTA, não afirma. A versão anterior deste passo era prosa digitada à
-          # mão e dizia "32 de 33" com 39 arquivos no disco — a única coisa que
-          # existia para declarar a lacuna estava, ela mesma, desatualizada.
-          NO_DISCO=$(ls tests/e2e/*.spec.ts | wc -l | tr -d ' ')
-          RODOU=$(echo $SPECS_PARTE_1 $SPECS_PARTE_2 | wc -w | tr -d ' ')
-          FORA=$(echo $FORA_DO_CI | wc -w | tr -d ' ')
-          {
-            echo "## E2E — cobertura deste job"
-            echo ""
-            echo "**Rodou: ${RODOU} de ${NO_DISCO} specs.**"
-            echo ""
-            echo "**Não rodou (${FORA}):**"
-            for s in $FORA_DO_CI; do echo "- \`${s}\` — precisa de WAHA + Redis + Resend + Nuvemshop (P0 da doutrina de QA Visual)"; done
-            echo ""
-            echo "A soma é conferida mecanicamente por \`tests/unit/e2e-cobertura-completa.test.ts\`:"
-            echo "spec no disco que não esteja em nenhuma das três listas reprova o build."
-          } >> "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          # A lista sai da matrix, e as duas variáveis continuam existindo no
+          # `env:` do job porque é DELAS que `e2e-cobertura-completa.test.ts` lê
+          # a cobertura. Ler por indireção aqui e não duplicar a lista mantém
+          # UMA fonte por parte.
+          if [ "${{ matrix.parte }}" = "1" ]; then LISTA="$SPECS_PARTE_1"; else LISTA="$SPECS_PARTE_2"; fi
+          # Falha alto se a variável vier vazia: sem isto, um typo no nome faria
+          # o playwright rodar a suíte INTEIRA (ou nenhuma) e o job ficaria
+          # verde medindo outra coisa.
+          [ -n "$LISTA" ] || { echo "::error::lista da parte ${{ matrix.parte }} vazia"; exit 1; }
+          pnpm exec playwright test --workers=1 $LISTA
+        env:
+          # Só o que NÃO vem do `.env.e2e`: isto é ajuste de CI, não config do
+          # produto. CI = 1 IP para todos os specs, e o teto de produção
+          # (60/5min) é irreal aqui. O teto por CONTA (5 falhas) NÃO muda — é
+          # ele que barra brute force.
+          AUTH_RATE_LIMIT_LOGIN_IP: "1000"
+          # ver o comentário do passo de build: vazio NÃO desliga.
+          SENTRY_DSN: "off"
 
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-parte-${{ matrix.parte }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
+
+  # O NOME DESTE JOB É O CHECK OBRIGATÓRIO, e é por isso que ele existe.
+  #
+  # A branch protection da `main` exige um check chamado exatamente `e2e`
+  # (medido: verify, build-and-size, invariants, e2e, imagens-ok). Jobs de
+  # matrix se chamam `e2e-parte (1)` e `e2e-parte (2)` — se o job das partes
+  # tivesse ficado com o nome `e2e`, a proteção passaria a esperar para sempre
+  # um check que nenhum run produz, e NENHUM PR mergearia. Este agregador é o
+  # mesmo padrão do `imagens-ok` em `publish-image.yml`.
+  e2e:
+    if: always()
+    needs: [e2e-parte]
+    runs-on: ubuntu-latest
+    # Nenhuma permissão: este job só lê o resultado de `needs` e escreve o
+    # summary. Sem o bloco, o token herdaria o default do REPOSITÓRIO, que vive
+    # fora do repo e muda num clique.
+    permissions: {}
+    steps:
+      - name: Falhar se qualquer parte não passou
+        run: |
+          echo "e2e-parte: ${{ needs.e2e-parte.result }}"
+          # `success` é o único desfecho aceito. `skipped` também reprova, de
+          # propósito: parte pulada não mediu nada, e ler isso como aprovação é
+          # o modo de falha que o `imagens-ok` documenta.
+          [ "${{ needs.e2e-parte.result }}" = "success" ]
+
+      - uses: actions/checkout@v7
+        if: always()
+
+      - name: Declarar o que este job ainda NÃO cobre
+        if: always()
+        run: |
+          set -euo pipefail
+          # CONTA, não afirma. A versão anterior deste passo era prosa digitada à
+          # mão e dizia "32 de 33" com 39 arquivos no disco — a única coisa que
+          # existia para declarar a lacuna estava, ela mesma, desatualizada.
+          #
+          # As listas saem do PRÓPRIO workflow, com recorte por bloco. Contar com
+          # um `grep` no arquivo inteiro daria número MAIOR: os nomes aparecem
+          # também em comentários, e foi assim que a contagem antiga mentiu.
+          #
+          # O `[A-Z_0-9]` inclui DÍGITO de propósito: sem ele o range de
+          # `SPECS_PARTE_1` não parava em `SPECS_PARTE_2` (que tem `2` no nome) e
+          # seguia até `FORA_DO_CI`, devolvendo a união das duas como se fosse a
+          # parte 1. Medido antes do conserto: 67 em vez de 29.
+          bloco() { sed -n "/^      $1: >-/,/^      [A-Z_0-9]*:/p" .github/workflows/e2e.yml \
+                    | grep -oE "[a-z0-9-]+\.spec\.ts" | sort -u; }
+          NO_DISCO=$(ls tests/e2e/*.spec.ts | wc -l | tr -d " ")
+          RODOU=$( { bloco SPECS_PARTE_1; bloco SPECS_PARTE_2; } | sort -u | wc -l | tr -d " ")
+          FORA_LISTA=$(bloco FORA_DO_CI)
+          FORA=$(echo "$FORA_LISTA" | grep -c . || true)
+          # Falha alto se o recorte parou de casar: listas vazias fariam este
+          # passo anunciar "0 de N" como se fosse notícia, em vez de erro.
+          [ "$RODOU" -gt 10 ] || { echo "::error::o recorte das listas do workflow parou de casar"; exit 1; }
+          {
+            echo "## E2E — cobertura deste job"
+            echo ""
+            echo "**Rodou: ${RODOU} de ${NO_DISCO} specs**, em duas partes paralelas."
+            echo ""
+            echo "**Não rodou (${FORA}):**"
+            for s in $FORA_LISTA; do echo "- \`${s}\` — precisa de WAHA + Redis + Resend + Nuvemshop (P0 da doutrina de QA Visual)"; done
+            echo ""
+            echo "A soma é conferida mecanicamente por \`tests/unit/e2e-cobertura-completa.test.ts\`:"
+            echo "spec no disco que não esteja em nenhuma das três listas reprova o build."
+          } >> "$GITHUB_STEP_SUMMARY"

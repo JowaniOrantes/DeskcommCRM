@@ -48,6 +48,7 @@ import { z } from "zod";
 import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
+import { PROVEDOR_GOOGLE } from "@/lib/agenda/tipos";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +87,9 @@ export async function DELETE(req: NextRequest): Promise<Response> {
     .select("id, account_email")
     .eq("organization_id", org.orgId)
     .eq("user_id", alvo)
-    .eq("provider", "google");
+    // A CONSTANTE. Era `"google"`, e por isso desconectar respondia 404
+    // "Não há agenda do Google conectada" para quem TINHA a agenda conectada.
+    .eq("provider", PROVEDOR_GOOGLE);
 
   if (erroLeitura) {
     return fail("internal_error", erroLeitura.message, 500, { requestId });

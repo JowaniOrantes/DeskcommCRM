@@ -16,8 +16,8 @@ import { z } from "zod";
 
 import { fail, ok } from "@/lib/api/wrappers";
 import { audit } from "@/lib/audit";
-import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
-import { ROLE_RANK } from "@/lib/auth/types";
+import { requireRole } from "@/lib/auth/require-role";
+import { roleAtLeast } from "@/lib/auth/types";
 import {
   decidirBinding,
   EXPLICACAO_DA_ORIGEM,
@@ -44,12 +44,9 @@ interface ModeloDoCatalogo {
 }
 
 export async function GET(): Promise<Response> {
-  const user = await requireAuth();
-  const org = await resolveActiveOrg(user);
-  if (!org) return fail("no_active_org", "nenhuma organização ativa", 400);
-  if (ROLE_RANK[org.role] < ROLE_RANK.manager) {
-    return fail("forbidden", "requer papel de gerente ou superior", 403);
-  }
+  const authz = await requireRole("manager", { resource: "ai_providers" });
+  if (!authz.ok) return authz.response;
+  const { org } = authz;
 
   const db = await createClient();
 
@@ -178,7 +175,7 @@ export async function GET(): Promise<Response> {
     provedores: PROVEDORES,
     credenciais: credsRes.data ?? [],
     modelos,
-    podeEditar: ROLE_RANK[org.role] >= ROLE_RANK.admin,
+    podeEditar: roleAtLeast(org.role, "admin"),
   });
 }
 
@@ -204,12 +201,9 @@ const corpoDoPut = z.object({
 });
 
 export async function PUT(req: NextRequest): Promise<Response> {
-  const user = await requireAuth();
-  const org = await resolveActiveOrg(user);
-  if (!org) return fail("no_active_org", "nenhuma organização ativa", 400);
-  if (ROLE_RANK[org.role] < ROLE_RANK.admin) {
-    return fail("forbidden", "requer papel de administrador", 403);
-  }
+  const authz = await requireRole("admin", { resource: "ai_providers" });
+  if (!authz.ok) return authz.response;
+  const { user, org } = authz;
 
   const parsed = corpoDoPut.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

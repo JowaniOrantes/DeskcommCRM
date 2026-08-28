@@ -237,6 +237,26 @@ export const CONEXOES_QUE_NAO_CONTAM: readonly SituacaoDaConexao[] =
 export const PROVEDORES_DE_AGENDA = ["google_calendar"] as const;
 export type ProvedorDeAgenda = (typeof PROVEDORES_DE_AGENDA)[number];
 
+/**
+ * O provider do Google, para quem CONSULTA — e não só para quem tipa.
+ *
+ * ⚠️ ESTE SÍMBOLO EXISTE PORQUE A CONSTANTE ACIMA ERA ÓRFÃ. Ela estava aqui com
+ * ZERO consumidores de produção (medido), enquanto três consultas filtravam por
+ * `"google"` — um valor que o CHECK de `calendar_connections.provider` PROÍBE
+ * existir. Elas casavam zero linhas por construção, e o efeito foi a conexão do
+ * Google ficar invisível na v1.9.0: o botão "Conectar Google" não sumia depois de
+ * conectar, a ida ao Google nunca saía, e desconectar respondia 404.
+ *
+ * Símbolo canônico que ninguém importa não é fonte da verdade — é documentação
+ * que o compilador não confere. Um valor tipado que os call sites de fato usam é.
+ *
+ * A varredura que prende isso é `tests/unit/consulta-usa-o-vocabulario-do-banco`,
+ * e ela é a segunda guarda de propósito: `tests/invariants/agenda-vocabulario`
+ * compara o CHECK do banco com a constante e fica VERDE, porque o valor errado
+ * não estava em nenhum dos dois — estava no literal dentro do `.eq()`.
+ */
+export const PROVEDOR_GOOGLE: ProvedorDeAgenda = "google_calendar";
+
 /** O que o Google diz sobre um evento ocupar ou não a hora. */
 export const TRANSPARENCIAS_EXTERNAS = ["opaque", "transparent"] as const;
 export type TransparenciaExterna = (typeof TRANSPARENCIAS_EXTERNAS)[number];

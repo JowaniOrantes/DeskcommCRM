@@ -2,6 +2,7 @@ import { addDays, startOfWeek } from "date-fns";
 import { redirect } from "next/navigation";
 
 import { enderecoDeRetorno, faltaParaConectarOGoogle, googleEstaConfigurado } from "@/lib/agenda/google/config";
+import { PROVEDOR_GOOGLE } from "@/lib/agenda/tipos";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -111,7 +112,13 @@ export default async function AgendaPage() {
     .select("account_email, status")
     .eq("organization_id", activeOrg.orgId)
     .eq("user_id", user.id)
-    .eq("provider", "google")
+    // ⚠️ A CONSTANTE, e não o literal. Isto era `.eq("provider", "google")` — um
+    // valor que o CHECK de `calendar_connections` PROÍBE existir, então a
+    // consulta casava zero linhas SEMPRE. O efeito na tela: `contaConectada`
+    // vinha `null`, o ramo "Agenda conectada" do cartão nunca entrava, e o botão
+    // "Conectar Google" continuava aparecendo depois de a pessoa já ter
+    // conectado. Ela reconectava, o ciclo repetia.
+    .eq("provider", PROVEDOR_GOOGLE)
     .neq("status", "disconnected")
     .maybeSingle();
 

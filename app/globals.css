@@ -626,7 +626,11 @@
 
    Trocada a medida para `body.scrollWidth`, o estouro apareceu na primeira
    execução. */
-@media (max-width: 767px) {
+/* ⚠️ O CORTE MUDOU DE 767 PARA 1023, e é o conserto do defeito da v1.8.0.
+   As três colunas do painel somam 980px, e entre 768 e 1023 o Sheet que as
+   hospeda tem 768: a coluna de horários ficava fora da tela — medido em 1280,
+   só 42 dos 280px apareciam. Empilhada, ela ocupa a largura toda e cabe. */
+@media (max-width: 1023px) {
   .agenda-coluna-horarios[data-aberta="true"] {
     width: 100%;
   }
@@ -636,15 +640,15 @@
    desenharia um risco vertical de 1px no meio de um painel sem coluna
    nenhuma — e daria à coluna "de largura zero" um retângulo de 1px de
    largura, que é uma medida difícil de explicar a quem lê o teste. */
-@media (min-width: 768px) {
-  .agenda-coluna-horarios[data-aberta="true"] {
-    border-left: 1px solid var(--color-border);
-  }
-}
-
+/* A borda-esquerda só existe quando a coluna É uma coluna. Empilhada, ela
+   desenharia um risco vertical no meio de uma seção que ocupa a largura toda.
+   Por isso as duas regras moram no MESMO breakpoint em que o painel vira
+   `flex-row` — separá-las foi o que deixou uma borda de coluna numa seção
+   empilhada entre 768 e 1023. */
 @media (min-width: 1024px) {
   .agenda-coluna-horarios[data-aberta="true"] {
     width: var(--agenda-largura-horarios-lg, 280px);
+    border-left: 1px solid var(--color-border);
   }
 }
 

@@ -42,7 +42,27 @@ const admin = createClient(credenciais.url, credenciais.serviceRole, {
 
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
 
-const ORG_B_SLUG = "e2e-segunda-org";
+/**
+ * ⚠️ SLUG PRÓPRIO, e a troca dele é o conserto de um CI vermelho.
+ *
+ * Isto era `"e2e-segunda-org"` — o MESMO slug que `scripts/seed-e2e-funis.ts:50`
+ * usa. Os dois seeds construíam estados diferentes na mesma linha de
+ * `organizations`, e quem rodava primeiro vencia: o de funis cria a org **sem
+ * `onboarded_at`** (ele só quer o funil homônimo), e este aqui, ao encontrar a
+ * linha por slug, devolvia o id sem corrigir nada.
+ *
+ * Na parte 2 do e2e o `pipelines-gestao` roda antes do `agenda-escopo`, então a
+ * org B chegava sem onboarding — e `app/app/layout.tsx` manda para `/onboarding`
+ * toda org nesse estado. A troca de organização terminava num redirect, o shell
+ * saía da árvore junto com o seletor, e a spec reprovava com `element(s) not
+ * found` depois de alguns `unexpected value "disabled"`. Medido no run
+ * 33164258175 e reproduzido aqui zerando o `onboarded_at` à mão.
+ *
+ * Dois seeds disputando uma linha é o defeito; corrigir o `onboarded_at` no
+ * caminho de "já existe" trataria o sintoma e deixaria a disputa de pé, para o
+ * próximo campo que divergisse. Slug próprio remove a disputa.
+ */
+const ORG_B_SLUG = "e2e-org-b";
 const ORG_B_NOME = "E2E Segunda Organização";
 
 /** Um tipo por org, com nome que não existe na outra. É a asserção da spec. */
@@ -63,7 +83,25 @@ async function orgB(): Promise<string> {
     .eq("slug", ORG_B_SLUG)
     .maybeSingle();
   if (error) throw new Error(`buscar org B: ${error.message}`);
-  if (existente) return (existente as { id: string }).id;
+  if (existente) {
+    const id = (existente as { id: string }).id;
+    /**
+     * O SEED GARANTE A PRECONDIÇÃO QUE ELE PRÓPRIO EXIGE — mesmo reencontrando a
+     * org de uma corrida anterior.
+     *
+     * Defesa em profundidade ao lado do slug próprio: o que quebrou o CI foi uma
+     * org **sem `onboarded_at`**, e um seed que devolve o id sem olhar o estado
+     * herda qualquer coisa que estivesse ali. `update` e não `upsert` porque a
+     * linha existe; e só este campo, para não pisar no que outra spec configurou.
+     */
+    const { error: fixErr } = await admin
+      .from("organizations")
+      .update({ onboarded_at: new Date().toISOString() } as never)
+      .eq("id", id)
+      .is("onboarded_at", null);
+    if (fixErr) throw new Error(`garantir onboarding da org B: ${fixErr.message}`);
+    return id;
+  }
 
   const { data, error: insErr } = await admin
     .from("organizations")

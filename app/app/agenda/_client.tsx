@@ -7,10 +7,10 @@ import * as React from "react";
 import { AvisoDaConexaoGoogle } from "./_components/AvisoDaConexaoGoogle";
 import { CartaoDaConexaoGoogle } from "./_components/CartaoDaConexaoGoogle";
 
+import { AgendaInterativa } from "@/components/agenda/AgendaInterativa";
 import { FiltroDePessoas } from "@/components/agenda/FiltroDePessoas";
-import { GradeDaAgenda } from "@/components/agenda/GradeDaAgenda";
 import { HistoricoDaAgenda } from "@/components/agenda/HistoricoDaAgenda";
-import type { Agendamento, VisaoDaAgenda } from "@/components/agenda/tipos";
+import type { Agendamento, HorarioLivre, VisaoDaAgenda } from "@/components/agenda/tipos";
 import { EmptyAgenda } from "@/components/empty";
 import { rotuloDoLocal } from "@/lib/agenda/locais";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,9 @@ export function AgendaClient({
   agendamentosIniciais: Agendamento[];
 }) {
   const [marcando, setMarcando] = React.useState(false);
+  // O horário que veio de um CLIQUE NA GRADE. Preenchido, o painel abre já em
+  // "confirmando" naquele instante; vazio, ele abre pedindo o dia, como sempre.
+  const [horarioEscolhido, setHorarioEscolhido] = React.useState<HorarioLivre | null>(null);
   // REMARCAR reusa o painel de marcação: escolher horário novo é o MESMO gesto
   // de escolher o primeiro, e uma segunda tela para a mesma pergunta seria duas
   // coisas para manter em sincronia. Quando `remarcandoId` está preenchido, a
@@ -375,11 +378,49 @@ export function AgendaClient({
         onOpenChange={(aberto) => {
           setMarcando(aberto);
           // Fechar sem confirmar volta ao modo normal — senão o próximo "Novo
-          // agendamento" remarcaria o compromisso anterior em silêncio.
-          if (!aberto) setRemarcandoId(null);
+          // agendamento" remarcaria o compromisso anterior em silêncio. O
+          // horário vindo da grade some pela mesma razão: abrir o painel pelo
+          // botão depois de fechar um bloco reabriria no horário do bloco.
+          if (!aberto) {
+            setRemarcandoId(null);
+            setHorarioEscolhido(null);
+          }
         }}
       >
-        <SheetContent side="right" className="w-full sm:max-w-3xl">
+        {/*
+          `lg:max-w-[1040px]` — o painel de marcar precisa de 980px para as três
+          colunas (contexto 280 + calendário 420 + horários 280), e cabia num
+          Sheet de 768px cortando 239px em silêncio.
+          
+          O `sm:max-w-3xl` fica para as telas menores DE PROPÓSITO: lá o painel
+          empilha os horários sob o calendário, então 768px bastam e um Sheet
+          maior só roubaria contexto da tela atrás.
+        */}
+        {/*
+          A CADEIA DE ALTURAS, e ela é o que faz a lista de horários rolar.
+          
+          O `overflow-y-auto` da lista (`PainelDeMarcacao`) sempre esteve no
+          elemento certo e era INERTE: `overflow-y-auto` cujo pai tem altura
+          `auto` não rola — o filho cresce, `scrollHeight === clientHeight`, e os
+          últimos horários ficavam abaixo da dobra sem nenhum jeito de alcançá-los.
+          E a página também não rolava: o `SheetContent` é `position: fixed`, e
+          transbordo de elemento fixo não estende a área rolável do documento.
+          
+          Abaixo de `lg` o próprio Sheet rola (ali o painel empilha e a lista é
+          uma seção, não uma coluna). De `lg` para cima o Sheet segura a altura e
+          a LISTA rola, com calendário e contexto parados.
+          
+          ⚠️ `lg:overflow-hidden` e não `overflow-y-auto` em todo breakpoint: em
+          `lg` o Sheet tem 1040px com `p-6` → 992px de caixa contra ~980px de
+          painel. Uma barra vertical come essa folga, e como o CSS computa
+          `overflow-x: visible` como `auto` quando `overflow-y` não é `visible`,
+          nasceria barra HORIZONTAL exatamente no breakpoint que o conserto de
+          largura acabou de reparar.
+        */}
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col overflow-y-auto sm:max-w-3xl lg:max-w-[1040px] lg:overflow-hidden"
+        >
           <SheetHeader>
             <SheetTitle>{remarcandoId ? "Remarcar agendamento" : "Novo agendamento"}</SheetTitle>
           </SheetHeader>
@@ -409,8 +450,9 @@ export function AgendaClient({
             </div>
           )}
           {tipo && (
-            <div className="mt-4">
+            <div className="mt-4 lg:min-h-0 lg:flex-1">
               <PainelDeMarcacao
+                className="lg:h-full"
                 ancora={new Date()}
                 agora={new Date()}
                 responsavel={
@@ -441,6 +483,7 @@ export function AgendaClient({
                 erroAoCarregar={horariosFalharam}
                 fusoSuposto={horarios?.fuso_suposto ?? false}
                 fontesDefasadas={horarios?.fontes_defasadas}
+                horarioInicial={horarioEscolhido ?? undefined}
                 // ESTE é o fio que faltava. Sem ele o "Marcado ✓" era estado
                 // local do React e nenhuma linha nascia no banco.
                 onConfirmar={(instante) => {
@@ -468,6 +511,25 @@ export function AgendaClient({
                       });
                   }
                   return marcar.mutateAsync({ event_type_id: tipo.id, starts_at: instante });
+                }}
+                // "VER NA AGENDA" — o botão que não fazia nada.
+                //
+                // Ele não tinha `onClick`: parecia ativo e o clique era mudo. E
+                // fechar o painel sozinho não bastaria — o compromisso recém
+                // marcado costuma ser de OUTRA semana (o do relato era 8 de
+                // setembro), e a grade abre na semana corrente. Voltar para uma
+                // grade que não mostra o que acabou de nascer é o mesmo "nada
+                // acontece" com um passo a mais.
+                //
+                // Por isso a âncora vai junto: fecha o painel E leva a grade até
+                // o dia do compromisso. `startOfDay` porque a âncora é o DIA de
+                // referência da visão — mandar o instante exato funcionaria por
+                // acidente na visão de semana e escolheria a hora errada na de
+                // dia.
+                onVerNaAgenda={(instante) => {
+                  setAncora(startOfDay(new Date(instante)));
+                  setMarcando(false);
+                  setRemarcandoId(null);
                 }}
               />
             </div>
@@ -586,14 +648,27 @@ export function AgendaClient({
           <EmptyAgenda />
         </div>
       ) : null}
-      <GradeDaAgenda
-          visao={visao}
-          ancora={ancora}
-          agora={new Date()}
-          pessoas={pessoas}
-          agendamentos={agendamentos}
-          className="min-h-0 flex-1"
-        />
+      {/* A GRADE INTERATIVA — clicar num bloco livre marca ali, arrastar um card
+          remarca. Toda a fiação (a consulta de horários da janela desenhada, a
+          proposta de remarcação, o otimismo com volta atrás) mora em
+          `AgendaInterativa`; aqui fica só o que esta tela já sabia. */}
+      <AgendaInterativa
+        visao={visao}
+        ancora={ancora}
+        agora={new Date()}
+        pessoas={pessoas}
+        agendamentos={agendamentos}
+        recorte={recorteDaGrade}
+        tipos={tiposIniciais.map((t) => ({ id: t.id, nome: t.nome, duracaoMin: t.duracaoMin }))}
+        tipo={tipo ? { id: tipo.id, duracaoMin: tipo.duracaoMin } : null}
+        onEscolherTipo={setTipoId}
+        onMarcarEm={(instante) => {
+          setHorarioEscolhido({ instante, rotulo: format(new Date(instante), "HH:mm") });
+          setRemarcandoId(null);
+          setMarcando(true);
+        }}
+        className="min-h-0 flex-1"
+      />
 
     </div>
   );

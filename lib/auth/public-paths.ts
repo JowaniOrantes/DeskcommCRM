@@ -21,6 +21,22 @@ export const PUBLIC_PATHS: RegExp[] = [
   // Relógio Hobby (GitHub Actions / cron-job.org). Auth é Bearer na própria
   // rota — sem isto o proxy devolve 401 e o follow-up waiting_reply nunca anda.
   /^\/api\/v1\/system\/relogio\/tick$/,
+  // VOLTAS DE CONSENTIMENTO OAuth. O provedor devolve o NAVEGADOR para cá, e
+  // essa navegação vem de outro site — o cookie de sessão é `sameSite: "strict"`
+  // e, por definição, não viaja nela. Sem estas duas linhas o `proxy` responde
+  // 401 antes de a rota existir, e o fluxo NUNCA completa: medido na v1.8.0, em
+  // produção, `GET /api/v1/agenda/google/callback` → 401 `unauthenticated`.
+  //
+  // A identidade não vem da sessão e sim do `state` assinado (HMAC de
+  // `INTERNAL_SECRET`), com nonce de uso único; no caso do Google, somado a um
+  // cookie de vínculo `SameSite=Lax` (`lib/agenda/google/vinculo.ts`) que prova
+  // que o navegador que volta é o que saiu. Mesma natureza de
+  // `/api/v1/system/relogio/tick`, logo acima: a auth mora DENTRO da rota.
+  //
+  // Ancorados com `$` de propósito — `/^\/api\/v1\/agenda\/google\// deixaria
+  // qualquer sub-path futuro nascer público de carona.
+  /^\/api\/v1\/agenda\/google\/callback$/,
+  /^\/api\/v1\/integrations\/nuvemshop\/callback$/,
   /^\/api\/internal\//,
   /^\/api\/mcp(\/.*)?$/,
   /^\/_next\//,

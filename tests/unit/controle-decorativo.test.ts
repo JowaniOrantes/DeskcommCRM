@@ -30,6 +30,21 @@ import { describe, expect, it } from "vitest";
  * fiação faltando no produto — foi por isso que o defeito ficou verde por tempo
  * indeterminado.
  *
+ * ─── A SEGUNDA FORMA, que esta varredura NÃO pegava ──────────────────────────
+ * O padrão acima é `disabled={!callback}`. Existe outro, mais simples e mais
+ * difícil de ver: **o botão que não tem `onClick` nenhum**. Ele nem fica cinza —
+ * parece perfeitamente ativo, o cursor vira mãozinha, e o clique não faz nada.
+ *
+ * Foi assim que o "Ver na agenda" da confirmação de marcação atravessou a
+ * v1.8.0: `<Button size="sm" data-testid="ver-na-agenda">Ver na agenda</Button>`,
+ * sem handler. O dono do produto marcou um compromisso, clicou, e nada aconteceu.
+ *
+ * ⚠️ E esta varredura, que eu escrevi para pegar exatamente esta classe, era
+ * CEGA para ele: ela procurava `disabled={!on...}`, e um botão mudo não tem
+ * `disabled`. Guarda que cobre uma forma da classe e não a outra dá a sensação
+ * de que a classe está fechada — que é pior do que não existir, porque ninguém
+ * volta a olhar.
+ *
  * ─── O que conta como "ligado" ───────────────────────────────────────────────
  * Um caller em `app/app/**` — a tela do PRODUTO. A vitrine (`app/vitrine-*`) e
  * as páginas de demonstração não contam de propósito: passar a callback lá
@@ -79,6 +94,43 @@ function propsLigadasNoProduto(): Set<string> {
   return ligadas;
 }
 
+/**
+ * Um `<Button>` é MUDO quando nada lhe dá comportamento.
+ *
+ * As quatro formas legítimas de um botão sem `onClick`, todas medidas contra o
+ * repo real antes de virarem exclusão:
+ *   - `asChild` — o comportamento é do filho (`<Link>`);
+ *   - `type="submit"` — quem age é o `<form>`;
+ *   - `disabled` COM `title` — o padrão da casa: diz por que não pode;
+ *   - dentro de `<XTrigger asChild>` — o gatilho é o PAI, e por isso `anterior`
+ *     existe como parâmetro: olhar só os atributos do botão acusaria 17 casos
+ *     corretos.
+ */
+export function ehMudo(tagDoBotao: string, anterior: string): boolean {
+  if (/\bonClick\b|\basChild\b|type="submit"/.test(tagDoBotao)) return false;
+  if (/\bdisabled\b/.test(tagDoBotao) && /\btitle=/.test(tagDoBotao)) return false;
+  if (/<[A-Za-z]*Trigger\b[^>]*\basChild\b[^>]*>\s*$/.test(anterior.trimEnd())) return false;
+  return true;
+}
+
+function botoesMudos(): Array<{ onde: string }> {
+  const out: Array<{ onde: string }> = [];
+  for (const arquivo of arquivos(path.join(RAIZ, "components"), /\.tsx$/)) {
+    const fonte = fs.readFileSync(arquivo, "utf8");
+    const linhas = fonte.split("\n");
+    const rel = path.relative(RAIZ, arquivo);
+    for (const m of fonte.matchAll(/<Button\b(?:[^>]|\n)*?>/g)) {
+      const n = fonte.slice(0, m.index ?? 0).split("\n").length;
+      const anterior = linhas.slice(Math.max(0, n - 3), n - 1).join("\n");
+      if (ehMudo(m[0], anterior)) out.push({ onde: `${rel}:${n}` });
+    }
+  }
+  return out;
+}
+
+/** Botões mudos aceitos, por caminho:linha, com o motivo. Só ENCOLHE. */
+const MUDOS_JUSTIFICADOS: Record<string, string> = {};
+
 const CONTROLES = controlesQueDependemDeCallback();
 const LIGADAS = propsLigadasNoProduto();
 
@@ -104,6 +156,34 @@ describe("nenhum botão fica cinza por falta de fiação", () => {
     // fiação).
     expect(/\bonSalvar\?\s*:/.test("  onSalvar?: () => void;")).toBe(true);
     expect(/\bonSalvar\?\s*:/.test("  onSalvar: () => void;")).toBe(false);
+  });
+
+  it("nenhum botão é MUDO — sem onClick e sem quem lhe dê comportamento", () => {
+    const mudos = botoesMudos().filter((b) => !(b.onde in MUDOS_JUSTIFICADOS));
+    expect(
+      mudos.map((b) => b.onde),
+      "Botão sem `onClick` não fica cinza: ele parece ATIVO, o cursor vira mãozinha, e o " +
+        "clique não faz nada — o usuário conclui que o produto está quebrado e não tem o " +
+        "que reportar além de \"não acontece nada\". Foi o \"Ver na agenda\" da v1.8.0. " +
+        "Ligue o handler, ou desabilite COM o motivo à vista (`disabled` + `title`), que é " +
+        "o padrão desta casa.",
+    ).toEqual([]);
+  });
+
+  it("a sonda de botão mudo distingue as quatro formas legítimas", () => {
+    // Controle do instrumento, e ele não é decorativo: sem estas quatro
+    // exclusões a varredura acusaria 19 botões corretos e ninguém a manteria —
+    // gate que grita demais é gate que se desliga.
+    expect(ehMudo('<Button size="sm">Ver</Button>', "")).toBe(true);
+    expect(ehMudo('<Button onClick={x}>Ver</Button>', "")).toBe(false);
+    expect(ehMudo('<Button asChild><Link href="/x">Ver</Link></Button>', "")).toBe(false);
+    expect(ehMudo('<Button type="submit">Salvar</Button>', "")).toBe(false);
+    // `disabled` com o motivo à vista é o padrão CORRETO — o controle diz por
+    // que não pode, em vez de fingir que pode.
+    expect(ehMudo('<Button disabled title="ainda não implementado">X</Button>', "")).toBe(false);
+    // E o gatilho que dá o comportamento mora no PAI (`<DropdownMenuTrigger
+    // asChild>`), não nos atributos do próprio botão.
+    expect(ehMudo('<Button size="sm">Mover…</Button>', "<DropdownMenuTrigger asChild>")).toBe(false);
   });
 
   it("toda callback que apaga um botão é passada por alguma tela do produto", () => {

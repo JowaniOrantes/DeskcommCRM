@@ -11,6 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError } from "@/lib/api/types";
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
+import { roleAtLeast } from "@/lib/auth/types";
 import { canonicalPhoneBR, phoneLookupVariants } from "@/lib/channels/phone-variants";
 import { hashCpf, encryptCpfSql } from "@/lib/contacts/cpf";
 import type { Contact } from "@/lib/types/contacts";
@@ -27,13 +28,6 @@ type SB = SupabaseClient;
 
 const SELECT_COLS =
   "id, organization_id, name, display_name, email, email_normalized, phone_number, cpf_hash, birthdate, is_blocked, blocked_reason, is_anonymized, anonymized_at, is_merged_into, merged_at, consent, tags, source, source_metadata, created_at, updated_at, last_activity_at";
-
-const ROLE_RANK: Record<string, number> = {
-  viewer: 1,
-  agent: 2,
-  manager: 3,
-  admin: 4,
-};
 
 interface CursorPayload {
   sort: string | null;
@@ -285,8 +279,7 @@ export async function getContactHandler(
       .maybeSingle();
 
     const role = membership?.role as string | undefined;
-    const rank = role ? (ROLE_RANK[role] ?? 0) : 0;
-    if (rank < ROLE_RANK.manager!) {
+    if (!roleAtLeast(role, "manager")) {
       cpfDecryptDenied = true;
     } else {
       const { data: dec, error: decErr } = await supabase.rpc("decrypt_cpf", {
