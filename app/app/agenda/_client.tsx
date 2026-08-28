@@ -1,7 +1,10 @@
 "use client";
 
+import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+
+import { useT } from "@/hooks/i18n/useT";
+
 import { addDays, endOfMonth, format, startOfDay, startOfMonth, startOfWeek } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import * as React from "react";
 
 import { AvisoDaConexaoGoogle } from "./_components/AvisoDaConexaoGoogle";
@@ -88,6 +91,8 @@ export function AgendaClient({
   /** A semana corrente, resolvida no servidor: `GET /agendamentos` não existe. */
   agendamentosIniciais: Agendamento[];
 }) {
+  const localeDaData = useLocaleDeData();
+  const t = useT();
   const [marcando, setMarcando] = React.useState(false);
   // O horário que veio de um CLIQUE NA GRADE. Preenchido, o painel abre já em
   // "confirmando" naquele instante; vazio, ele abre pedindo o dia, como sempre.
@@ -221,12 +226,17 @@ export function AgendaClient({
   );
 
   const passo = visao === "mes" ? 30 : visao === "semana" ? 7 : 1;
+  // O PADRÃO de formato também muda de idioma, não só o locale: em português
+  // "d 'de' MMMM" tem a preposição escrita à mão dentro do padrão, e em
+  // espanhol ela também é "de" — mas quem garante isso é a chave no dicionário,
+  // não a coincidência. Passando o padrão por `t()`, um idioma que ordene a
+  // data de outro jeito não precisa de código novo aqui.
   const periodo =
     visao === "mes"
-      ? format(ancora, "MMMM 'de' yyyy", { locale: ptBR })
+      ? format(ancora, t("MMMM 'de' yyyy"), { locale: localeDaData })
       : visao === "semana"
-        ? `${format(startOfWeek(ancora, { weekStartsOn: 0 }), "d 'de' MMM", { locale: ptBR })} — ${format(addDays(startOfWeek(ancora, { weekStartsOn: 0 }), 6), "d 'de' MMM", { locale: ptBR })}`
-        : format(ancora, "EEEE, d 'de' MMMM", { locale: ptBR });
+        ? `${format(startOfWeek(ancora, { weekStartsOn: 0 }), t("d 'de' MMM"), { locale: localeDaData })} — ${format(addDays(startOfWeek(ancora, { weekStartsOn: 0 }), 6), t("d 'de' MMM"), { locale: localeDaData })}`
+        : format(ancora, t("EEEE, d 'de' MMMM"), { locale: localeDaData });
 
   return (
     <div
@@ -254,14 +264,14 @@ export function AgendaClient({
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">Agenda</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Agenda")}</h1>
           <p className="text-sm text-muted-foreground">
-            O que está marcado, com quem, e quem atende — seu e da equipe.
+            {t("O que está marcado, com quem, e quem atende — seu e da equipe.")}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAncora(new Date())}>
-            Hoje
+            {t("Hoje")}
           </Button>
           {/*
             DESABILITADO COM O MOTIVO À VISTA, e não ligado a um `onClick` vazio.
@@ -283,17 +293,26 @@ export function AgendaClient({
               data-testid="motivo-novo-agendamento"
               className="hidden text-xs text-text-subtle sm:inline"
             >
-              Cadastre um tipo de agendamento para começar
+              {t("Cadastre um tipo de agendamento para começar")}
             </span>
           )}
           <Button
             size="sm"
             disabled={!tipo}
-            title={tipo ? undefined : "Cadastre um tipo de agendamento para começar"}
+            // `data-testid` porque o RÓTULO deixou de ser estável: até este PR
+            // ele era literal, e `agenda-escopo-da-organizacao.spec.ts` o acha
+            // por `getByRole("button", { name: /Novo agendamento/i })`. Com o
+            // texto passando por `t()`, casar por rótulo passa a depender do
+            // idioma da conta de teste — hoje passa porque a conta nasce em
+            // português, mas é acoplamento que não precisa existir. O testid é
+            // o caminho estável; trocar a spec para usá-lo é decisão de quem a
+            // escreveu, e vai anotada no PR.
+            data-testid="novo-agendamento"
+            title={tipo ? undefined : t("Cadastre um tipo de agendamento para começar")}
             onClick={() => setMarcando(true)}
           >
             <CalendarPlus size={16} weight="bold" aria-hidden />
-            <span>Novo agendamento</span>
+            <span>{t("Novo agendamento")}</span>
           </Button>
         </div>
       </header>
@@ -304,7 +323,7 @@ export function AgendaClient({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Período anterior"
+              aria-label={t("Período anterior")}
               data-testid="periodo-anterior"
               onClick={() => setAncora((d) => addDays(d, -passo))}
             >
@@ -313,7 +332,7 @@ export function AgendaClient({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Próximo período"
+              aria-label={t("Próximo período")}
               data-testid="periodo-seguinte"
               onClick={() => setAncora((d) => addDays(d, passo))}
             >
@@ -361,7 +380,7 @@ export function AgendaClient({
                     : "text-text-muted hover:bg-surface-elevated hover:text-text",
                 )}
               >
-                {v.rotulo}
+                {t(v.rotulo)}
               </button>
             ))}
           </div>
@@ -422,28 +441,28 @@ export function AgendaClient({
           className="flex w-full flex-col overflow-y-auto sm:max-w-3xl lg:max-w-[1040px] lg:overflow-hidden"
         >
           <SheetHeader>
-            <SheetTitle>{remarcandoId ? "Remarcar agendamento" : "Novo agendamento"}</SheetTitle>
+            <SheetTitle>{remarcandoId ? t("Remarcar agendamento") : t("Novo agendamento")}</SheetTitle>
           </SheetHeader>
           {tiposIniciais.length > 1 && (
             <div className="mt-4" data-testid="tipos-de-agendamento">
-              <p className="mb-2 text-xs font-medium text-text-muted">Tipo de agendamento</p>
+              <p className="mb-2 text-xs font-medium text-text-muted">{t("Tipo de agendamento")}</p>
               <div className="flex flex-wrap gap-1.5">
-                {tiposIniciais.map((t) => (
+                {tiposIniciais.map((opcao) => (
                   <button
-                    key={t.id}
+                    key={opcao.id}
                     type="button"
-                    data-testid={`tipo-${t.id}`}
-                    aria-pressed={t.id === tipo?.id}
-                    onClick={() => setTipoId(t.id)}
+                    data-testid={`tipo-${opcao.id}`}
+                    aria-pressed={opcao.id === tipo?.id}
+                    onClick={() => setTipoId(opcao.id)}
                     className={cn(
                       "rounded-full border px-3 py-1 text-xs transition-colors duration-fast",
-                      t.id === tipo?.id
+                      opcao.id === tipo?.id
                         ? "border-transparent bg-accent text-accent-foreground"
                         : "border-border text-text-muted hover:border-border-strong hover:text-text",
                     )}
                   >
-                    {t.nome}
-                    <span className="ml-1 opacity-70 tabular-nums">{t.duracaoMin}min</span>
+                    {opcao.nome}
+                    <span className="ml-1 opacity-70 tabular-nums">{opcao.duracaoMin}min</span>
                   </button>
                 ))}
               </div>
@@ -549,19 +568,19 @@ export function AgendaClient({
       >
         <SheetContent side="right" className="w-full sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>Cancelar agendamento</SheetTitle>
+            <SheetTitle>{t("Cancelar agendamento")}</SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-3" data-testid="painel-de-cancelamento">
             <p className="text-sm text-text-muted">
               {(() => {
                 const alvo = todos.find((a) => a.id === cancelandoId);
-                if (!alvo) return "Este agendamento não está mais na lista.";
-                const quem = alvo.quemSeraAtendido ? ` de ${alvo.quemSeraAtendido}` : "";
-                return `${alvo.titulo}${quem}, ${format(new Date(alvo.comeca), "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}.`;
+                if (!alvo) return t("Este agendamento não está mais na lista.");
+                const quem = alvo.quemSeraAtendido ? ` ${t("de")} ${alvo.quemSeraAtendido}` : "";
+                return `${t(alvo.titulo)}${quem}, ${format(new Date(alvo.comeca), t("d 'de' MMMM 'às' HH:mm"), { locale: localeDaData })}.`;
               })()}
             </p>
             <label className="block text-xs font-medium text-text-muted" htmlFor="motivo-do-cancelamento">
-              Por que está cancelando?
+              {t("Por que está cancelando?")}
             </label>
             <textarea
               id="motivo-do-cancelamento"
@@ -570,11 +589,11 @@ export function AgendaClient({
               onChange={(e) => setMotivo(e.target.value)}
               rows={3}
               className="w-full rounded-md border border-border bg-surface p-2 text-sm outline-none focus:border-border-strong"
-              placeholder="O paciente pediu para remarcar por telefone"
+              placeholder={t("O paciente pediu para remarcar por telefone")}
             />
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setCancelandoId(null)}>
-                Voltar
+                {t("Voltar")}
               </Button>
               <Button
                 size="sm"
@@ -591,7 +610,7 @@ export function AgendaClient({
                   );
                 }}
               >
-                {cancelar.isPending ? "Cancelando…" : "Cancelar agendamento"}
+                {cancelar.isPending ? t("Cancelando…") : t("Cancelar agendamento")}
               </Button>
             </div>
           </div>

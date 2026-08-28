@@ -22,7 +22,13 @@ const consultas: { platformAdmins: unknown; memberships: unknown } = {
   memberships: { data: [], error: null },
 };
 
-vi.mock("next/headers", () => ({ cookies: async () => ({ getAll: () => [], set: () => {} }) }));
+// `get` entrou junto com a cadeia de idioma (usuário → organização): o
+// resolvedor pergunta ao cookie qual organização está ativa. O dublê tinha
+// `getAll`/`set` e não `get` — menos completo que a API real, e o teste caía
+// por falta do dublê, não por defeito.
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: () => undefined, getAll: () => [], set: () => {} }),
+}));
 vi.mock("next/navigation", () => ({ redirect: () => { throw new Error("redirect"); } }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -97,7 +103,10 @@ describe("loadAuthUser — falha de permissão não vira 'sem organização'", (
     };
     const u = await loadAuthUser();
     expect(u?.organizations).toEqual([
-      { organization_id: "o1", organization_name: "Acme", role: "admin" },
+      // `locale` é o idioma padrão da organização, que entra na membership para
+      // a resolução do idioma da sessão não precisar de uma segunda consulta.
+      // Aqui vem `null` porque o dublê não devolve a coluna.
+      { organization_id: "o1", organization_name: "Acme", role: "admin", locale: null },
     ]);
   });
 });

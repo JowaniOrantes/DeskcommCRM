@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useT } from "@/hooks/i18n/useT";
 import { useBoard } from "@/hooks/kanban/useBoard";
 
-function formatError(err: unknown): string {
+function formatError(err: unknown, t: (texto: string) => string): string {
   if (err instanceof Error) return err.message;
   if (err && typeof err === "object") {
     const obj = err as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
@@ -14,7 +15,7 @@ function formatError(err: unknown): string {
     try {
       return JSON.stringify(err);
     } catch {
-      return "Erro desconhecido";
+      return t("Erro desconhecido");
     }
   }
   return String(err);
@@ -35,6 +36,7 @@ export function PipelinePageClient({
   pipelineId: string;
   initialName: string;
 }) {
+  const t = useT();
   const { data, isLoading, error, pulses, realtimeStatus, seguranca } = useBoard(pipelineId);
   const router = useRouter();
   const pathname = usePathname();
@@ -83,7 +85,7 @@ export function PipelinePageClient({
           {data?.pipeline.name ?? initialName}
         </h1>
         <Button onClick={() => setNewOpen(true)} disabled={!data} className="shrink-0">
-          <Plus size={16} className="mr-2" /> Novo Lead
+          <Plus size={16} className="mr-2" /> {t("Novo Lead")}
         </Button>
       </header>
       {data && (
@@ -97,12 +99,11 @@ export function PipelinePageClient({
       <FilterBar filters={filters} onChange={setFilters} leads={data?.leads ?? []} />
       {error ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm">
-          Não consegui carregar este funil:{" "}
-          {formatError(error)}
+          {t("Não consegui carregar este funil:")} {formatError(error, t)}
         </div>
       ) : isLoading || !data ? (
         <div className="flex flex-1 animate-pulse items-center justify-center text-muted-foreground">
-          Carregando…
+          {t("Carregando…")}
         </div>
       ) : (
         <KanbanBoard

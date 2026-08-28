@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/hooks/i18n/useT";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +35,7 @@ export function DeleteFollowupFlowButton({
   variant = "outline",
   size = "sm",
 }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const del = useDeleteFollowupFlow();
@@ -60,7 +63,7 @@ export function DeleteFollowupFlowButton({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir &ldquo;{flowName}&rdquo;?</AlertDialogTitle>
             <AlertDialogDescription>
-              Inscrições e versões deste fluxo são apagadas junto. Não é possível desfazer.
+              {t("Inscrições e versões deste fluxo são apagadas junto. Não é possível desfazer.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

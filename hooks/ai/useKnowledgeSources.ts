@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
+import { useT } from "@/hooks/i18n/useT";
 import type { EstadoDaChave } from "@/components/ai/ChaveDeConhecimento";
 
 export interface SourceRow {
@@ -97,6 +98,7 @@ export function useEstadoDaChave(initial?: EstadoDaChave) {
 }
 
 export function useReindexSource() {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationKey: ["ai", "knowledge", "sources", "reindex"],
@@ -108,7 +110,7 @@ export function useReindexSource() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Vou preparar este material de novo — leva alguns instantes.");
+      toast.success(t("Vou preparar este material de novo — leva alguns instantes."));
     },
     onError: (err) => showApiError(err),
     onSettled: () => {
@@ -118,6 +120,7 @@ export function useReindexSource() {
 }
 
 export function useArquivarSource() {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationKey: ["ai", "knowledge", "sources", "arquivar"],
@@ -126,7 +129,7 @@ export function useArquivarSource() {
       return id;
     },
     onSuccess: () => {
-      toast.success("Material arquivado. O agente para de consultá-lo.");
+      toast.success(t("Material arquivado. O agente para de consultá-lo."));
     },
     onError: (err) => showApiError(err),
     onSettled: () => {

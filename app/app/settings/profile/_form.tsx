@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateProfile } from "@/app/actions/settings/updateProfile";
-import { profileSchema, type Locale } from "@/lib/schemas/settings";
+import { useT } from "@/hooks/i18n/useT";
+import {
+  profileSchema,
+  SEM_PREFERENCIA_DE_IDIOMA,
+  type Locale,
+} from "@/lib/schemas/settings";
 
 const TIMEZONES = [
   "America/Sao_Paulo",
@@ -29,12 +34,21 @@ interface Props {
   email: string;
   initialFullName: string | null;
   initialAvatarUrl: string | null;
+  initialLocale: Locale | typeof SEM_PREFERENCIA_DE_IDIOMA;
+  initialTimezone: string;
 }
 
-export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props) {
+export function ProfileForm({
+  email,
+  initialFullName,
+  initialAvatarUrl,
+  initialLocale,
+  initialTimezone,
+}: Props) {
+  const t = useT();
   const [fullName, setFullName] = useState(initialFullName ?? "");
-  const [locale, setLocale] = useState<Locale>("pt-BR");
-  const [timezone, setTimezone] = useState("America/Sao_Paulo");
+  const [locale, setLocale] = useState<Locale | typeof SEM_PREFERENCIA_DE_IDIOMA>(initialLocale);
+  const [timezone, setTimezone] = useState(initialTimezone);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
   const [isPending, startTransition] = useTransition();
 
@@ -47,13 +61,13 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
       avatar_url: avatarUrl || null,
     });
     if (!parsed.success) {
-      toast.error("Dados inválidos.");
+      toast.error(t("Dados inválidos."));
       return;
     }
     startTransition(async () => {
       const r = await updateProfile(parsed.data);
-      if (r.ok) toast.success("Perfil atualizado.");
-      else toast.error(`Erro: ${r.error}`);
+      if (r.ok) toast.success(t("Perfil atualizado."));
+      else toast.error(`${t("Erro")}: ${r.error}`);
     });
   }
 
@@ -61,14 +75,14 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
     <form onSubmit={handleSubmit} className="max-w-xl">
       <Card className="space-y-4 p-6">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("Email")}</Label>
           <Input id="email" value={email} disabled />
           <p className="text-xs text-muted-foreground">
-            Trocar email — em breve.
+            {t("Trocar email — em breve.")}
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="full_name">Nome completo</Label>
+          <Label htmlFor="full_name">{t("Nome completo")}</Label>
           <Input
             id="full_name"
             value={fullName}
@@ -78,12 +92,15 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="locale">Idioma</Label>
+            <Label htmlFor="locale">{t("Idioma")}</Label>
             <Select value={locale} onValueChange={(v) => setLocale(v as Locale)}>
               <SelectTrigger id="locale">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={SEM_PREFERENCIA_DE_IDIOMA}>
+                  {t("Seguir o idioma da empresa")}
+                </SelectItem>
                 <SelectItem value="pt-BR">Português (BR)</SelectItem>
                 {/* Espanhol entrou quando passou a MUDAR alguma coisa. Enquanto
                     o campo era guardado e ninguém o lia, oferecer um idioma a
@@ -95,7 +112,7 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="timezone">Fuso horário</Label>
+            <Label htmlFor="timezone">{t("Fuso horário")}</Label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger id="timezone">
                 <SelectValue />
@@ -111,7 +128,7 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="avatar_url">Avatar URL</Label>
+          <Label htmlFor="avatar_url">{t("Avatar URL")}</Label>
           <Input
             id="avatar_url"
             type="url"
@@ -120,12 +137,12 @@ export function ProfileForm({ email, initialFullName, initialAvatarUrl }: Props)
             onChange={(e) => setAvatarUrl(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Upload de arquivo — em breve. Cole uma URL pública.
+            {t("Upload de arquivo — em breve. Cole uma URL pública.")}
           </p>
         </div>
         <div className="flex sm:justify-end">
           <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-            {isPending ? "Salvando…" : "Salvar"}
+            {isPending ? t("Salvando…") : t("Salvar")}
           </Button>
         </div>
       </Card>

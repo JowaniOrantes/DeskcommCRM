@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { NodeType } from "@/lib/followup/graph-schema";
+import { useT } from "@/hooks/i18n/useT";
 import { NODE_VISUAL_LIST } from "./nodes/nodeVisuals";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 /** Sidebar palette — click to add. Native HTML5 drag-and-drop wired in FlowCanvas (increment 3). */
 export function NodePalette({ onAdd, variant = "desktop" }: Props) {
+  const t = useT();
   const isMobile = variant === "mobile";
   return (
     <aside
@@ -26,7 +28,7 @@ export function NodePalette({ onAdd, variant = "desktop" }: Props) {
       data-testid="node-palette"
     >
       <h2 className="px-1 pb-1 text-xs font-medium uppercase tracking-wide text-text-muted">
-        Adicionar nó
+        {t("Adicionar nó")}
       </h2>
       {NODE_VISUAL_LIST.map((visual) => {
         const Icon = visual.icon;
@@ -50,7 +52,7 @@ export function NodePalette({ onAdd, variant = "desktop" }: Props) {
             >
               <Icon size={14} aria-hidden />
             </span>
-            {visual.paletteLabel}
+            {t(visual.paletteLabel)}
           </Button>
         );
       })}

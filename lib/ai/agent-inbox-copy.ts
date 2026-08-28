@@ -77,8 +77,8 @@ export const SEVERITY_LABEL: Record<AgentInboxSeverity, string> = {
  * este build não conhece. O genérico é a defesa para ESSE caso — não para
  * cobrir esquecimento, que agora o compilador pega acima.
  */
-export function kindLabel(kind: string): string {
-  return (KIND_LABEL as Record<string, string>)[kind] ?? "Aviso do assistente";
+export function kindLabel(kind: string, t: (texto: string) => string = (texto) => texto): string {
+  return t((KIND_LABEL as Record<string, string>)[kind] ?? "Aviso do assistente");
 }
 
 /** Por que ninguém ficou responsável — o que muda é a AÇÃO que cabe a quem lê. */

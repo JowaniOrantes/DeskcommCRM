@@ -169,6 +169,7 @@ function session(effectiveRole: Role, db: ReturnType<typeof makeDb>) {
     full_name: null,
     avatar_url: null,
     is_platform_admin: false,
+    idioma: "pt-BR" as const,
     organizations: [{ organization_id: ORG_ID, organization_name: "Org", role: effectiveRole }],
   };
   vi.mocked(requireRole).mockImplementation(async (min: Role) => {

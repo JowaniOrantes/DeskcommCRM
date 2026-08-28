@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/hooks/i18n/useT";
+
 import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,7 @@ export function RepeatForm({
   config: ConfigOf<"repeat">;
   onChange: (c: ConfigOf<"repeat">) => void;
 }) {
+  const t = useT();
   const [maxCount, setMaxCount] = useState(String(config.max_count));
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +34,7 @@ export function RepeatForm({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="repeat-max">No máximo quantas voltas</Label>
+      <Label htmlFor="repeat-max">{t("No máximo quantas voltas")}</Label>
       <Input
         id="repeat-max"
         type="number"
@@ -41,7 +44,7 @@ export function RepeatForm({
         onChange={(e) => commit(e.target.value)}
       />
       <p className="text-xs text-text-muted">
-        A última resposta vira o número de voltas (ex.: 4 filhos). O teto evita um loop sem fim.
+        {t("A última resposta vira o número de voltas (ex.: 4 filhos). O teto evita um loop sem fim.")}
       </p>
       {error && <p className="text-xs text-error-fg">{error}</p>}
     </div>

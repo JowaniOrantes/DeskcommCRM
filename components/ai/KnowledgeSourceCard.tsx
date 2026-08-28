@@ -1,4 +1,8 @@
 "use client";
+
+import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
+
+import { useT } from "@/hooks/i18n/useT";
 /**
  * UM MATERIAL DO ACERVO.
  *
@@ -52,18 +56,22 @@ interface Props {
   isReindexing?: boolean;
 }
 
-function formatRelative(iso: string | null): string {
-  if (!iso) return "nunca";
+function formatRelative(
+  iso: string | null,
+  tagDoIdioma: string,
+  t: (texto: string) => string = (texto) => texto,
+): string {
+  if (!iso) return t("nunca");
   const then = new Date(iso).getTime();
   const diffSec = Math.floor((Date.now() - then) / 1000);
-  if (diffSec < 60) return "agora há pouco";
+  if (diffSec < 60) return t("agora há pouco");
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `há ${diffMin} min`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `há ${diffHr} h`;
   const diffDay = Math.floor(diffHr / 24);
   if (diffDay < 30) return `há ${diffDay} d`;
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return new Date(iso).toLocaleDateString(tagDoIdioma);
 }
 
 export function KnowledgeSourceCard({
@@ -74,6 +82,8 @@ export function KnowledgeSourceCard({
   onMudou,
   isReindexing,
 }: Props) {
+  const t = useT();
+  const tagDoIdioma = useTagDeIdioma();
   const [vendoTrechos, setVendoTrechos] = useState(false);
   const [editando, setEditando] = useState(false);
 
@@ -97,27 +107,29 @@ export function KnowledgeSourceCard({
           </div>
           <SourceStatusBadge source={source} />
         </div>
-        <p className="text-sm text-text-muted">{meta?.rotulo ?? source.source_type}</p>
+        <p className="text-sm text-text-muted">
+          {meta?.rotulo ? t(meta.rotulo) : source.source_type}
+        </p>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-2 text-sm">
         <div className="flex items-baseline justify-between">
-          <span className="text-text-muted">Preparado</span>
-          <span>{formatRelative(source.last_indexed_at)}</span>
+          <span className="text-text-muted">{t("Preparado")}</span>
+          <span>{formatRelative(source.last_indexed_at, tagDoIdioma, t)}</span>
         </div>
         <div className="flex items-baseline justify-between">
-          <span className="text-text-muted">Trechos que o agente encontra</span>
+          <span className="text-text-muted">{t("Trechos que o agente encontra")}</span>
           <span data-testid={`material-trechos-${source.id}`}>{source.chunks_count ?? 0}</span>
         </div>
 
         {/* Quem usa este material. Sem isto, arquivar é um tiro no escuro: não dá
             para saber quantos assistentes param de saber daquilo. */}
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-text-muted">Consultado por</span>
+          <span className="text-text-muted">{t("Consultado por")}</span>
           <span className="text-right">
             {usadoPor.length === 0 ? (
               <span className="text-warning-fg" data-testid={`material-orfao-${source.id}`}>
-                nenhum assistente ainda
+                {t("nenhum assistente ainda")}
               </span>
             ) : (
               usadoPor.join(", ")
@@ -127,7 +139,7 @@ export function KnowledgeSourceCard({
 
         {mostraErro ? (
           <details className="rounded-md border border-error-bg bg-error-bg/30 p-2 text-xs text-error-fg">
-            <summary className="cursor-pointer font-medium">Por que não entrou</summary>
+            <summary className="cursor-pointer font-medium">{t("Por que não entrou")}</summary>
             <p className="mt-1 whitespace-pre-wrap break-words">{source.last_index_error}</p>
           </details>
         ) : null}
@@ -145,7 +157,7 @@ export function KnowledgeSourceCard({
             className={`mr-2 h-3.5 w-3.5 ${isReindexing ? "animate-spin" : ""}`}
             aria-hidden
           />
-          {isReindexing ? "Preparando…" : "Preparar de novo"}
+          {isReindexing ? t("Preparando…") : t("Preparar de novo")}
         </Button>
 
         {temTrechos ? (
@@ -156,7 +168,7 @@ export function KnowledgeSourceCard({
               onClick={() => setVendoTrechos(true)}
               data-testid={`material-ver-${source.id}`}
             >
-              Ver o que ele aprendeu
+              {t("Ver o que ele aprendeu")}
             </Button>
             {/* Montado só quando aberto: o diálogo faz `useQuery`, e mantê-lo
                 no ar fechado custa um observer por cartão numa tela que lista
@@ -180,7 +192,7 @@ export function KnowledgeSourceCard({
               onClick={() => setEditando(true)}
               data-testid={`material-editar-${source.id}`}
             >
-              Editar conteúdo
+              {t("Editar conteúdo")}
             </Button>
             {editando ? (
               <EditarFaqDialog
@@ -202,7 +214,7 @@ export function KnowledgeSourceCard({
             data-testid={`material-arquivar-${source.id}`}
           >
             <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden />
-            Arquivar
+            {t("Arquivar")}
           </Button>
         ) : null}
       </CardFooter>

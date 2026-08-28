@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
 import { nomesDosAtendentes } from "@/lib/users/nome-do-atendente";
@@ -29,6 +30,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function TiposDeAgendamentoPage() {
   const user = await requireAuth();
+  // `t` local em vez do hook: esta página é componente de SERVIDOR, e lá o
+  // idioma vem resolvido em `user.idioma` (a cadeia pessoa → organização →
+  // padrão vive em `lib/auth/server.ts`).
+  const t = (texto: string) => traduzir(texto, user.idioma);
   const activeOrg = await resolveActiveOrg(user);
   if (!activeOrg) redirect("/app");
   // `viewer` vê a lista (é informação de operação: quanto dura uma consulta);
@@ -73,8 +78,7 @@ export default async function TiposDeAgendamentoPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Tipos de agendamento</h1>
         <p className="mt-1 text-sm text-text-muted">
-          O que se pode marcar, quanto dura e quem atende. É isto que a tela de marcar e o
-          agente de IA oferecem ao cliente.
+          {t("O que se pode marcar, quanto dura e quem atende. É isto que a tela de marcar e o agente de IA oferecem ao cliente.")}
         </p>
       </header>
       <TiposDeAgendamentoClient

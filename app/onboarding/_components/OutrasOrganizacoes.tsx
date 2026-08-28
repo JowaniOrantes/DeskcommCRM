@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { setActiveOrg } from "@/app/actions/shell/setActiveOrg";
+import { useT } from "@/hooks/i18n/useT";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ export function OutrasOrganizacoes({
   outras: Array<{ id: string; nome: string }>;
 }) {
   const [isPending, startTransition] = useTransition();
+  const t = useT();
   const router = useRouter();
 
   if (outras.length === 0) return null;
@@ -72,7 +74,9 @@ export function OutrasOrganizacoes({
         className="gap-1.5"
       >
         <ArrowBendUpLeft size={14} weight="bold" aria-hidden />
-        <span className="max-w-[180px] truncate">Voltar para {unica.nome}</span>
+        <span className="max-w-[180px] truncate">
+          {t("Voltar para")} {unica.nome}
+        </span>
       </Button>
     );
   }
@@ -88,7 +92,7 @@ export function OutrasOrganizacoes({
           className="gap-1.5"
         >
           <ArrowBendUpLeft size={14} weight="bold" aria-hidden />
-          <span>Ir para outra organização</span>
+          <span>{t("Ir para outra organização")}</span>
           <CaretDown size={12} aria-hidden />
         </Button>
       </DropdownMenuTrigger>

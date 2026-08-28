@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { ROLE_RANK } from "@/lib/auth/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +34,10 @@ export default async function TeamPage({
   // link velho ou digitado errado não pode devolver uma tela sem conteúdo.
   const abaInicial = ABAS[aba ?? ""] ?? "members";
   const user = await requireAuth();
+  // `t` local em vez do hook: esta página é componente de SERVIDOR, e lá o
+  // idioma vem resolvido em `user.idioma` (a cadeia pessoa → organização →
+  // padrão vive em `lib/auth/server.ts`).
+  const t = (texto: string) => traduzir(texto, user.idioma);
   const activeOrg = await resolveActiveOrg(user);
   const isAdmin = !!activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.admin;
   const isManager = !!activeOrg && ROLE_RANK[activeOrg.role] >= ROLE_RANK.manager;
@@ -43,7 +48,7 @@ export default async function TeamPage({
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">Equipe</h1>
           <p className="text-sm text-muted-foreground">
-            Gestão de membros, roles e atendimento do tenant.
+            {t("Gestão de membros, roles e atendimento do tenant.")}
           </p>
         </div>
         {isAdmin ? (
@@ -78,9 +83,9 @@ export default async function TeamPage({
                 pessoa a mudar a PRÓPRIA jornada (`isSelf`), e não há tela para
                 isso. Enquanto não houver, pedir a um gerente é o caminho real.
               */}
-              Só gerentes e administradores editam os horários de atendimento da equipe.
-              Para publicar os seus, peça a um gerente que abra esta aba e use o botão
-              &ldquo;Editar horário&rdquo; ao lado do seu nome.
+              {t(
+                "Só gerentes e administradores editam os horários de atendimento da equipe. Para publicar os seus, peça a um gerente que abra esta aba e use o botão “Editar horário” ao lado do seu nome.",
+              )}
             </p>
           )}
         </TabsContent>

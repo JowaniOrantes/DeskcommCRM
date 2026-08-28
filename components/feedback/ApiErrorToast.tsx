@@ -1,6 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
+import { useT } from "@/hooks/i18n/useT";
+import { traduzir } from "@/lib/i18n/dicionario";
+import { idiomaAtual } from "@/lib/i18n/IdiomaProvider";
 import { ApiError } from "@/lib/api/types";
 
 type Variant = "error" | "warning" | "info";
@@ -101,7 +104,15 @@ const COPY: Record<string, { variant: Variant; msg?: string }> = {
   agenda_listagem_sem_recorte: { variant: "info" },
 };
 
-export function showApiError(err: unknown): void {
+/**
+ * `t` chega pronto de fora: `showApiError` resolve via `idiomaAtual()` (fora da
+ * árvore React), `useApiErrorHandler` via `useT()` (dentro dela). Nenhum dos
+ * dois passa `t` como segundo parâmetro de `onError` — o TanStack Query chama
+ * `onError(error, variables, context)`, e um segundo parâmetro aqui receberia
+ * `variables` no lugar (foi exatamente o que aconteceu e quebrou o typecheck
+ * em cadeia da primeira tentativa).
+ */
+function toastFor(err: unknown, t: (texto: string) => string): void {
   if (err instanceof ApiError) {
     const entry = COPY[err.code];
     const description = err.requestId ? `ID: ${err.requestId}` : undefined;
@@ -113,16 +124,30 @@ export function showApiError(err: unknown): void {
             ? toast.info
             : toast.error;
       // `entry.msg ?? err.message`: entrada sem `msg` declara só o tom e deixa
-      // passar o texto da rota, que costuma ser mais específico.
-      fn(entry.msg ?? err.message ?? err.code, { description });
+      // passar o texto da rota, que costuma ser mais específico. Passa por
+      // `t()` do mesmo jeito: o texto da rota é pt-BR literal (ver a seção
+      // "Mensagens literais de `fail()`" em lib/i18n/dicionario.ts), e sem
+      // tradução aqui chegaria em português na tela de quem escolheu espanhol.
+      fn(entry.msg ? t(entry.msg) : t(err.message ?? err.code), { description });
       return;
     }
-    toast.error(err.message || err.code, { description });
+    toast.error(t(err.message) || err.code, { description });
     return;
   }
-  toast.error("Erro inesperado. Tente novamente.");
+  toast.error(t("Erro inesperado. Tente novamente."));
+}
+
+/**
+ * `showApiError` é passado por REFERÊNCIA como `onError` em ~80 lugares, a
+ * maioria dentro de `useMutation` — não pode virar hook. `idiomaAtual()` lê o
+ * espelho que `IdiomaProvider` mantém fora da árvore React para viabilizar
+ * exatamente isto: traduzir sem mudar a assinatura pública da função.
+ */
+export function showApiError(err: unknown): void {
+  toastFor(err, (texto) => traduzir(texto, idiomaAtual()));
 }
 
 export function useApiErrorHandler(): (err: unknown) => void {
-  return showApiError;
+  const t = useT();
+  return (err: unknown) => toastFor(err, t);
 }

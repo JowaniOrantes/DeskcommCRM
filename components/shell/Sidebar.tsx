@@ -104,7 +104,7 @@ export function SidebarContent({
           </span>
         )}
       </div>
-      <nav className="flex-1 space-y-3 overflow-y-auto p-2" aria-label="Navegação principal">
+      <nav className="flex-1 space-y-3 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {
           const tituloId = `nav-grupo-${group.id}`;
           return (
@@ -192,7 +192,7 @@ export function SidebarContent({
             )}
           >
             <Gear size={18} aria-hidden />
-            {!collapsed && <span className="truncate">{rodape.label}</span>}
+            {!collapsed && <span className="truncate">{t(rodape.label)}</span>}
           </Link>
         )}
         <VersionFooter collapsed={collapsed} onNavigate={onNavigate} />
@@ -205,10 +205,10 @@ export function SidebarContent({
               "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               collapsed && "justify-center px-2",
             )}
-            aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+            aria-label={collapsed ? t("Expandir sidebar") : t("Recolher sidebar")}
           >
             {collapsed ? <CaretDoubleRight size={14} aria-hidden /> : <CaretDoubleLeft size={14} aria-hidden />}
-            {!collapsed && <span>Recolher</span>}
+            {!collapsed && <span>{t("Recolher")}</span>}
           </button>
         )}
       </div>

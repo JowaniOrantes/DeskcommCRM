@@ -1,7 +1,11 @@
 "use client";
+
+import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+
+import type { Locale } from "date-fns";
 import { useEffect, useMemo, useRef } from "react";
+import { useT } from "@/hooks/i18n/useT";
 import { format, isToday, isYesterday } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
@@ -37,13 +41,15 @@ export function mergeThreadItems(messages: Message[], notes: Note[]): ThreadItem
   return items;
 }
 
-function dayLabel(d: Date): string {
-  if (isToday(d)) return "Hoje";
-  if (isYesterday(d)) return "Ontem";
-  return format(d, "dd/MM/yyyy", { locale: ptBR });
+function dayLabel(d: Date, t: (texto: string) => string = (texto) => texto, locale: Locale): string {
+  if (isToday(d)) return t("Hoje");
+  if (isYesterday(d)) return t("Ontem");
+  return format(d, "dd/MM/yyyy", { locale: locale });
 }
 
 export function ChatThread({ conversationId, onResponder }: Props) {
+  const localeDaData = useLocaleDeData();
+  const t = useT();
   const q = useMessagesRealtime(conversationId);
   const notes = useConversationNotes(conversationId);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -144,7 +150,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
         {...sinalDoCanal}
         className="flex h-full items-center justify-center text-sm text-muted-foreground"
       >
-        Selecione uma conversa
+        {t("Selecione uma conversa")}
       </div>
     );
   }
@@ -165,9 +171,9 @@ export function ChatThread({ conversationId, onResponder }: Props) {
         {...sinalDoCanal}
         className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
       >
-        <p>Erro ao carregar mensagens.</p>
+        <p>{t("Erro ao carregar mensagens.")}</p>
         <Button size="sm" variant="outline" onClick={() => q.refetch()}>
-          Tentar novamente
+          {t("Tentar novamente")}
         </Button>
       </div>
     );
@@ -179,7 +185,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
         {...sinalDoCanal}
         className="flex h-full items-center justify-center text-sm text-muted-foreground"
       >
-        Nenhuma mensagem nesta conversa.
+        {t("Nenhuma mensagem nesta conversa.")}
       </div>
     );
   }
@@ -205,7 +211,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
               onClick={() => q.fetchNextPage()}
               disabled={q.isFetchingNextPage}
             >
-              {q.isFetchingNextPage ? "Carregando…" : "Carregar mais antigas"}
+              {q.isFetchingNextPage ? t("Carregando…") : t("Carregar mais antigas")}
             </Button>
           </div>
         )}
@@ -214,7 +220,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
           <div key={g.key} className="space-y-1">
             <div className="sticky top-0 z-10 flex justify-center py-1">
               <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground backdrop-blur">
-                {dayLabel(g.date)}
+                {dayLabel(g.date, t, localeDaData)}
               </span>
             </div>
             {g.items.map((item) =>

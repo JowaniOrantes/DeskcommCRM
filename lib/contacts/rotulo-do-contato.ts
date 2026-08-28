@@ -65,8 +65,11 @@ export function ehIdentificadorTecnico(valor: string): boolean {
  * Celular BR aparece COM o nono dígito: `+553284793302` e `+5532984793302` são
  * a mesma pessoa, e o 9 é o que o atendente espera copiar.
  */
-export function rotuloDoContato(c: ContatoNomeavel | null | undefined): string {
-  if (!c) return SEM_NOME;
+export function rotuloDoContato(
+  c: ContatoNomeavel | null | undefined,
+  t: (texto: string) => string = (texto) => texto,
+): string {
+  if (!c) return t(SEM_NOME);
 
   const candidatos = [c.display_name, c.name];
   for (const bruto of candidatos) {
@@ -77,5 +80,5 @@ export function rotuloDoContato(c: ContatoNomeavel | null | undefined): string {
   const tel = (c.phone_number ?? "").trim();
   if (tel !== "") return phoneForDisplay(tel);
 
-  return SEM_NOME;
+  return t(SEM_NOME);
 }

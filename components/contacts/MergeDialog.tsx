@@ -9,6 +9,7 @@
  * placeholder informing the operator that resolution is not yet wired.
  */
 import { useEffect, useState } from "react";
+import { useT } from "@/hooks/i18n/useT";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export function MergeDialog({ queueItemId, open, onOpenChange }: Props) {
+  const t = useT();
   const [item, setItem] = useState<MergeQueueRow | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -74,18 +76,18 @@ export function MergeDialog({ queueItemId, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Resolver merge de contatos</DialogTitle>
+          <DialogTitle>{t("Resolver merge de contatos")}</DialogTitle>
           <DialogDescription>
-            Comparação dos candidatos detectados. A resolução automática via API
-            ainda não está disponível neste MVP — entre em contato com o admin para
-            mesclar via SQL.
+            {t(
+              "Comparação dos candidatos detectados. A resolução automática via API ainda não está disponível neste MVP — entre em contato com o admin para mesclar via SQL.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <Skeleton className="h-32 w-full" />
         ) : candidates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum candidato disponível.</p>
+          <p className="text-sm text-muted-foreground">{t("Nenhum candidato disponível.")}</p>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {candidates.map((c, idx) => (
@@ -103,10 +105,10 @@ export function MergeDialog({ queueItemId, open, onOpenChange }: Props) {
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Fechar
+            {t("Fechar")}
           </Button>
-          <Button disabled title="Endpoint de resolução não implementado neste MVP">
-            Resolver via SQL (em breve)
+          <Button disabled title={t("Endpoint de resolução não implementado neste MVP")}>
+            {t("Resolver via SQL (em breve)")}
           </Button>
         </DialogFooter>
       </DialogContent>

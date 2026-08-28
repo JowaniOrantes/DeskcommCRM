@@ -1542,3 +1542,50 @@ commit, com o motivo) e o gate lê a declaração. Três ganhos: não há falso 
 vira imposto, porque uma linha de declaração custa menos que uma linha vazia de changelog —
 que é o risco real, já que ela polui a tela de produto do operador. Não é convenção nova: o
 `tests/unit/navegacao-completude.test.ts` já aceita exceção **com justificativa escrita**.
+
+## J19 — Quem instala em espanhol usa o sistema em espanhol? `[P0]` (2026-08-27)
+
+Primeira impressão de quem instala fora do Brasil, que é o público do
+espanhol: a pessoa escolhe o idioma na instalação e abre o produto. Se a tela
+vier em português, ela conclui que a opção não funciona — e ela teria razão,
+porque até este passe o seletor da organização era gravado no banco e **não era
+lido por ninguém**.
+
+**Como foi provado.** Supabase local pg17 com o `baseline.sql` (o que o
+`install.sh` aplica, não a cadeia de migrations, que não sobe do zero), `next
+build` + `next start` de produção, login com conta de teste real, cinco telas
+percorridas pelo browser. Spec: `tests/e2e/i18n-espanhol-na-tela.spec.ts`.
+Evidência: `evidence/i18n-es/01-inbox-em-espanhol.png` e
+`evidence/i18n-es/02-inbox-de-volta-em-portugues.png`.
+
+**Achados, todos consertados neste mesmo passe:**
+
+1. **A troca se desfazia sozinha na primeira navegação.** O `revalidatePath`
+   invalida o cache do servidor; o Router Cache do cliente guarda o layout de
+   `/app`, que é quem monta o provider de idioma. Logo após o clique a tela
+   mostrava o idioma novo, ao navegar voltava ao antigo, e só um reload
+   acertava. `router.refresh()` melhora e não resolve — medido: a primeira
+   navegação ainda vinha antiga, só a segunda vinha certa.
+2. **Os rótulos do Índice de Atrito** (`lib/metrics/atrito.ts`) chegavam à tela
+   sem passar por `t()`. São montados em lógica pura, e o guarda estático não
+   os alcança porque `{par.titulo}` é expressão, não literal.
+3. **"Atendente" e "Funil" crus** em `/app/metrics` — o guarda estático não os
+   viu porque a régua dele é ortográfica (ç, ã, õ, lh/nh) e nenhuma das duas
+   palavras tem acento. É o falso negativo assumido dele, e é a razão de os
+   dois guardas existirem: o estático alcança todo arquivo, o e2e alcança o que
+   a régua do estático não distingue.
+
+**A data, que a primeira versão desta jornada declarava como não coberta,
+passou a ser medida aqui.** Existe `lib/i18n/datas.ts`, e a spec reprova se
+achar mês ou dia da semana em português com a interface em espanhol.
+
+⚠️ Essa asserção nasceu VACUOSA, e o registro do porquê vale mais que ela: as
+telas percorridas não imprimiam data por extenso naquele banco, então a régua
+não tinha o que achar — sabotei a camada de idioma e o teste passou VERDE.
+Hoje ela tem um **controle positivo** (exige achar data em português no retrato
+inicial, senão falha dizendo que o problema é o teste) e uma **fixture** que
+garante o dado: `ContactsTable` só escreve a data por extenso quando é de hoje
+ou ontem, e fora disso imprime `dd/MM/yyyy` — idêntico nos dois idiomas.
+
+**O que segue fora:** e-mail e o PDF de LGPD, com o motivo escrito em
+`tests/unit/i18n-a-data-segue-o-idioma.test.ts`.

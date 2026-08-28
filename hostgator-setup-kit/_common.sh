@@ -426,6 +426,13 @@ psql_run() { docker run --rm -i postgres:17-alpine psql "$(url_do_schema)" -v ON
 # O namespace é constante e literal de propósito: ele está gravado no .env de
 # toda instalação viva, e derivá-lo de variável faria o kit antigo (que já está
 # no disco do cliente) e o novo montarem strings diferentes.
+#
+# Esta linha é a ÚNICA fonte do namespace para tudo que executa — os testes do
+# kit a leem em vez de repetir a string. Quem a confere é
+# `tests/unit/namespace-das-imagens.test.ts`, que assere este valor e cobra que
+# `docker-compose.prod.yml`, `.env.hostgator.example` e a matriz de
+# `publish-image.yml` digam o mesmo. Se você é um fork, é lá que está a lista do
+# que trocar junto.
 IMG_NS="ghcr.io/melgarafael"
 IMG_APP="${IMG_NS}/deskcommcrm"
 IMG_WORKER="${IMG_NS}/deskcomm-worker"

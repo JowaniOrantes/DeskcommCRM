@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Warning, X } from "@/lib/ui/icons";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/i18n/useT";
 
 /**
  * O LEITOR que faltava.
@@ -148,6 +149,7 @@ function lerDesfecho(params: URLSearchParams | ReturnType<typeof useSearchParams
 }
 
 export function AvisoDaConexaoGoogle() {
+  const t = useT();
   const params = useSearchParams();
   const router = useRouter();
   const jaTratou = useRef(false);
@@ -179,15 +181,18 @@ export function AvisoDaConexaoGoogle() {
       // `import()` em vez de import de topo: o toast só é necessário em dois dos
       // dez desfechos, e carregá-lo sempre pesaria a tela que abre todo dia.
       void import("sonner").then(({ toast }) => {
-        if (chave === "agenda_conectada") toast.success(desfecho.titulo, { description: desfecho.corpo });
-        else toast(desfecho.titulo, { description: desfecho.corpo });
+        // `t()` aqui e não no catálogo: `DESFECHOS` é módulo, não componente,
+        // e um Record de rótulos fechados se traduz no ponto de render — a
+        // mesma fronteira dos outros vocabulários deste produto.
+        if (chave === "agenda_conectada") toast.success(t(desfecho.titulo), { description: t(desfecho.corpo) });
+        else toast(t(desfecho.titulo), { description: t(desfecho.corpo) });
       });
     }
 
     // Limpa a query para o reload não repetir o aviso — mesma razão do
     // precedente da casa.
     router.replace("/app/agenda");
-  }, [params, router]);
+  }, [params, router, t]);
 
   if (!faixa) return null;
 
@@ -203,17 +208,17 @@ export function AvisoDaConexaoGoogle() {
     >
       <Warning size={18} weight="fill" className="mt-0.5 shrink-0 text-warning" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-text">{faixa.titulo}</p>
-        <p className="mt-0.5 text-xs leading-4 text-text-muted">{faixa.corpo}</p>
+        <p className="text-sm font-semibold text-text">{t(faixa.titulo)}</p>
+        <p className="mt-0.5 text-xs leading-4 text-text-muted">{t(faixa.corpo)}</p>
       </div>
       {faixa.acao === "reconectar" && (
         <Button variant="outline" size="sm" data-testid="reconectar" className="shrink-0">
-          Conectar de novo
+          {t("Conectar de novo")}
         </Button>
       )}
       <button
         type="button"
-        aria-label="Fechar aviso"
+        aria-label={t("Fechar aviso")}
         data-testid="fechar-aviso-google"
         onClick={() => setFaixa(null)}
         className="shrink-0 rounded-sm p-1 text-text-muted transition-colors hover:bg-surface hover:text-text"

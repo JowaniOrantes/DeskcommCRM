@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -47,6 +49,7 @@ function centsToReais(cents: number | null | undefined): string {
  * fica registrada" provaria isso para todo mundo menos para o autor.
  */
 export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCancel }: Props) {
+  const t = useT();
   const edit = useEditLead(pipelineId);
   const [customFields, setCustomFields] = useState<Record<string, unknown>>(lead.custom_fields ?? {});
 
@@ -120,7 +123,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCa
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Título</Label>
+          <Label htmlFor="title">{t("Título")}</Label>
           <Input
             id="title"
             {...form.register("title", { required: true, minLength: 2 })}
@@ -128,7 +131,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCa
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
+          <Label htmlFor="description">{t("Descrição")}</Label>
           <Textarea id="description" rows={3} {...form.register("description")} />
         </div>
 
@@ -159,13 +162,13 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCa
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tagsRaw">Tags (separadas por vírgula)</Label>
+          <Label htmlFor="tagsRaw">{t("Tags (separadas por vírgula)")}</Label>
           <Input id="tagsRaw" placeholder="vip, recompra" {...form.register("tagsRaw")} />
         </div>
 
         {fieldDefs.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
-            <p className="text-sm font-medium">Campos do funil</p>
+            <p className="text-sm font-medium">{t("Campos do funil")}</p>
             <CustomFieldsEditor
               fields={fieldDefs}
               value={customFields}

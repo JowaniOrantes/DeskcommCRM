@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { actionConfigSchema } from "@/lib/followup/graph-schema";
 import { MODOS_DA_ACAO, opcoes, type ModoDaAcao } from "@/lib/followup/vocabulario";
 import { useMessageTemplates } from "@/hooks/inbox/useMessageTemplates";
+import { useT } from "@/hooks/i18n/useT";
 
 import type { ConfigOf } from "./shared";
 
@@ -34,16 +35,21 @@ function SeletorDeModelo({
   onChange: (templateId: string) => void;
   permiteVazio: boolean;
 }) {
+  const t = useT();
   const { data: modelos, isLoading, isError } = useMessageTemplates();
 
-  if (isLoading) return <p className="text-xs text-text-muted">Carregando seus modelos…</p>;
+  if (isLoading) return <p className="text-xs text-text-muted">{t("Carregando seus modelos…")}</p>;
   if (isError) {
-    return <p className="text-xs text-error-fg">Não consegui carregar seus modelos de mensagem. Recarregue a página.</p>;
+    return (
+      <p className="text-xs text-error-fg">
+        {t("Não consegui carregar seus modelos de mensagem. Recarregue a página.")}
+      </p>
+    );
   }
   if (!modelos?.length) {
     return (
       <p className="text-xs text-text-muted">
-        Você ainda não tem modelos de mensagem. Crie um em Ajustes → Modelos e ele aparece aqui.
+        {t("Você ainda não tem modelos de mensagem. Crie um em Ajustes → Modelos e ele aparece aqui.")}
       </p>
     );
   }
@@ -55,10 +61,10 @@ function SeletorDeModelo({
       onValueChange={(v) => onChange(v === SEM_MODELO ? "" : v)}
     >
       <SelectTrigger id={id}>
-        <SelectValue placeholder="Escolha um modelo" />
+        <SelectValue placeholder={t("Escolha um modelo")} />
       </SelectTrigger>
       <SelectContent>
-        {permiteVazio && <SelectItem value={SEM_MODELO}>Nenhum</SelectItem>}
+        {permiteVazio && <SelectItem value={SEM_MODELO}>{t("Nenhum")}</SelectItem>}
         {modelos.map((m) => (
           <SelectItem key={m.id} value={m.id}>
             {m.title}
@@ -76,6 +82,7 @@ export function ActionForm({
   config: ConfigOf<"action">;
   onChange: (c: ConfigOf<"action">) => void;
 }) {
+  const t = useT();
   const [mode, setMode] = useState(config.mode);
   const [body, setBody] = useState(config.mode === "text" ? config.body : "");
   const [promptHint, setPromptHint] = useState(config.mode === "ai_message" ? config.prompt_hint : "");
@@ -104,7 +111,7 @@ export function ActionForm({
           : { mode: "template" as const, template_id: next.templateId };
     const parsed = actionConfigSchema.safeParse(candidate);
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Configuração inválida.");
+      setError(parsed.error.issues[0]?.message ?? t("Configuração inválida."));
       return;
     }
     setError(null);
@@ -116,7 +123,7 @@ export function ActionForm({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="action-mode">Como escrever a mensagem</Label>
+        <Label htmlFor="action-mode">{t("Como escrever a mensagem")}</Label>
         <Select
           value={mode}
           onValueChange={(v) => {
@@ -131,7 +138,7 @@ export function ActionForm({
           <SelectContent>
             {opcoes(MODOS_DA_ACAO).map(({ valor, rotulo }) => (
               <SelectItem key={valor} value={valor}>
-                {rotulo}
+                {t(rotulo)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -151,13 +158,13 @@ export function ActionForm({
             }}
           />
           <p className="text-xs text-text-muted">
-            Sai exatamente assim, sem IA. No laço, {`{{volta}}`} e {`{{voltas}}`} viram o número da volta.
+            {t("Sai exatamente assim, sem IA. No laço,")} {t("{{volta}}")} e {t("{{voltas}}")} {t("viram o número da volta.")}
           </p>
         </div>
       ) : mode === "ai_message" ? (
         <>
           <div className="space-y-2">
-            <Label htmlFor="action-prompt-hint">Instrução para a IA</Label>
+            <Label htmlFor="action-prompt-hint">{t("Instrução para a IA")}</Label>
             <Textarea
               id="action-prompt-hint"
               maxLength={1000}
@@ -169,7 +176,7 @@ export function ActionForm({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="action-fallback">Se a IA não conseguir escrever, mandar este modelo</Label>
+            <Label htmlFor="action-fallback">{t("Se a IA não conseguir escrever, mandar este modelo")}</Label>
             <SeletorDeModelo
               id="action-fallback"
               valor={fallbackTemplateId}
@@ -183,7 +190,7 @@ export function ActionForm({
         </>
       ) : (
         <div className="space-y-2">
-          <Label htmlFor="action-template-id">Modelo de mensagem</Label>
+          <Label htmlFor="action-template-id">{t("Modelo de mensagem")}</Label>
           <SeletorDeModelo
             id="action-template-id"
             valor={templateId}

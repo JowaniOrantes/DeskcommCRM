@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -34,6 +36,7 @@ interface Props {
 }
 
 export function AcervoClient({ initialSources, initialChave, agentes }: Props) {
+  const t = useT();
   const qc = useQueryClient();
   const [novoAberto, setNovoAberto] = useState(false);
 
@@ -72,12 +75,12 @@ export function AcervoClient({ initialSources, initialChave, agentes }: Props) {
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-text-muted">
           {lista.length === 0
-            ? "Nenhum material ainda."
-            : `${lista.length} ${lista.length === 1 ? "material" : "materiais"} no acervo.`}
+            ? t("Nenhum material ainda.")
+            : `${lista.length} ${lista.length === 1 ? t("material") : t("materiais")} ${t("no acervo.")}`}
         </p>
         <Button onClick={() => setNovoAberto(true)} data-testid="acervo-adicionar">
           <Plus className="mr-2 h-4 w-4" aria-hidden />
-          Adicionar material
+          {t("Adicionar material")}
         </Button>
       </div>
 
@@ -93,11 +96,11 @@ export function AcervoClient({ initialSources, initialChave, agentes }: Props) {
           className="rounded-lg border border-dashed border-border p-8 text-center"
           data-testid="acervo-vazio"
         >
-          <p className="text-sm font-medium">O agente ainda não conhece o seu negócio</p>
+          <p className="text-sm font-medium">{t("O agente ainda não conhece o seu negócio")}</p>
           <p className="mx-auto mt-1 max-w-prose text-sm text-text-muted">
-            Comece pelo que ele mais vai precisar: as perguntas que se repetem, e a política que
-            você mais explica. Ele passa a consultar isso antes de responder, em vez de
-            improvisar.
+            {t(
+              "Comece pelo que ele mais vai precisar: as perguntas que se repetem, e a política que você mais explica. Ele passa a consultar isso antes de responder, em vez de improvisar.",
+            )}
           </p>
         </div>
       ) : (
@@ -119,11 +122,13 @@ export function AcervoClient({ initialSources, initialChave, agentes }: Props) {
       {arquivados.length > 0 ? (
         <details className="rounded-lg border border-border p-4" data-testid="acervo-arquivados">
           <summary className="cursor-pointer text-sm font-medium">
-            {arquivados.length} arquivado{arquivados.length === 1 ? "" : "s"}
+            {arquivados.length}{" "}
+            {arquivados.length === 1 ? t("arquivado") : t("arquivados")}
           </summary>
           <p className="mt-2 text-xs text-text-muted">
-            Material arquivado não é consultado por nenhum assistente, e não é apagado — o
-            histórico do que o agente já soube continua existindo.
+            {t(
+              "Material arquivado não é consultado por nenhum assistente, e não é apagado — o histórico do que o agente já soube continua existindo.",
+            )}
           </p>
           <ul className="mt-3 space-y-1 text-sm">
             {arquivados.map((s) => (

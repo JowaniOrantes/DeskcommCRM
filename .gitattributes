@@ -27,3 +27,17 @@ supabase/migrations/MANIFEST.md merge=union
 #
 # O conserto certo para o baseline é de processo, não de atributo: apêndice
 # idempotente por migration, como a doutrina de migrations do CLAUDE.md manda.
+
+# ─── Fim de linha fixo em LF pra todo .sql ───────────────────────────────────
+#
+# supabase/baseline.sql tem blocos que se autoconferem por md5(body) contra uma
+# constante `v_md5` gravada no próprio arquivo (ex.: migration 0191, playbook
+# `agendamento`). Sem esta regra, um clone com `core.autocrlf=true` (padrão do
+# instalador git pra Windows) faz checkout do arquivo com CRLF — o hash
+# declarado foi calculado sobre o blob LF do git, então o corpo inserido no
+# banco (lido do disco, já CRLF) diverge do declarado e o self-check do
+# `do $pub$ ... end $pub$;` derruba `pnpm test:db` antes de qualquer teste
+# rodar. CI passa porque `ubuntu-latest` não converte por padrão — só quem
+# clona no Windows vê a falha. `eol=lf` fixa LF no checkout independente do
+# `core.autocrlf` de quem clonou.
+*.sql text eol=lf

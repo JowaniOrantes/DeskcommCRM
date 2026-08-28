@@ -1,4 +1,8 @@
 "use client";
+
+import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -15,8 +19,8 @@ interface Props {
   canWrite: boolean;
 }
 
-function formatUpdatedAt(iso: string): string {
-  return new Date(iso).toLocaleDateString("pt-BR", {
+function formatUpdatedAt(iso: string, idioma: string): string {
+  return new Date(iso).toLocaleDateString(idioma, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -24,6 +28,8 @@ function formatUpdatedAt(iso: string): string {
 }
 
 export function FlowsList({ initialData, canWrite }: Props) {
+  const tagDoIdioma = useTagDeIdioma();
+  const t = useT();
   const { data } = useFollowupFlows({ initialData });
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -40,11 +46,11 @@ export function FlowsList({ initialData, canWrite }: Props) {
       <>
         <Card className="flex flex-col items-center gap-3 p-10 text-center">
           <FlowArrow size={36} aria-hidden className="text-text-muted" />
-          <h2 className="font-medium">Nenhum fluxo de follow-up ainda</h2>
+          <h2 className="font-medium">{t("Nenhum fluxo de follow-up ainda")}</h2>
           <p className="max-w-sm text-sm text-text-muted">
-            Follow-ups reengajam contatos após silêncio, mudança de etapa, uma regra em
-            Webhooks ou a resposta do contato — sem depender de alguém lembrar de mandar
-            mensagem.
+            {t(
+              "Follow-ups reengajam contatos após silêncio, mudança de etapa, uma regra em Webhooks ou a resposta do contato — sem depender de alguém lembrar de mandar mensagem.",
+            )}
           </p>
           {canWrite && <div className="mt-1">{newFlowButton}</div>}
         </Card>
@@ -72,7 +78,7 @@ export function FlowsList({ initialData, canWrite }: Props) {
                 </div>
                 <dl className="grid grid-cols-2 gap-2 pt-1 text-xs">
                   <div>
-                    <dt className="text-text-muted">Versão</dt>
+                    <dt className="text-text-muted">{t("Versão")}</dt>
                     <dd className="font-mono">{flow.active_version_id ? "publicada" : "—"}</dd>
                   </div>
                   <div>
@@ -81,7 +87,7 @@ export function FlowsList({ initialData, canWrite }: Props) {
                   </div>
                 </dl>
                 <p className="mt-auto pt-2 text-xs text-text-muted">
-                  Atualizado em {formatUpdatedAt(flow.updated_at)}
+                  Atualizado em {formatUpdatedAt(flow.updated_at, tagDoIdioma)}
                 </p>
               </Link>
               {canWrite && (

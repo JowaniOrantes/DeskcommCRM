@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useT } from "@/hooks/i18n/useT";
 
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export interface PassoVisivel {
  * primeiro passo o wizard inteiro.
  */
 export function Stepper({ passos }: { passos: PassoVisivel[] }) {
+  const t = useT();
   const pathname = usePathname() ?? "";
   const idx = passos.findIndex((p) => pathname.includes(`/${p.segmento}`));
 
@@ -69,7 +71,7 @@ export function Stepper({ passos }: { passos: PassoVisivel[] }) {
                 isActive ? "font-medium text-foreground" : "text-muted-foreground",
               )}
             >
-              {p.rotulo}
+              {t(p.rotulo)}
             </span>
           </li>
         );

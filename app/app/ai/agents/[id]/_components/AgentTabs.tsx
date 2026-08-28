@@ -4,6 +4,7 @@
  */
 import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/hooks/i18n/useT";
 import { AgentForm, type ChannelSessionLite } from "./AgentForm";
 import type { CoberturaPorFunil } from "./FunisDoAgente";
 import type { MaterialDoAcervo } from "./BasesDoAgente";
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export function AgentTabs(props: Props) {
+  const t = useT();
   const [tab, setTab] = React.useState<
     "configuration" | "test" | "capacidades" | "runs" | "history" | "proposals"
   >("configuration");
@@ -52,14 +54,14 @@ export function AgentTabs(props: Props) {
       className="flex flex-col gap-4"
     >
       <TabsList>
-        <TabsTrigger value="configuration">Configuração</TabsTrigger>
+        <TabsTrigger value="configuration">{t("Configuração")}</TabsTrigger>
         <TabsTrigger value="test" disabled={!hasVersion}>
-          Teste
+          {t("Teste")}
         </TabsTrigger>
-        <TabsTrigger value="capacidades">Capacidades</TabsTrigger>
-        <TabsTrigger value="runs">Execuções</TabsTrigger>
-        <TabsTrigger value="history">Histórico</TabsTrigger>
-        <TabsTrigger value="proposals">Propostas</TabsTrigger>
+        <TabsTrigger value="capacidades">{t("Capacidades")}</TabsTrigger>
+        <TabsTrigger value="runs">{t("Execuções")}</TabsTrigger>
+        <TabsTrigger value="history">{t("Histórico")}</TabsTrigger>
+        <TabsTrigger value="proposals">{t("Propostas")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="configuration" className="m-0">

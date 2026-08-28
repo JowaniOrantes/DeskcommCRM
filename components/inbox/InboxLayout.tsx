@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useT } from "@/hooks/i18n/useT";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { estadoDaJanela, formatarDecorrido } from "@/lib/channels/janela";
@@ -101,6 +102,7 @@ interface InboxLayoutProps {
 }
 
 export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {}) {
+  const t = useT();
   const { activeOrg } = useAuth();
   const orgId = activeOrg?.orgId ?? null;
 
@@ -243,14 +245,14 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
   const motivoDaJanela =
     janela.tipo === "fechada"
       ? janela.fechadaHaMs === null
-        ? "O cliente ainda não escreveu — a janela de 24h nunca abriu. Só um modelo aprovado sai daqui."
-        : `A janela de 24h fechou há ${formatarDecorrido(janela.fechadaHaMs)}. Só um modelo aprovado sai daqui — texto livre é recusado pela plataforma.`
+        ? t("O cliente ainda não escreveu — a janela de 24h nunca abriu. Só um modelo aprovado sai daqui.")
+        : `${t("A janela de 24h fechou há")} ${formatarDecorrido(janela.fechadaHaMs)}. ${t("Só um modelo aprovado sai daqui — texto livre é recusado pela plataforma.")}`
       : null;
 
   const blockedReason = selectedConversation?.contacts?.is_blocked
-    ? "Contato bloqueado — envio de mensagens desabilitado."
+    ? t("Contato bloqueado — envio de mensagens desabilitado.")
     : selectedConversation?.contacts?.is_anonymized
-      ? "Contato anonimizado — não é possível enviar mensagens."
+      ? t("Contato anonimizado — não é possível enviar mensagens.")
       : null;
 
   // Altura da grade: a conta desconta TUDO que fica acima e abaixo dela.
@@ -382,7 +384,7 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
               onClick={() => handleSelect(null)}
             >
               <CaretLeft size={16} />
-              Conversas
+              {t("Conversas")}
             </Button>
             <div className="flex-1" />
             {selectedConversation && (
@@ -390,11 +392,11 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-9 gap-1 px-2 xl:hidden">
                     <IdentificationCard size={16} />
-                    Ficha
+                    {t("Ficha")}
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[min(22rem,90vw)] overflow-y-auto p-0">
-                  <SheetTitle className="sr-only">Ficha do contato</SheetTitle>
+                  <SheetTitle className="sr-only">{t("Ficha do contato")}</SheetTitle>
                   <CRMSidePanel conversation={selectedConversation} />
                 </SheetContent>
               </Sheet>
@@ -429,11 +431,11 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
           </>
         ) : selectionNotFound ? (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-            Conversa não encontrada ou fora do seu acesso.
+            {t("Conversa não encontrada ou fora do seu acesso.")}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            Selecione uma conversa
+            {t("Selecione uma conversa")}
           </div>
         )}
       </div>

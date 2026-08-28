@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
 import type { AdminConversationDetailResponse } from "@/hooks/useAdminConversation";
 import { Buildings, Phone, ArrowRight } from "@/lib/ui/icons";
@@ -17,6 +19,7 @@ function maskEmail(email: string | null | undefined): string {
 }
 
 export function AdminSidePanel({ data }: Props) {
+  const t = useT();
   const { contact, organization } = data;
 
   return (
@@ -32,7 +35,7 @@ export function AdminSidePanel({ data }: Props) {
               {contact.is_anonymized ? (
                 <span className="italic text-muted-foreground">Contato anonimizado</span>
               ) : (
-                contact.name ?? "Sem nome"
+                contact.name ?? t("Sem nome")
               )}
             </div>
             {contact.phone_number && (
@@ -51,7 +54,7 @@ export function AdminSidePanel({ data }: Props) {
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Sem contato vinculado.</p>
+          <p className="text-xs text-muted-foreground">{t("Sem contato vinculado.")}</p>
         )}
       </section>
 
@@ -80,7 +83,7 @@ export function AdminSidePanel({ data }: Props) {
             </Link>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Sem organização vinculada.</p>
+          <p className="text-xs text-muted-foreground">{t("Sem organização vinculada.")}</p>
         )}
       </section>
     </aside>

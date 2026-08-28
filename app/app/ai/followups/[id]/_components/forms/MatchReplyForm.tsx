@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/hooks/i18n/useT";
+
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ export function MatchReplyForm({
   config: ConfigOf<"match_reply">;
   onChange: (c: ConfigOf<"match_reply">) => void;
 }) {
+  const t = useT();
   const [branches, setBranches] = useState(config.branches);
   const [graceMin, setGraceMin] = useState(msToMin(config.grace_timeout_ms));
   const [saveTo, setSaveTo] = useState<ReplySaveTo | undefined>(config.save_to);
@@ -79,7 +82,7 @@ export function MatchReplyForm({
               aria-label={`Rótulo da regra ${index + 1}`}
               value={branch.label}
               onChange={(e) => atualizar(index, { label: e.target.value })}
-              placeholder="Rótulo"
+              placeholder={t("Rótulo")}
             />
             <div className="flex gap-2">
               <Select
@@ -90,8 +93,8 @@ export function MatchReplyForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="contains">Contém</SelectItem>
-                  <SelectItem value="eq">É igual a</SelectItem>
+                  <SelectItem value="contains">{t("Contém")}</SelectItem>
+                  <SelectItem value="eq">{t("É igual a")}</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -174,17 +177,17 @@ export function MatchReplyForm({
           }}
         >
           <SelectTrigger id="match-reply-save">
-            <SelectValue placeholder="Não gravar" />
+            <SelectValue placeholder={t("Não gravar")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">Não gravar</SelectItem>
+            <SelectItem value="__none__">{t("Não gravar")}</SelectItem>
             <SelectItem value="__contact_name__">Nome do contato</SelectItem>
             {camposUnicos.map((c) => (
               <SelectItem key={c.key} value={c.key}>
                 {c.label} ({c.key})
               </SelectItem>
             ))}
-            <SelectItem value="__livre__">Chave livre (use {"{{volta}}"} no laço)</SelectItem>
+            <SelectItem value="__livre__">{t("Chave livre (use")} {t("{{volta}}")} {t("no laço)")}</SelectItem>
           </SelectContent>
         </Select>
         {saveTo?.kind === "lead_custom" && !camposUnicos.some((c) => c.key === saveTo.key) && (
@@ -222,7 +225,7 @@ export function MatchReplyForm({
           </div>
         )}
         <p className="text-xs text-text-muted">
-          Crie os campos em Configurações → Funis. A resposta só grava quando o contato responde (não no timeout).
+          {t("Crie os campos em Configurações → Funis. A resposta só grava quando o contato responde (não no timeout).")}
         </p>
       </div>
       {error && <p className="text-xs text-error-fg">{error}</p>}

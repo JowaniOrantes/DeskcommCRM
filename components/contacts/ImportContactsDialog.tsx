@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { useT } from "@/hooks/i18n/useT";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ interface Props {
  * fechar sozinho esconderia o que o usuário veio corrigir na planilha.
  */
 export function ImportContactsDialog({ open, onOpenChange }: Props) {
+  const t = useT();
   const importar = useImportContacts();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -41,14 +43,14 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
     try {
       const r = await importar.mutateAsync(file);
       setResumo(r);
-      if (r.imported > 0) toast.success(`${r.imported} contato(s) importado(s)`);
-      if (r.errors.length > 0) toast.warning(`${r.errors.length} linha(s) com problema`);
+      if (r.imported > 0) toast.success(`${r.imported} ${t("contato(s) importado(s)")}`);
+      if (r.errors.length > 0) toast.warning(`${r.errors.length} ${t("linha(s) com problema")}`);
     } catch (err) {
       // Falha de requisição (arquivo grande, formato errado…): mostra no rodapé.
       const msg =
         err instanceof Error && err.message
-          ? err.message
-          : "Não foi possível importar o arquivo.";
+          ? t(err.message)
+          : t("Não foi possível importar o arquivo.");
       toast.error(msg);
     }
   }
@@ -63,11 +65,11 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Importar contatos de planilha</DialogTitle>
+          <DialogTitle>{t("Importar contatos de planilha")}</DialogTitle>
           <DialogDescription>
-            Envie um arquivo .csv com cabeçalho — colunas reconhecidas: nome,
-            telefone, email, cpf, nascimento, tags. Excel: use “Salvar como” →
-            “CSV UTF-8”. Máximo de 500 linhas por arquivo.
+            {t(
+              "Envie um arquivo .csv com cabeçalho — colunas reconhecidas: nome, telefone, email, cpf, nascimento, tags. Excel: use “Salvar como” → “CSV UTF-8”. Máximo de 500 linhas por arquivo.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -75,7 +77,7 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
           {!resumo && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="csv-file">Arquivo CSV</Label>
+                <Label htmlFor="csv-file">{t("Arquivo CSV")}</Label>
                 <Input
                   id="csv-file"
                   ref={inputRef}
@@ -96,10 +98,10 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
                   onClick={() => onOpenChange(false)}
                   disabled={importar.isPending}
                 >
-                  Cancelar
+                  {t("Cancelar")}
                 </Button>
                 <Button type="submit" disabled={!file || importar.isPending}>
-                  {importar.isPending ? "Importando…" : "Importar"}
+                  {importar.isPending ? t("Importando…") : t("Importar")}
                 </Button>
               </DialogFooter>
             </>
@@ -109,19 +111,19 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2 text-sm">
                 <span className="rounded bg-surface px-2 py-1">
-                  {resumo.total_linhas} linha(s) lidas
+                  {resumo.total_linhas} {t("linha(s) lidas")}
                 </span>
                 <span className="rounded px-2 py-1 font-medium">
-                  {resumo.imported} importado(s)
+                  {resumo.imported} {t("importado(s)")}
                 </span>
                 {resumo.skipped_duplicates > 0 && (
                   <span className="rounded bg-surface px-2 py-1">
-                    {resumo.skipped_duplicates} já existente(s)
+                    {resumo.skipped_duplicates} {t("já existente(s)")}
                   </span>
                 )}
                 {resumo.errors.length > 0 && (
                   <span className="rounded px-2 py-1 font-medium">
-                    {resumo.errors.length} com erro
+                    {resumo.errors.length} {t("com erro")}
                   </span>
                 )}
               </div>
@@ -130,7 +132,7 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
                 <div className="max-h-48 space-y-1 overflow-y-auto rounded border border-border p-2 text-sm">
                   {resumo.errors.map((err) => (
                     <p key={err.linha}>
-                      Linha {err.linha}: {err.motivo}
+                      {t("Linha")} {err.linha}: {err.motivo}
                     </p>
                   ))}
                 </div>
@@ -138,10 +140,10 @@ export function ImportContactsDialog({ open, onOpenChange }: Props) {
 
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={reset}>
-                  Importar outro arquivo
+                  {t("Importar outro arquivo")}
                 </Button>
                 <Button type="button" onClick={() => onOpenChange(false)}>
-                  Concluir
+                  {t("Concluir")}
                 </Button>
               </DialogFooter>
             </div>

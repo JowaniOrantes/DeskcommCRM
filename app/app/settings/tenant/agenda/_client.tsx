@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/hooks/i18n/useT";
+
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -79,6 +81,7 @@ export function TiposDeAgendamentoClient({
   podeEditar: boolean;
   usuarioAtualId: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const [criando, setCriando] = React.useState(false);
   /**
@@ -143,7 +146,7 @@ export function TiposDeAgendamentoClient({
                         ? { default_owner_user_id: rascunho.default_owner_user_id }
                         : {}),
                     }),
-                  "Tipo de agendamento criado.",
+                  t("Tipo de agendamento criado."),
                 );
                 if (feito) {
                   setCriando(false);
@@ -152,19 +155,19 @@ export function TiposDeAgendamentoClient({
               }}
             >
               <label className="flex flex-col gap-1 text-xs font-medium text-text-muted">
-                Nome
+                {t("Nome")}
                 <input
                   data-testid="novo-tipo-nome"
                   required
                   minLength={2}
                   value={rascunho.name}
                   onChange={(e) => setRascunho((r) => ({ ...r, name: e.target.value }))}
-                  placeholder="Retorno"
+                  placeholder={t("Retorno")}
                   className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text outline-none focus:border-border-strong"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium text-text-muted">
-                Categoria
+                {t("Categoria")}
                 <select
                   data-testid="novo-tipo-categoria"
                   value={rascunho.category}
@@ -173,13 +176,13 @@ export function TiposDeAgendamentoClient({
                 >
                   {CATEGORIAS.map((c) => (
                     <option key={c.valor} value={c.valor}>
-                      {c.rotulo}
+                      {t(c.rotulo)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium text-text-muted">
-                Duração (minutos)
+                {t("Duração (minutos)")}
                 <input
                   data-testid="novo-tipo-duracao"
                   type="number"
@@ -193,7 +196,7 @@ export function TiposDeAgendamentoClient({
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium text-text-muted">
-                Onde acontece
+                {t("Onde acontece")}
                 <select
                   data-testid="novo-tipo-local"
                   value={rascunho.location_kind}
@@ -212,7 +215,7 @@ export function TiposDeAgendamentoClient({
                     dono para saber de QUEM é a jornada; sem ele a rota devolve
                     `sem_responsavel` e a tela de marcar não oferece horário nenhum.
                     Era exatamente o estado dos três tipos semeados. */}
-                Quem atende (sem isto, não há horário para oferecer)
+                {t("Quem atende (sem isto, não há horário para oferecer)")}
                 <select
                   data-testid="novo-tipo-dono"
                   value={rascunho.default_owner_user_id}
@@ -221,7 +224,7 @@ export function TiposDeAgendamentoClient({
                   }
                   className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text outline-none focus:border-border-strong"
                 >
-                  <option value="">Definir depois</option>
+                  <option value="">{t("Definir depois")}</option>
                   {pessoas.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.nome}
@@ -234,7 +237,7 @@ export function TiposDeAgendamentoClient({
                   Cancelar
                 </Button>
                 <Button type="submit" size="sm" data-testid="salvar-novo-tipo" disabled={salvando}>
-                  {salvando ? "Criando…" : "Criar tipo"}
+                  {salvando ? t("Criando…") : t("Criar tipo")}
                 </Button>
               </div>
             </form>
@@ -249,23 +252,23 @@ export function TiposDeAgendamentoClient({
       <ul className="flex flex-col gap-2" data-testid="lista-de-tipos">
         {tiposIniciais.length === 0 ? (
           <li data-testid="sem-tipos" className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">
-            Nenhum tipo de agendamento ainda. Crie o primeiro para que a Agenda tenha o que oferecer.
+            {t("Nenhum tipo de agendamento ainda. Crie o primeiro para que a Agenda tenha o que oferecer.")}
           </li>
         ) : null}
-        {tiposIniciais.map((t) => (
+        {tiposIniciais.map((tipo) => (
           <li
-            key={t.id}
-            data-testid={`tipo-${t.id}`}
-            className={`rounded-lg border border-border bg-surface p-3 ${t.is_active ? "" : "opacity-60"}`}
+            key={tipo.id}
+            data-testid={`tipo-${tipo.id}`}
+            className={`rounded-lg border border-border bg-surface p-3 ${tipo.is_active ? "" : "opacity-60"}`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-text">{t.name}</span>
+              <span className="text-sm font-medium text-text">{t(tipo.name)}</span>
               <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-text-muted">
-                {rotuloDe(CATEGORIAS, t.category)}
+                {rotuloDe(CATEGORIAS, tipo.category)}
               </span>
-              <span className="text-xs tabular-nums text-text-muted">{t.duration_minutes} min</span>
-              <span className="text-xs text-text-muted">{rotuloDe(LOCAIS, t.location_kind)}</span>
-              {!t.default_owner_user_id ? (
+              <span className="text-xs tabular-nums text-text-muted">{tipo.duration_minutes} min</span>
+              <span className="text-xs text-text-muted">{rotuloDe(LOCAIS, tipo.location_kind)}</span>
+              {!tipo.default_owner_user_id ? (
                 // O aviso existe porque o sintoma é MUDO: sem dono, a tela de
                 // marcar simplesmente não mostra horário, sem dizer por quê.
                 //
@@ -281,38 +284,38 @@ export function TiposDeAgendamentoClient({
                 podeEditar ? (
                   <button
                     type="button"
-                    data-testid={`sem-dono-${t.id}`}
-                    onClick={() => setEditandoId(t.id)}
+                    data-testid={`sem-dono-${tipo.id}`}
+                    onClick={() => setEditandoId(tipo.id)}
                     className="text-xs text-warning underline underline-offset-2 hover:text-warning/80"
                   >
-                    sem responsável — definir quem atende
+                    {t("sem responsável — definir quem atende")}
                   </button>
                 ) : (
-                  <span data-testid={`sem-dono-${t.id}`} className="text-xs text-warning">
-                    sem responsável — não aparece para marcar
+                  <span data-testid={`sem-dono-${tipo.id}`} className="text-xs text-warning">
+                    {t("sem responsável — não aparece para marcar")}
                   </span>
                 )
               ) : null}
-              {!t.is_active ? <span className="text-xs text-text-subtle">desativado</span> : null}
+              {!tipo.is_active ? <span className="text-xs text-text-subtle">{t("desativado")}</span> : null}
               {podeEditar ? (
                 <span className="ml-auto flex gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    data-testid={`editar-${t.id}`}
-                    onClick={() => setEditandoId(editandoId === t.id ? null : t.id)}
+                    data-testid={`editar-${tipo.id}`}
+                    onClick={() => setEditandoId(editandoId === tipo.id ? null : tipo.id)}
                   >
-                    {editandoId === t.id ? "Fechar" : "Editar"}
+                    {editandoId === tipo.id ? t("Fechar") : t("Editar")}
                   </Button>
-                  {t.is_active ? (
+                  {tipo.is_active ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      data-testid={`desativar-${t.id}`}
+                      data-testid={`desativar-${tipo.id}`}
                       disabled={salvando}
                       onClick={() =>
                         void comErro(
-                          () => apiClient.delete("/api/v1/agenda/tipos", { id: t.id }),
+                          () => apiClient.delete("/api/v1/agenda/tipos", { id: tipo.id }),
                           "Tipo desativado.",
                         )
                       }
@@ -323,11 +326,11 @@ export function TiposDeAgendamentoClient({
                     <Button
                       variant="ghost"
                       size="sm"
-                      data-testid={`reativar-${t.id}`}
+                      data-testid={`reativar-${tipo.id}`}
                       disabled={salvando}
                       onClick={() =>
                         void comErro(
-                          () => apiClient.patch("/api/v1/agenda/tipos", { id: t.id, is_active: true } as never),
+                          () => apiClient.patch("/api/v1/agenda/tipos", { id: tipo.id, is_active: true } as never),
                           "Tipo reativado.",
                         )
                       }
@@ -339,9 +342,9 @@ export function TiposDeAgendamentoClient({
               ) : null}
             </div>
 
-            {editandoId === t.id ? (
+            {editandoId === tipo.id ? (
               <form
-                data-testid={`form-editar-${t.id}`}
+                data-testid={`form-editar-${tipo.id}`}
                 className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-3"
                 onSubmit={async (e) => {
                   e.preventDefault();
@@ -349,13 +352,13 @@ export function TiposDeAgendamentoClient({
                   const feito = await comErro(
                     () =>
                       apiClient.patch("/api/v1/agenda/tipos", {
-                        id: t.id,
+                        id: tipo.id,
                         name: String(dados.get("name") ?? "").trim(),
-                        category: String(dados.get("category") ?? t.category),
-                        duration_minutes: Number(dados.get("duration_minutes") ?? t.duration_minutes),
+                        category: String(dados.get("category") ?? tipo.category),
+                        duration_minutes: Number(dados.get("duration_minutes") ?? tipo.duration_minutes),
                         // `|| null`, e NÃO omitir quando vazio.
                         //
-                        // A tela oferece `<option value="">Sem responsável</option>`
+                        // A tela oferece `<option value="">{t("Sem responsável")}</option>`
                         // logo abaixo, e omitir o campo fazia essa escolha não
                         // chegar ao servidor: depois de definido, o responsável não
                         // podia mais ser removido. Controle que a tela oferece e o
@@ -378,32 +381,32 @@ export function TiposDeAgendamentoClient({
                   Nome
                   <input
                     name="name"
-                    defaultValue={t.name}
-                    data-testid={`editar-nome-${t.id}`}
+                    defaultValue={tipo.name}
+                    data-testid={`editar-nome-${tipo.id}`}
                     className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-xs text-text-muted">
-                  Duração
+                  {t("Duração")}
                   <input
                     name="duration_minutes"
                     type="number"
                     min={5}
                     max={1440}
-                    defaultValue={t.duration_minutes}
-                    data-testid={`editar-duracao-${t.id}`}
+                    defaultValue={tipo.duration_minutes}
+                    data-testid={`editar-duracao-${tipo.id}`}
                     className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-xs text-text-muted">
-                  Quem atende
+                  {t("Quem atende")}
                   <select
                     name="default_owner_user_id"
-                    defaultValue={t.default_owner_user_id ?? ""}
-                    data-testid={`editar-dono-${t.id}`}
+                    defaultValue={tipo.default_owner_user_id ?? ""}
+                    data-testid={`editar-dono-${tipo.id}`}
                     className="rounded-md border border-border bg-surface-elevated p-2 text-sm text-text"
                   >
-                    <option value="">Sem responsável</option>
+                    <option value="">{t("Sem responsável")}</option>
                     {pessoas.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nome}
@@ -412,8 +415,8 @@ export function TiposDeAgendamentoClient({
                   </select>
                 </label>
                 <div className="flex justify-end sm:col-span-3">
-                  <Button type="submit" size="sm" data-testid={`salvar-${t.id}`} disabled={salvando}>
-                    {salvando ? "Salvando…" : "Salvar"}
+                  <Button type="submit" size="sm" data-testid={`salvar-${tipo.id}`} disabled={salvando}>
+                    {salvando ? t("Salvando…") : t("Salvar")}
                   </Button>
                 </div>
               </form>

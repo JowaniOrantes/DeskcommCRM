@@ -238,10 +238,11 @@ export function actorShape(actorKind: string | null): ActivityActorShape {
 export function actorName(
   actorKind: string | null,
   nomes: { agente?: string | null; usuario?: string | null } = {},
+  t: (texto: string) => string = (texto) => texto,
 ): string {
   if (actorKind === "ai" && nomes.agente) return nomes.agente;
   if ((actorKind === "user" || actorKind === "contact") && nomes.usuario) return nomes.usuario;
-  return actorLabel(actorKind);
+  return t(actorLabel(actorKind));
 }
 
 /**

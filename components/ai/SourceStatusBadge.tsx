@@ -1,6 +1,7 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import type { SourceRow } from "@/hooks/ai/useKnowledgeSources";
+import { useT } from "@/hooks/i18n/useT";
 
 type Variant = "default" | "neutral" | "success" | "warning" | "error" | "info";
 
@@ -55,7 +56,8 @@ interface Props {
 }
 
 export function SourceStatusBadge({ source }: Props) {
+  const t = useT();
   const derived = deriveBadgeStatus(source);
   const { label, variant } = MAP[derived];
-  return <Badge variant={variant}>{label}</Badge>;
+  return <Badge variant={variant}>{t(label)}</Badge>;
 }

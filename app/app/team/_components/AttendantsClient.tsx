@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useMemo, useState } from "react";
 import { FUSOS_OFERECIDOS } from "@/lib/tempo/fusos";
 
@@ -83,9 +85,9 @@ interface Attendant {
  * o roteamento aceitando a qualquer hora — é dito por extenso no diálogo, onde
  * há espaço para as duas metades.
  */
-function summarizeSchedule(windows: ScheduleWindow[]): string {
-  if (windows.length === 0) return "Não publicado";
-  return windows.map((w) => `${DOW_LABELS[w.dow]} ${w.start}–${w.end}`).join(", ");
+function summarizeSchedule(windows: ScheduleWindow[], t: (texto: string) => string): string {
+  if (windows.length === 0) return t("Não publicado");
+  return windows.map((w) => `${t(DOW_LABELS[w.dow] ?? "")} ${w.start}–${w.end}`).join(", ");
 }
 
 function StatusBadge({ attendant, now }: { attendant: Attendant; now: Date }) {
@@ -114,6 +116,7 @@ function ScheduleDialog({
   onSave: (windows: ScheduleWindow[], timezone: string) => void;
   isPending: boolean;
 }) {
+  const t = useT();
   const initial = attendant.availability?.schedule;
   const [timezone, setTimezone] = useState(initial?.timezone || "America/Sao_Paulo");
   const [windows, setWindows] = useState<ScheduleWindow[]>(initial?.windows ?? []);
@@ -122,17 +125,17 @@ function ScheduleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Horário de {attendant.name}</DialogTitle>
+          <DialogTitle>{t("Horário de")} {attendant.name}</DialogTitle>
           <DialogDescription>
-            Sem janelas, o roteamento aceita conversa a qualquer hora — mas a Agenda não
-            oferece NENHUM horário para marcar. Adicione janelas para publicar seus
-            horários de atendimento.
+            {t(
+              "Sem janelas, o roteamento aceita conversa a qualquer hora — mas a Agenda não oferece NENHUM horário para marcar. Adicione janelas para publicar seus horários de atendimento.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="tz">Fuso horário</Label>
+            <Label htmlFor="tz">{t("Fuso horário")}</Label>
             {/* Mesma razão do painel anti-banimento, e aqui o custo é maior:
                 este fuso é lido por `localMoment`, que LANÇA num fuso inexistente
                 — e o atendente com agenda quebrada nunca fica elegível, sem que
@@ -154,7 +157,7 @@ function ScheduleDialog({
           <div className="space-y-2">
             {windows.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nenhuma janela publicada — ninguém consegue marcar com esta pessoa.
+                {t("Nenhuma janela publicada — ninguém consegue marcar com esta pessoa.")}
               </p>
             ) : null}
             {windows.map((w, i) => (
@@ -181,7 +184,7 @@ function ScheduleDialog({
                 <Input
                   type="time"
                   value={w.start}
-                  aria-label="Início"
+                  aria-label={t("Início")}
                   onChange={(e) =>
                     setWindows((ws) =>
                       ws.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)),
@@ -235,6 +238,7 @@ function ScheduleDialog({
 }
 
 function RoutingCard({ canManage }: { canManage: boolean }) {
+  const t = useT();
   const { data, isLoading, isError } = useRoutingConfig();
   const update = useUpdateRouting();
   const config = data?.data;
@@ -258,7 +262,7 @@ function RoutingCard({ canManage }: { canManage: boolean }) {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-sm text-destructive">Erro ao carregar a configuração de roteamento.</p>
+          <p className="text-sm text-destructive">{t("Erro ao carregar a configuração de roteamento.")}</p>
         </CardContent>
       </Card>
     );
@@ -277,7 +281,7 @@ function RoutingCard({ canManage }: { canManage: boolean }) {
       <CardHeader>
         <CardTitle>Modo de roteamento</CardTitle>
         <CardDescription>
-          Como as conversas novas são distribuídas entre os atendentes da organização.
+          {t("Como as conversas novas são distribuídas entre os atendentes da organização.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -306,7 +310,7 @@ function RoutingCard({ canManage }: { canManage: boolean }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="max_retries">Tentativas máx.</Label>
+            <Label htmlFor="max_retries">{t("Tentativas máx.")}</Label>
             <Input
               id="max_retries"
               type="number"
@@ -351,6 +355,7 @@ interface Props {
 }
 
 export function AttendantsClient({ canManage }: Props) {
+  const t = useT();
   const avail = useAttendants();
   const patch = useUpdateAvailability();
   const [scheduleFor, setScheduleFor] = useState<Attendant | null>(null);
@@ -376,7 +381,7 @@ export function AttendantsClient({ canManage }: Props) {
 
       <div className="rounded-md border">
         <div className="border-b px-4 py-3" data-testid="atendentes-e-horarios">
-          <h2 className="text-sm font-semibold">Atendentes e horários de atendimento</h2>
+          <h2 className="text-sm font-semibold">{t("Atendentes e horários de atendimento")}</h2>
           <p className="text-xs text-muted-foreground">
             {/*
               A frase NOMEIA o que a coluna "Horário" faz, e isso é o conserto —
@@ -386,8 +391,9 @@ export function AttendantsClient({ canManage }: Props) {
               (`/app/team?aba=atendimento`) quando ninguém publicou nada, e o
               destino tinha de dizer que é o lugar certo.
             */}
-            Status, carga e capacidade de cada atendente — e a jornada semanal que
-            decide os horários oferecidos na Agenda. Sem ela ninguém consegue marcar.
+            {t(
+              "Status, carga e capacidade de cada atendente — e a jornada semanal que decide os horários oferecidos na Agenda. Sem ela ninguém consegue marcar.",
+            )}
           </p>
         </div>
 
@@ -401,7 +407,7 @@ export function AttendantsClient({ canManage }: Props) {
           <p className="p-4 text-sm text-destructive">Erro ao carregar atendentes.</p>
         ) : attendants.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">
-            Nenhum atendente na organização. Convide membros com papel de atendente ou superior.
+            {t("Nenhum atendente na organização. Convide membros com papel de atendente ou superior.")}
           </p>
         ) : (
           <Table>
@@ -411,8 +417,8 @@ export function AttendantsClient({ canManage }: Props) {
                 <TableHead>Status</TableHead>
                 <TableHead>Carga</TableHead>
                 <TableHead>Capacidade</TableHead>
-                <TableHead>Horário</TableHead>
-                {canManage ? <TableHead className="w-[120px]">Disponível</TableHead> : null}
+                <TableHead>{t("Horário")}</TableHead>
+                {canManage ? <TableHead className="w-[120px]">{t("Disponível")}</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -458,7 +464,7 @@ export function AttendantsClient({ canManage }: Props) {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <span>{summarizeSchedule(windows)}</span>
+                        <span>{summarizeSchedule(windows, t)}</span>
                         {canManage ? (
                           <Button
                             variant="ghost"

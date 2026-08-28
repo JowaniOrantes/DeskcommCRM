@@ -1,10 +1,15 @@
 "use client";
+
+import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+
+import type { Locale } from "date-fns";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, formatRelative, isToday, isYesterday } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { CaretDown, CaretUp, ChatCircle, Trash } from "@/lib/ui/icons";
 import {
@@ -39,17 +44,20 @@ interface Props {
   onSort: (column: ContactOrderBy) => void;
 }
 
-function displayName(c: Contact): string {
-  return rotuloDoContato(c);
+function displayName(c: Contact, t: (texto: string) => string = (texto) => texto): string {
+  return rotuloDoContato(c, t);
 }
 
 /** Hoje/ontem: relativo ("há 2 horas", "ontem"). Mais antigo: data, não dia da semana. */
-function formatUltimaAtividade(iso: string, now = new Date()): string {
+// `locale` ANTES de `now`, e não depois: `now` tem default, e um parâmetro
+// obrigatório atrás de um opcional obriga todo chamador a passar os dois. O
+// codemod acrescentou no fim, que é o certo em 22 dos 23 casos e o errado aqui.
+function formatUltimaAtividade(iso: string, locale: Locale, now = new Date()): string {
   const d = new Date(iso);
   if (isToday(d) || isYesterday(d)) {
-    return formatRelative(d, now, { locale: ptBR });
+    return formatRelative(d, now, { locale: locale });
   }
-  return format(d, "dd/MM/yyyy", { locale: ptBR });
+  return format(d, "dd/MM/yyyy", { locale: locale });
 }
 
 function SortableHead({
@@ -98,6 +106,8 @@ function SortableHead({
 }
 
 export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
+  const localeDaData = useLocaleDeData();
+  const t = useT();
   const del = useDeleteContact();
   const [alvo, setAlvo] = useState<Contact | null>(null);
   const [abrindo, setAbrindo] = useState<string | null>(null);
@@ -118,12 +128,12 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
         error?: { message?: string };
       };
       if (!res.ok || !json.data?.conversation_id) {
-        throw new Error(json.error?.message ?? "Não foi possível abrir a conversa.");
+        throw new Error(json.error?.message ?? t("Não foi possível abrir a conversa."));
       }
       await qc.invalidateQueries({ queryKey: ["contacts"] });
       router.push(`/app/inbox?id=${json.data.conversation_id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível abrir a conversa.");
+      toast.error(err instanceof Error ? t(err.message) : t("Não foi possível abrir a conversa."));
     } finally {
       setAbrindo(null);
     }
@@ -133,7 +143,7 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
     if (!alvo) return;
     try {
       await del.mutateAsync(alvo.id);
-      toast.success("Contato excluído.");
+      toast.success(t("Contato excluído."));
       setAlvo(null);
     } catch {
       // hook handles toast
@@ -146,37 +156,37 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
       <TableHeader>
         <TableRow>
           <SortableHead
-            label="Nome"
+            label={t("Nome")}
             column="display_name"
             orderBy={orderBy}
             orderDir={orderDir}
             onSort={onSort}
           />
           <SortableHead
-            label="Email"
+            label={t("Email")}
             column="email"
             orderBy={orderBy}
             orderDir={orderDir}
             onSort={onSort}
           />
           <SortableHead
-            label="Telefone"
+            label={t("Telefone")}
             column="phone_number"
             orderBy={orderBy}
             orderDir={orderDir}
             onSort={onSort}
           />
-          <TableHead>Tags</TableHead>
+          <TableHead>{t("Tags")}</TableHead>
           <SortableHead
-            label="Última atividade"
+            label={t("Última atividade")}
             column="last_activity_at"
             orderBy={orderBy}
             orderDir={orderDir}
             onSort={onSort}
           />
-          <TableHead>Status</TableHead>
+          <TableHead>{t("Status")}</TableHead>
           <TableHead className="w-[88px]">
-            <span className="sr-only">Ações</span>
+            <span className="sr-only">{t("Ações")}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -198,22 +208,22 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
               <div className="flex flex-wrap gap-1">
                 {c.tags.length === 0
                   ? <span className="text-muted-foreground text-xs">—</span>
-                  : c.tags.map((t) => (
-                      <Badge key={t} variant="neutral">{t}</Badge>
+                  : c.tags.map((tag) => (
+                      <Badge key={tag} variant="neutral">{tag}</Badge>
                     ))}
               </div>
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">
               {c.last_activity_at
-                ? formatUltimaAtividade(c.last_activity_at)
+                ? formatUltimaAtividade(c.last_activity_at, localeDaData)
                 : "—"}
             </TableCell>
             <TableCell>
               <div className="flex flex-wrap gap-1">
-                {c.is_anonymized && <Badge variant="destructive">Anonimizado</Badge>}
-                {c.is_blocked && <Badge variant="warning">Bloqueado</Badge>}
+                {c.is_anonymized && <Badge variant="destructive">{t("Anonimizado")}</Badge>}
+                {c.is_blocked && <Badge variant="warning">{t("Bloqueado")}</Badge>}
                 {!c.is_anonymized && !c.is_blocked && (
-                  <Badge variant="success">Ativo</Badge>
+                  <Badge variant="success">{t("Ativo")}</Badge>
                 )}
               </div>
             </TableCell>
@@ -223,12 +233,12 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
                   <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link
                       href={`/app/inbox?id=${c.conversa.id}`}
-                      title="Abrir conversa no Inbox"
-                      aria-label={`Abrir conversa com ${displayName(c)} no Inbox`}
+                      title={t("Abrir conversa no Inbox")}
+                      aria-label={`${t("Abrir conversa com")} ${displayName(c, t)} ${t("no Inbox")}`}
                     >
                       <ChatCircle size={16} weight="regular" aria-hidden />
                       {c.conversa.unread > 0 && (
-                        <span className="sr-only">{c.conversa.unread} sem ler</span>
+                        <span className="sr-only">{c.conversa.unread} {t("sem ler")}</span>
                       )}
                     </Link>
                   </Button>
@@ -237,8 +247,8 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title="Iniciar conversa no Inbox"
-                    aria-label={`Iniciar conversa com ${displayName(c)} no Inbox`}
+                    title={t("Iniciar conversa no Inbox")}
+                    aria-label={`${t("Iniciar conversa com")} ${displayName(c, t)} ${t("no Inbox")}`}
                     disabled={abrindo === c.id}
                     onClick={() => void iniciarConversa(c)}
                   >
@@ -249,8 +259,8 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-error-fg"
-                  title="Excluir contato"
-                  aria-label={`Excluir contato ${displayName(c)}`}
+                  title={t("Excluir contato")}
+                  aria-label={`${t("Excluir contato")} ${displayName(c, t)}`}
                   onClick={() => setAlvo(c)}
                 >
                   <Trash size={16} weight="regular" aria-hidden />
@@ -265,21 +275,21 @@ export function ContactsTable({ contacts, orderBy, orderDir, onSort }: Props) {
     <AlertDialog open={alvo !== null} onOpenChange={(open) => { if (!open) setAlvo(null); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir contato?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Excluir contato?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {alvo
-              ? `Isso remove ${displayName(alvo)} e a conversa associada, se houver. Esta ação não pode ser desfeita.`
+              ? `${t("Isso remove")} ${displayName(alvo, t)} ${t("e a conversa associada, se houver. Esta ação não pode ser desfeita.")}`
               : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={del.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={del.isPending}>{t("Cancelar")}</AlertDialogCancel>
           <Button
             variant="destructive"
             onClick={() => void confirmarExclusao()}
             disabled={del.isPending}
           >
-            {del.isPending ? "Excluindo…" : "Excluir"}
+            {del.isPending ? t("Excluindo…") : t("Excluir")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

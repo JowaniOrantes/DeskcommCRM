@@ -1405,15 +1405,18 @@ chegou_na_deteccao() {
 # Contagem de Enters antes do 'c', medida com
 #   eval "$(grep -m1 '^RESTO_DAS_PERGUNTAS=' test-validators.sh)"
 #   printf '%s' "${RESTO_DAS_PERGUNTAS%%c*}" | grep -c ''
-# → era 9 antes de APP_ACCENT_HEX entrar em FIELDS, é 10 agora.
-RESTO_DAS_PERGUNTAS=$'\n\n\n\n\n\n\n\n\n\nc\n'
+# → era 9 antes de APP_ACCENT_HEX entrar em FIELDS, 10 depois dela, e é 11
+#   desde que APP_LOCALE (o idioma da instalação) entrou logo após APP_NAME.
+RESTO_DAS_PERGUNTAS=$'\n\n\n\n\n\n\n\n\n\n\nc\n'
 
 # A posição da cor DENTRO da fila acima — 1 provedor + APP_IMAGE + OPENAI +
-# APP_NAME e ela é a 5ª. Fica numa variável porque a fila com a cor RESPONDIDA
+# APP_NAME + APP_LOCALE e ela é a 6ª. Fica numa variável porque a fila com a cor RESPONDIDA
 # (abaixo) é DERIVADA da de cima em vez de copiada: duas filas posicionais
 # mantidas à mão desincronizam no primeiro campo novo, e aí uma passa e a outra
 # reprova com um nome que não é o dela.
-POSICAO_DA_COR=5
+POSICAO_DA_COR=6
+# O idioma vem logo antes da cor: 1 provedor + APP_IMAGE + OPENAI + APP_NAME.
+POSICAO_DO_IDIOMA=5
 COR_DE_TESTE='#f2c94c'
 # fila_com <fila> <posição> <valor> → a mesma fila, com uma resposta no lugar de
 # um Enter. `awk` porque a substituição é por NÚMERO DE LINHA: um `sed s///`
@@ -1494,7 +1497,7 @@ STUB
   tag_app="${img_app##*:}"
   for par in "WORKER_IMAGE:deskcomm-worker" "SCHEDULER_IMAGE:deskcomm-scheduler"; do
     chave="${par%%:*}"; repo="${par##*:}"
-    if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "ghcr.io/melgarafael/${repo}:${tag_app}" ]; then
+    if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "${IMG_NS}/${repo}:${tag_app}" ]; then
       printf '  ✗ %s não acompanha a versão do app (%s): %s\n' "$chave" "$tag_app" \
         "$(grep -E "^${chave}=" "$VPS_PROJ/.env" || echo '(ausente)')"
       printf '     app numa versão e worker em outra é a matriz que ninguém testou.\n'; exit 1
@@ -1572,6 +1575,31 @@ STUB
       "$(valor_no_env "$VPS_PROJ/.env" SUPPORT_EMAIL)"; exit 1
   fi
   printf '  ✓ a cor respondida na entrevista (%s) chega ao .env, e a fila não desandou\n' "$COR_DE_TESTE"
+
+  # ── O IDIOMA respondido na entrevista chega ao .env ───────────────────────
+  # Mesmo desenho do caso da cor, e pela mesma razão: a pergunta existir em
+  # FIELDS não prova que a resposta é GRAVADA — foi assim que `APP_ACCENT_HEX`
+  # ficou meses sendo perguntado e descartado.
+  #
+  # A asserção é sobre o CÓDIGO (`es`), não sobre o "2" digitado: quem lê um
+  # menu numerado responde o número, e quem lê o .env — o bootstrap, o SQL que
+  # cria a organização, um operador conferindo — precisa do código. A conversão
+  # acontece no install; se ela sumir, `APP_LOCALE=2` chega ao banco e o
+  # resolvedor de idioma o descarta em silêncio, deixando tudo em português
+  # depois de a pessoa ter escolhido espanhol.
+  saida="$(rodar install.sh "" "" "$(fila_com "$RESTO_DAS_PERGUNTAS" "$POSICAO_DO_IDIOMA" 2)")"
+  chegou_na_deteccao || exit 1
+  idioma_gravado="$(valor_no_env "$VPS_PROJ/.env" APP_LOCALE)"
+  if [ "$idioma_gravado" != "es" ]; then
+    printf '  ✗ o idioma respondido na entrevista não chegou ao .env como código: [%s]\n' \
+      "${idioma_gravado:-(ausente)}"
+    printf '     esperava [es]. Três pontos produzem o mesmo sintoma:\n'
+    printf '       (a) o campo APP_LOCALE em FIELDS — sem ele a pergunta não existe;\n'
+    printf '       (b) o `envq APP_LOCALE` no bloco que fecha com `} > .env`;\n'
+    printf '       (c) a conversão 1/2 → pt-BR/es logo antes do envq — sem ela grava "2".\n'
+    exit 1
+  fi
+  printf '  ✓ o idioma respondido (2) chega ao .env como código (%s)\n' "$idioma_gravado"
 ) || fail=1
 rm -rf "$TMP3B"
 
@@ -1653,7 +1681,7 @@ STUB
 
   for par in "APP_IMAGE:deskcommcrm" "WORKER_IMAGE:deskcomm-worker" "SCHEDULER_IMAGE:deskcomm-scheduler"; do
     chave="${par%%:*}"; repo="${par##*:}"
-    if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "ghcr.io/melgarafael/${repo}:1.10.0" ]; then
+    if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "${IMG_NS}/${repo}:1.10.0" ]; then
       printf '  ✗ %s não foi pinado na versão resolvida (1.10.0): %s\n' "$chave" \
         "$(grep -E "^${chave}=" "$VPS_PROJ/.env" || echo '(ausente)')"
       printf '     instalação de cliente NUNCA nasce em tag móvel — docs/doctrine/packaging.md, invariante 3.\n'

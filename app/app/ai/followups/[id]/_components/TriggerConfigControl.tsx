@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/hooks/i18n/useT";
+
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -135,6 +137,7 @@ function toTriggerConfig(form: TriggerFormState): Record<string, unknown> {
 function summaryLabel(
   cfg: Record<string, unknown>,
   etapa: { stageName: string; pipelineName: string } | null,
+  t: (texto: string) => string = (texto) => texto,
 ): string {
   if (cfg.kind === "silence") {
     const minutes = (cfg.params as { threshold_minutes?: number } | undefined)?.threshold_minutes;
@@ -147,9 +150,9 @@ function summaryLabel(
     // superfície que o dono lê uma semana depois, sem abrir nada.
     return etapa ? `Gatilho: entrou em «${etapa.stageName}» em ${etapa.pipelineName}` : "Gatilho: Etapa do funil";
   }
-  if (cfg.kind === "case_opened") return "Gatilho: quando o agente pede ajuda";
-  if (cfg.kind === "webhook") return "Disparado por uma automação em Webhooks";
-  if (cfg.kind === "manual" || cfg.kind === undefined) return "Gatilho: Manual";
+  if (cfg.kind === "case_opened") return `${t("Gatilho")}: ${t("quando o agente pede ajuda")}`;
+  if (cfg.kind === "webhook") return t("Disparado por uma automação em Webhooks");
+  if (cfg.kind === "manual" || cfg.kind === undefined) return `${t("Gatilho")}: ${t("Manual")}`;
   // conversation_end de dados antigos (API crua) — sem UI própria, mas mostrado
   // com transparência em vez de mentir "Manual".
   return `Gatilho: ${String(cfg.kind)} (indisponível)`;
@@ -160,10 +163,8 @@ interface Props {
   triggerConfig: Record<string, unknown>;
 }
 
-export function TriggerConfigControl({
-  flowId,
-  triggerConfig,
-}: Props) {
+export function TriggerConfigControl({ flowId, triggerConfig }: Props) {
+  const t = useT();
   const update = useUpdateTriggerConfig(flowId);
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState<TriggerFormState>(() => parseTriggerConfig(triggerConfig));
@@ -221,23 +222,23 @@ export function TriggerConfigControl({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button type="button" variant="outline" size="sm" data-testid="trigger-config-button">
-          {summaryLabel(triggerConfig, etapaSalva ?? null)}
+          {summaryLabel(triggerConfig, etapaSalva ?? null, t)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end" data-testid="trigger-config-panel">
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="trigger-kind">Tipo de gatilho</Label>
+            <Label htmlFor="trigger-kind">{t("Tipo de gatilho")}</Label>
             <Select value={form.kind} onValueChange={(v) => setForm((f) => ({ ...f, kind: v as TriggerKind }))}>
               <SelectTrigger id="trigger-kind">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manual">{KIND_LABEL.manual}</SelectItem>
-                <SelectItem value="silence">{KIND_LABEL.silence}</SelectItem>
-                <SelectItem value="stage_change">{KIND_LABEL.stage_change}</SelectItem>
-                <SelectItem value="case_opened">{KIND_LABEL.case_opened}</SelectItem>
-                <SelectItem value="webhook">{KIND_LABEL.webhook}</SelectItem>
+                <SelectItem value="manual">{t(KIND_LABEL.manual)}</SelectItem>
+                <SelectItem value="silence">{t(KIND_LABEL.silence)}</SelectItem>
+                <SelectItem value="stage_change">{t(KIND_LABEL.stage_change)}</SelectItem>
+                <SelectItem value="case_opened">{t(KIND_LABEL.case_opened)}</SelectItem>
+                <SelectItem value="webhook">{t(KIND_LABEL.webhook)}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -273,12 +274,11 @@ export function TriggerConfigControl({
               </Select>
               {!etapasCarregando && etapas.length === 0 && (
                 <p className="text-xs text-error-fg">
-                  Nenhuma etapa ativa encontrada — crie o funil antes de armar este gatilho.
+                  {t("Nenhuma etapa ativa encontrada — crie o funil antes de armar este gatilho.")}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por
-                automação. A entrada na fila leva poucos minutos, não é instantânea.
+                {t("O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.")}
               </p>
             </div>
           )}
@@ -286,36 +286,33 @@ export function TriggerConfigControl({
           {form.kind === "case_opened" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                O fluxo começa quando o agente abre um caso — o momento em que ele diz que
-                precisa de uma pessoa. Não há o que escolher aqui: vale para qualquer caso
-                desta conta.
+                {t("O fluxo começa quando o agente abre um caso — o momento em que ele diz que precisa de uma pessoa. Não há o que escolher aqui: vale para qualquer caso desta conta.")}
               </p>
               {/* ⚠️ ESTA FRASE NÃO É DICA, É A DEFESA PRINCIPAL. Abrir um caso não
                   cala o agente: ele continua conversando. Um fluxo que fale no mesmo
                   instante põe duas vozes na mesma conversa. O atraso é do FLUXO, e
                   quem monta precisa saber disso antes de publicar. */}
               <p className="text-xs text-muted-foreground">
-                <strong className="font-medium">Comece o fluxo por uma espera.</strong> O agente
-                continua conversando depois de abrir o caso — sem espera, o cliente recebe duas
-                mensagens ao mesmo tempo.
+                <strong className="font-medium">{t("Comece o fluxo por uma espera.")}</strong> {t("O agente continua conversando depois de abrir o caso — sem espera, o cliente recebe duas mensagens ao mesmo tempo.")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Se o caso for resolvido antes, o follow-up é cancelado sozinho.
+                {t("Se o caso for resolvido antes, o follow-up é cancelado sozinho.")}
               </p>
             </div>
           )}
 
           {form.kind === "webhook" && (
             <p className="text-xs text-muted-foreground">
-              O fluxo começa quando uma regra em Webhooks usa a ação «Iniciar fluxo de
-              mensagem» apontando para este fluxo publicado.
+              {t(
+                "O fluxo começa quando uma regra em Webhooks usa a ação «Iniciar fluxo de mensagem» apontando para este fluxo publicado.",
+              )}
             </p>
           )}
 
           {form.kind === "silence" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="trigger-threshold">Minutos de silêncio</Label>
+                <Label htmlFor="trigger-threshold">{t("Minutos de silêncio")}</Label>
                 <Input
                   id="trigger-threshold"
                   type="number"
@@ -325,14 +322,14 @@ export function TriggerConfigControl({
                   aria-invalid={thresholdInvalid}
                 />
                 {thresholdInvalid && (
-                  <p className="text-xs text-error-fg">Mínimo de {MIN_THRESHOLD_MINUTES} minutos.</p>
+                  <p className="text-xs text-error-fg">{t("Mínimo de")} {MIN_THRESHOLD_MINUTES} {t("minutos.")}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="trigger-segments">Segmentos (tags, opcional)</Label>
                 <Input
                   id="trigger-segments"
-                  placeholder="ex: vip, carrinho-abandonado"
+                  placeholder={t("ex: vip, carrinho-abandonado")}
                   value={form.segments}
                   onChange={(e) => setForm((f) => ({ ...f, segments: e.target.value }))}
                 />
@@ -357,7 +354,7 @@ export function TriggerConfigControl({
             onClick={onSave}
             data-testid="trigger-config-save"
           >
-            {update.isPending ? "Salvando…" : "Salvar gatilho"}
+            {update.isPending ? t("Salvando…") : t("Salvar gatilho")}
           </Button>
         </div>
       </PopoverContent>

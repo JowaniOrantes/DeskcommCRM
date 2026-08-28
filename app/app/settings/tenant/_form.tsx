@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateTenant } from "@/app/actions/settings/updateTenant";
+import { useT } from "@/hooks/i18n/useT";
 import { tenantSchema, type Locale, type TenantInput } from "@/lib/schemas/settings";
 
 interface Props {
@@ -30,6 +31,7 @@ const TIMEZONES = [
 ];
 
 export function TenantForm({ initial }: Props) {
+  const t = useT();
   const [form, setForm] = useState<TenantInput>(initial);
   const [reasonsText, setReasonsText] = useState(
     (initial.lost_reasons_extra ?? []).join(", "),
@@ -49,13 +51,13 @@ export function TenantForm({ initial }: Props) {
     const candidate = { ...form, lost_reasons_extra: reasons };
     const parsed = tenantSchema.safeParse(candidate);
     if (!parsed.success) {
-      toast.error("Dados inválidos.");
+      toast.error(t("Dados inválidos."));
       return;
     }
     startTransition(async () => {
       const r = await updateTenant(parsed.data);
-      if (r.ok) toast.success("Organização atualizada.");
-      else toast.error(`Erro: ${r.error}`);
+      if (r.ok) toast.success(t("Organização atualizada."));
+      else toast.error(`${t("Erro")}: ${r.error}`);
     });
   }
 
@@ -64,7 +66,7 @@ export function TenantForm({ initial }: Props) {
       <Card className="space-y-4 p-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="display_name">Nome de exibição</Label>
+            <Label htmlFor="display_name">{t("Nome de exibição")}</Label>
             <Input
               id="display_name"
               value={form.display_name}
@@ -73,7 +75,7 @@ export function TenantForm({ initial }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="legal_name">Razão social</Label>
+            <Label htmlFor="legal_name">{t("Razão social")}</Label>
             <Input
               id="legal_name"
               value={form.legal_name}
@@ -82,7 +84,7 @@ export function TenantForm({ initial }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cnpj">CNPJ</Label>
+            <Label htmlFor="cnpj">{t("CNPJ")}</Label>
             <Input
               id="cnpj"
               value={form.cnpj ?? ""}
@@ -90,7 +92,7 @@ export function TenantForm({ initial }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dpo_email">DPO email</Label>
+            <Label htmlFor="dpo_email">{t("DPO email")}</Label>
             <Input
               id="dpo_email"
               type="email"
@@ -99,7 +101,7 @@ export function TenantForm({ initial }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="timezone">Fuso horário</Label>
+            <Label htmlFor="timezone">{t("Fuso horário")}</Label>
             <Select value={form.timezone} onValueChange={(v) => set("timezone", v)}>
               <SelectTrigger id="timezone">
                 <SelectValue />
@@ -114,7 +116,7 @@ export function TenantForm({ initial }: Props) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="locale">Idioma</Label>
+            <Label htmlFor="locale">{t("Idioma")}</Label>
             <Select
               value={form.locale}
               onValueChange={(v) => set("locale", v as Locale)}
@@ -129,7 +131,7 @@ export function TenantForm({ initial }: Props) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="media_retention_days">Retenção de mídia (dias)</Label>
+            <Label htmlFor="media_retention_days">{t("Retenção de mídia (dias)")}</Label>
             <Input
               id="media_retention_days"
               type="number"
@@ -140,7 +142,7 @@ export function TenantForm({ initial }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="privacy_policy_url">URL política de privacidade</Label>
+            <Label htmlFor="privacy_policy_url">{t("URL política de privacidade")}</Label>
             <Input
               id="privacy_policy_url"
               type="url"
@@ -151,21 +153,21 @@ export function TenantForm({ initial }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lost_reasons">Motivos de perda extras (separados por vírgula)</Label>
+          <Label htmlFor="lost_reasons">{t("Motivos de perda extras (separados por vírgula)")}</Label>
           <Input
             id="lost_reasons"
             value={reasonsText}
             onChange={(e) => setReasonsText(e.target.value)}
-            placeholder="ex: Sem orçamento, Concorrente"
+            placeholder={t("ex: Sem orçamento, Concorrente")}
           />
           <p className="text-xs text-muted-foreground">
-            Adicionados ao set padrão. Cada pipeline pode ter seus próprios motivos.
+            {t("Adicionados ao set padrão. Cada pipeline pode ter seus próprios motivos.")}
           </p>
         </div>
 
         <div className="flex sm:justify-end">
           <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-            {isPending ? "Salvando…" : "Salvar"}
+            {isPending ? t("Salvando…") : t("Salvar")}
           </Button>
         </div>
       </Card>

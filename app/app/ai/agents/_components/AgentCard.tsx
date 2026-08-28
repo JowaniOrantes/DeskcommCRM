@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useT } from "@/hooks/i18n/useT";
 import type { AgentRow } from "@/hooks/ai/useAgent";
 import { AgentStatusBadge, deriveAgentStatus } from "./AgentStatusBadge";
 import { AgentRowMenu } from "./AgentRowMenu";
@@ -52,6 +53,7 @@ export function modeloEmVigor(agent: AgentRow): string {
 }
 
 export function AgentCard({ agent, canWrite }: Props) {
+  const t = useT();
   const status = deriveAgentStatus(agent);
 
   return (
@@ -65,8 +67,8 @@ export function AgentCard({ agent, canWrite }: Props) {
             className="truncate text-xs text-muted-foreground"
             title={
               origemDoModelo(agent) === "versao_publicada"
-                ? "Modelo da versão publicada — é o que atende o cliente."
-                : "Modelo do cadastro; nenhuma versão publicada ainda."
+                ? t("Modelo da versão publicada — é o que atende o cliente.")
+                : t("Modelo do cadastro; nenhuma versão publicada ainda.")
             }
           >
             {modeloEmVigor(agent)}
@@ -75,7 +77,7 @@ export function AgentCard({ agent, canWrite }: Props) {
         <div className="flex shrink-0 items-center gap-1">
           {agent.is_default && (
             <Badge variant="secondary" className="text-xs">
-              default
+              {t("default")}
             </Badge>
           )}
           <AgentStatusBadge status={status} />
@@ -87,18 +89,18 @@ export function AgentCard({ agent, canWrite }: Props) {
       )}
       <dl className="grid grid-cols-2 gap-2 pt-1 text-xs">
         <div>
-          <dt className="text-muted-foreground">Tipo</dt>
+          <dt className="text-muted-foreground">{t("Tipo")}</dt>
           <dd className="font-mono">{agent.kind ?? "rag_bot"}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Prioridade</dt>
+          <dt className="text-muted-foreground">{t("Prioridade")}</dt>
           <dd className="font-mono">{agent.priority ?? "—"}</dd>
         </div>
       </dl>
       <div className="mt-auto pt-2">
         <Link href={`/app/ai/agents/${agent.id}`}>
           <Button variant="outline" size="sm" className="w-full">
-            {canWrite ? "Editar" : "Visualizar"}
+            {canWrite ? t("Editar") : t("Visualizar")}
           </Button>
         </Link>
       </div>

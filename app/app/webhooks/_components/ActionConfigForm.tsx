@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -60,6 +62,7 @@ function CreateOrMoveLeadForm({
   config,
   onChange,
 }: FormProps<{ pipeline_id: string; stage_id: string }>) {
+  const t = useT();
   const { data: pipelinesRes, isLoading: pipelinesLoading } = usePipelines();
   const { data: boardRes, isLoading: stagesLoading } = usePipelineStages(
     config.pipeline_id || null,
@@ -77,7 +80,7 @@ function CreateOrMoveLeadForm({
           disabled={pipelinesLoading}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Escolha o funil" />
+            <SelectValue placeholder={t("Escolha o funil")} />
           </SelectTrigger>
           <SelectContent>
             {pipelines.map((p) => (
@@ -123,6 +126,7 @@ function SendWhatsappForm({
   config,
   onChange,
 }: FormProps<{ channel_session_id: string; template: string }>) {
+  const t = useT();
   const { data: sessions } = useChannelSessions();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -142,13 +146,13 @@ function SendWhatsappForm({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        <Label>Número de WhatsApp</Label>
+        <Label>{t("Número de WhatsApp")}</Label>
         <Select
           value={config.channel_session_id}
           onValueChange={(v) => onChange({ ...config, channel_session_id: v })}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Escolha o número" />
+            <SelectValue placeholder={t("Escolha o número")} />
           </SelectTrigger>
           <SelectContent>
             {(sessions ?? []).map((s) => (
@@ -160,7 +164,7 @@ function SendWhatsappForm({
         </Select>
         {(sessions ?? []).some((s) => s.status !== "WORKING") ? (
           <p className="text-xs text-muted-foreground">
-            Números desconectados aparecem desabilitados — reconecte em Conexões antes de usar.
+            {t("Números desconectados aparecem desabilitados — reconecte em Conexões antes de usar.")}
           </p>
         ) : null}
       </div>
@@ -190,8 +194,7 @@ function SendWhatsappForm({
           {/* NÃO cravar "7h e 22h": a janela passou a vir dos ajustes DO NÚMERO
               (Conexões), no fuso da sua organização, e quem a mudou lá veria a
               tela continuar prometendo outro horário. Rótulo visível é contrato. */}
-          Respeitamos a janela de envio e o limite diário configurados para esse número em
-          Conexões — fora da janela, a mensagem espera a próxima.
+          {t("Respeitamos a janela de envio e o limite diário configurados para esse número em Conexões — fora da janela, a mensagem espera a próxima.")}
         </p>
       </div>
     </div>
@@ -215,6 +218,7 @@ function SendAiMessageForm({
   config,
   onChange,
 }: FormProps<{ agent_id: string; channel_session_id: string; instruction: string }>) {
+  const t = useT();
   const { data: agentes } = useAgentsList();
   const { data: sessions } = useChannelSessions();
   const publicados = (agentes ?? []).filter((a) => Boolean(a.published_version_id));
@@ -229,31 +233,31 @@ function SendAiMessageForm({
           onValueChange={(v) => onChange({ ...config, agent_id: v })}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Escolha o agente" />
+            <SelectValue placeholder={t("Escolha o agente")} />
           </SelectTrigger>
           <SelectContent>
             {(agentes ?? []).map((a) => (
               <SelectItem key={a.id} value={a.id} disabled={!a.published_version_id}>
-                {a.name + (a.published_version_id ? "" : " — não publicado")}
+                {a.name + (a.published_version_id ? "" : t(" — não publicado"))}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
           {semPublicado
-            ? "Nenhum agente está publicado. Publique um em Agentes de IA para poder usá-lo aqui."
-            : "Ele escreve com o mesmo tom e o mesmo conhecimento que usa no atendimento."}
+            ? t("Nenhum agente está publicado. Publique um em Agentes de IA para poder usá-lo aqui.")
+            : t("Ele escreve com o mesmo tom e o mesmo conhecimento que usa no atendimento.")}
         </p>
       </div>
 
       <div className="space-y-1">
-        <Label>Número de WhatsApp</Label>
+        <Label>{t("Número de WhatsApp")}</Label>
         <Select
           value={config.channel_session_id}
           onValueChange={(v) => onChange({ ...config, channel_session_id: v })}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Escolha o número" />
+            <SelectValue placeholder={t("Escolha o número")} />
           </SelectTrigger>
           <SelectContent>
             {(sessions ?? []).map((s) => (
@@ -266,7 +270,7 @@ function SendAiMessageForm({
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="ai-instruction">O que a IA deve fazer com os dados</Label>
+        <Label htmlFor="ai-instruction">{t("O que a IA deve fazer com os dados")}</Label>
         <Textarea
           id="ai-instruction"
           rows={4}
@@ -279,9 +283,7 @@ function SendAiMessageForm({
           }
         />
         <p className="text-xs text-muted-foreground">
-          O agente já sabe que é a PRIMEIRA mensagem, logo depois de a pessoa preencher o
-          formulário, e recebe todos os campos que ela respondeu. Aqui você diz o que fazer com
-          eles — quanto mais concreto, melhor a mensagem.
+          {t("O agente já sabe que é a PRIMEIRA mensagem, logo depois de a pessoa preencher o formulário, e recebe todos os campos que ela respondeu. Aqui você diz o que fazer com eles — quanto mais concreto, melhor a mensagem.")}
         </p>
       </div>
     </div>
@@ -289,10 +291,11 @@ function SendAiMessageForm({
 }
 
 function AddTagForm({ config, onChange }: FormProps<{ tags: string[] }>) {
+  const t = useT();
   const [text, setText] = React.useState(config.tags.join(", "));
   return (
     <div className="space-y-1">
-      <Label>Tags (separadas por vírgula)</Label>
+      <Label>{t("Tags (separadas por vírgula)")}</Label>
       <Input
         value={text}
         onChange={(e) => {
@@ -310,13 +313,14 @@ function AddTagForm({ config, onChange }: FormProps<{ tags: string[] }>) {
 }
 
 function AssignOwnerForm({ config, onChange }: FormProps<{ user_id: string }>) {
+  const t = useT();
   const { data: members } = useAssignableMembers(true);
   return (
     <div className="space-y-1">
       <Label>Atendente</Label>
       <Select value={config.user_id} onValueChange={(v) => onChange({ user_id: v })}>
         <SelectTrigger>
-          <SelectValue placeholder="Escolha o atendente" />
+          <SelectValue placeholder={t("Escolha o atendente")} />
         </SelectTrigger>
         <SelectContent>
           {(members ?? []).map((m) => (
@@ -334,6 +338,7 @@ function CallWebhookForm({
   config,
   onChange,
 }: FormProps<{ url: string; secret?: string; secret_enc?: string }>) {
+  const t = useT();
   // O segredo é write-only: o servidor guarda cifrado (secret_enc) e nunca
   // devolve o valor. Digitar aqui envia `secret` novo; deixar em branco
   // preserva o secret_enc existente no round-trip do editor.
@@ -341,7 +346,7 @@ function CallWebhookForm({
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        <Label>Endereço (URL)</Label>
+        <Label>{t("Endereço (URL)")}</Label>
         <Input
           type="url"
           value={config.url}
@@ -364,8 +369,8 @@ function CallWebhookForm({
         />
         <p className="text-xs text-muted-foreground">
           {hasStoredSecret
-            ? "Já existe um segredo guardado com segurança. Digitar aqui substitui; limpar remove."
-            : "Se preencher, enviaremos uma assinatura para o outro sistema conferir que fomos nós."}
+            ? t("Já existe um segredo guardado com segurança. Digitar aqui substitui; limpar remove.")
+            : t("Se preencher, enviaremos uma assinatura para o outro sistema conferir que fomos nós.")}
         </p>
       </div>
     </div>
@@ -373,6 +378,7 @@ function CallWebhookForm({
 }
 
 function StartMessageFlowForm({ config, onChange }: FormProps<{ flow_pointer_id: string }>) {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ["followup", "flows", "list"],
     queryFn: async () => {
@@ -386,14 +392,14 @@ function StartMessageFlowForm({ config, onChange }: FormProps<{ flow_pointer_id:
 
   return (
     <div className="space-y-1">
-      <Label>Fluxo de follow-up</Label>
+      <Label>{t("Fluxo de follow-up")}</Label>
       <Select
         value={config.flow_pointer_id}
         onValueChange={(v) => onChange({ flow_pointer_id: v })}
         disabled={isLoading}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Escolha um fluxo publicado" />
+          <SelectValue placeholder={t("Escolha um fluxo publicado")} />
         </SelectTrigger>
         <SelectContent>
           {active.map((f) => (
@@ -405,11 +411,11 @@ function StartMessageFlowForm({ config, onChange }: FormProps<{ flow_pointer_id:
       </Select>
       {!isLoading && active.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          Nenhum fluxo ativo. Publique um follow-up em Follow-ups para usá-lo aqui.
+          {t("Nenhum fluxo ativo. Publique um follow-up em Follow-ups para usá-lo aqui.")}
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Só entram fluxos publicados e ativos.
+          {t("Só entram fluxos publicados e ativos.")}
         </p>
       )}
     </div>

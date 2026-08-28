@@ -1,7 +1,10 @@
 "use client";
 
+import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+
+import { useT } from "@/hooks/i18n/useT";
+
 import { differenceInMinutes, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -91,6 +94,8 @@ export function AgendaInterativa({
   onAbrirAgendamento?: (id: string) => void;
   className?: string;
 }) {
+  const localeDaData = useLocaleDeData();
+  const t = useT();
   const { data: horarios, isError: horariosFalharam } = useHorariosLivres(
     tipo ? { event_type_id: tipo.id, de: recorte.de, ate: recorte.ate } : null,
   );
@@ -191,7 +196,7 @@ export function AgendaInterativa({
         `A remarcação não foi aceita — o compromisso voltou para ${format(
           new Date(antes.comeca),
           "EEEE, d 'de' MMMM 'às' HH:mm",
-          { locale: ptBR },
+          { locale: localeDaData },
         )}.`,
       );
     });
@@ -208,7 +213,7 @@ export function AgendaInterativa({
           data-testid="tipo-da-grade"
           className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted"
         >
-          <span className="shrink-0">Horários livres de</span>
+          <span className="shrink-0">{t("Horários livres de")}</span>
           {tipos.map((t) => (
             <button
               key={t.id}
@@ -247,20 +252,17 @@ export function AgendaInterativa({
           {motivo === "sem-jornada" ? (
             <>
               <span className="font-semibold text-text">
-                Você ainda não publicou seus horários de atendimento.
+                {t("Você ainda não publicou seus horários de atendimento.")}
               </span>{" "}
-              Sem eles ninguém consegue marcar clicando na grade — nem você, nem o agente.
+              {t("Sem eles ninguém consegue marcar clicando na grade — nem você, nem o agente.")}
             </>
           ) : motivo === "erro" ? (
             <>
-              <span className="font-semibold text-text">Não consegui carregar os horários.</span> Os
-              blocos ficam bloqueados até eu conseguir — é mais seguro que oferecer um horário que
-              talvez não exista.
+              <span className="font-semibold text-text">{t("Não consegui carregar os horários.")}</span> {t("Os blocos ficam bloqueados até eu conseguir — é mais seguro que oferecer um horário que talvez não exista.")}
             </>
           ) : (
             <>
-              <span className="font-semibold text-text">Nenhum horário livre neste período.</span> Os
-              blocos vazios continuam aqui, e o que estiver publicado fica clicável.
+              <span className="font-semibold text-text">{t("Nenhum horário livre neste período.")}</span> {t("Os blocos vazios continuam aqui, e o que estiver publicado fica clicável.")}
             </>
           )}
         </div>
@@ -276,11 +278,11 @@ export function AgendaInterativa({
           className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-accent/50 bg-accent-soft px-3 py-2"
         >
           <p className="text-xs leading-4 text-text">
-            Remarcar <span className="font-semibold">{nomeDoPendente}</span> para{" "}
+            {t("Remarcar")} <span className="font-semibold">{nomeDoPendente}</span> {t("para")}{" "}
             <span className="font-semibold">
-              {format(new Date(pendente.instante), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+              {format(new Date(pendente.instante), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: localeDaData })}
             </span>
-            ? Quem foi atendido recebe o aviso da mudança.
+            {t("? Quem foi atendido recebe o aviso da mudança.")}
           </p>
           <div className="flex shrink-0 gap-2">
             <Button variant="ghost" size="sm" onClick={() => setPendente(null)}>

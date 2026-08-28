@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 /**
  * ADICIONAR MATERIAL AO ACERVO.
  *
@@ -44,6 +46,12 @@ import {
   type TipoDeFonteId,
 } from "@/lib/ai/rag/tipos-de-fonte";
 
+// Os DOIS exemplos ficam em português de propósito. O de FAQ é obrigação:
+// `## Pergunta:`/`## Resposta:` são os marcadores que
+// `lib/ai/rag/ingest/faq.ts` casa por regex de língua fixa, e um exemplo
+// traduzido ensinaria um formato que o parser recusa. O de documento vai junto
+// porque meio exemplo traduzido, meio não, dentro do mesmo campo, lê pior que
+// os dois iguais.
 const EXEMPLO_FAQ = `## Pergunta: Qual o prazo de entrega?
 ## Resposta: De 2 a 3 dias úteis após a confirmação do pagamento.
 
@@ -64,6 +72,7 @@ interface Props {
 }
 
 export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: Props) {
+  const t = useT();
   const [tipo, setTipo] = useState<TipoDeFonteId>("faq");
   const [nome, setNome] = useState("");
   const [conteudo, setConteudo] = useState("");
@@ -84,11 +93,11 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
   async function criar(): Promise<void> {
     const nomeLimpo = nome.trim();
     if (nomeLimpo.length < 2) {
-      toast.error("Dê um nome ao material — é assim que você o encontra depois.");
+      toast.error(t("Dê um nome ao material — é assim que você o encontra depois."));
       return;
     }
     if (!arquivo && conteudo.trim().length === 0) {
-      toast.error("Envie um arquivo ou cole o conteúdo.");
+      toast.error(t("Envie um arquivo ou cole o conteúdo."));
       return;
     }
 
@@ -104,7 +113,7 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
         });
         const json = (await res.json()) as { error?: { message?: string } };
         if (!res.ok) {
-          toast.error(json.error?.message ?? "Não consegui guardar o arquivo.");
+          toast.error(json.error?.message ? t(json.error.message) : t("Não consegui guardar o arquivo."));
           return;
         }
       } else {
@@ -117,8 +126,8 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
 
       toast.success(
         podeIndexar
-          ? "Material cadastrado. Estou preparando — em instantes o agente já sabe."
-          : "Material cadastrado. Ele fica esperando a chave da OpenAI para ser preparado.",
+          ? t("Material cadastrado. Estou preparando — em instantes o agente já sabe.")
+          : t("Material cadastrado. Ele fica esperando a chave da OpenAI para ser preparado."),
       );
       limpar();
       onCriado();
@@ -140,49 +149,50 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
           não se envia. */}
       <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Ensinar algo novo ao agente</DialogTitle>
+          <DialogTitle>{t("Ensinar algo novo ao agente")}</DialogTitle>
           <DialogDescription>
-            Ele consulta este material antes de responder sobre o seu negócio.
+            {t("Ele consulta este material antes de responder sobre o seu negócio.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto pr-1">
           <div className="space-y-2">
-            <Label>Que tipo de material é</Label>
+            <Label>{t("Que tipo de material é")}</Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="material-tipos">
-              {TIPOS_DE_FONTE.map((t) => {
-                const rotina = ePreenchidoPorRotina(t.id);
-                const marcado = tipo === t.id;
+              {/* `tf`, e não `t`: o `t` do `useT()` já ocupa o nome aqui. */}
+              {TIPOS_DE_FONTE.map((tf) => {
+                const rotina = ePreenchidoPorRotina(tf.id);
+                const marcado = tipo === tf.id;
                 return (
                   <button
-                    key={t.id}
+                    key={tf.id}
                     type="button"
                     disabled={rotina || enviando}
-                    onClick={() => setTipo(t.id)}
-                    data-testid={`material-tipo-${t.id}`}
+                    onClick={() => setTipo(tf.id)}
+                    data-testid={`material-tipo-${tf.id}`}
                     className={[
                       "rounded-lg border p-3 text-left text-sm transition",
                       marcado ? "border-accent bg-accent/10" : "border-border hover:bg-surface",
                       rotina ? "cursor-not-allowed opacity-50" : "",
                     ].join(" ")}
                   >
-                    <span className="font-medium">{t.rotulo}</span>
-                    <span className="mt-1 block text-xs text-text-muted">{t.oQueE}</span>
+                    <span className="font-medium">{t(tf.rotulo)}</span>
+                    <span className="mt-1 block text-xs text-text-muted">{t(tf.oQueE)}</span>
                   </button>
                 );
               })}
             </div>
             {porRotina && meta?.comoChega ? (
-              <p className="text-xs text-text-muted">{meta.comoChega}</p>
+              <p className="text-xs text-text-muted">{t(meta.comoChega)}</p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="material-nome">Nome do material</Label>
+            <Label htmlFor="material-nome">{t("Nome do material")}</Label>
             <Input
               id="material-nome"
               data-testid="material-nome"
-              placeholder={tipo === "faq" ? "Perguntas frequentes da loja" : "Política de troca"}
+              placeholder={tipo === "faq" ? t("Perguntas frequentes da loja") : t("Política de troca")}
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               disabled={enviando || porRotina}
@@ -191,7 +201,7 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
 
           {aceitaArquivo(tipo) ? (
             <div className="space-y-2">
-              <Label htmlFor="material-arquivo">Arquivo (opcional)</Label>
+              <Label htmlFor="material-arquivo">{t("Arquivo (opcional)")}</Label>
               <Input
                 id="material-arquivo"
                 data-testid="material-arquivo"
@@ -202,8 +212,9 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
                 disabled={enviando}
               />
               <p className="text-xs text-text-muted">
-                PDF, Markdown ou texto, até 20 MB. Um PDF só de imagens escaneadas não tem
-                letra nenhuma para ler — envie uma versão com texto selecionável.
+                {t(
+                  "PDF, Markdown ou texto, até 20 MB. Um PDF só de imagens escaneadas não tem letra nenhuma para ler — envie uma versão com texto selecionável.",
+                )}
               </p>
             </div>
           ) : null}
@@ -211,7 +222,7 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
           {!porRotina && !arquivo ? (
             <div className="space-y-2">
               <Label htmlFor="material-conteudo">
-                {aceitaArquivo(tipo) ? "…ou cole o texto aqui" : "Conteúdo"}
+                {aceitaArquivo(tipo) ? t("…ou cole o texto aqui") : t("Conteúdo")}
               </Label>
               <Textarea
                 id="material-conteudo"
@@ -224,8 +235,8 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
               />
               {ePerguntaEResposta(tipo) ? (
                 <p className="text-xs text-text-muted">
-                  Uma linha <code>## Pergunta:</code> e uma <code>## Resposta:</code> por item,
-                  separados por uma linha em branco.
+                  {t("Uma linha")} <code>## Pergunta:</code> {t("e uma")}{" "}
+                  <code>## Resposta:</code> {t("por item, separados por uma linha em branco.")}
                 </p>
               ) : null}
             </div>
@@ -233,18 +244,19 @@ export function NovoMaterialDialog({ aberto, onFechar, onCriado, podeIndexar }: 
 
           {!podeIndexar ? (
             <p className="text-xs text-warning-fg" data-testid="material-aviso-sem-chave">
-              Sem uma chave da OpenAI, o material fica guardado e esperando — o agente só passa
-              a conhecê-lo depois que a chave for cadastrada.
+              {t(
+                "Sem uma chave da OpenAI, o material fica guardado e esperando — o agente só passa a conhecê-lo depois que a chave for cadastrada.",
+              )}
             </p>
           ) : null}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onFechar} disabled={enviando}>
-            Cancelar
+            {t("Cancelar")}
           </Button>
           <Button onClick={criar} disabled={enviando || porRotina} data-testid="material-criar">
-            {enviando ? "Guardando…" : "Adicionar ao acervo"}
+            {enviando ? t("Guardando…") : t("Adicionar ao acervo")}
           </Button>
         </DialogFooter>
       </DialogContent>

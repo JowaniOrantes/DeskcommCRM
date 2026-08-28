@@ -498,17 +498,27 @@ describe("o código morto de orçamento não volta", () => {
 describe("os textos do orçamento nomeiam botões que existem", () => {
   const fonteCabecalho = readFileSync(CABECALHO, "utf8");
 
-  /** O rótulo do botão de volta, extraído do próprio componente. */
+  /**
+   * O rótulo do botão de volta, extraído do próprio componente.
+   *
+   * Lê o ÚLTIMO `t("...")` antes de `</Button>`, não o primeiro depois do
+   * `data-testid`: o `title` do botão (tooltip com o alcance da ação, i18n
+   * também) ganhou suas próprias chamadas `t(...)` antes do texto visível, e
+   * pegar a primeira ocorrência passou a capturar o tooltip em vez do rótulo.
+   */
   function rotuloDoBotaoDeVolta(): string {
     const bloco = fonteCabecalho.slice(fonteCabecalho.indexOf('data-testid="devolver-ao-automatico"'));
-    const m = /t\("([^"]+)"\)/.exec(bloco);
-    if (m === null) {
+    const fechamento = bloco.indexOf("</Button>");
+    const corpoDoBotao = fechamento === -1 ? bloco : bloco.slice(0, fechamento);
+    const ocorrencias = [...corpoDoBotao.matchAll(/t\("([^"]+)"\)/g)];
+    const ultima = ocorrencias[ocorrencias.length - 1];
+    if (ultima === undefined) {
       throw new Error(
         "não achei o rótulo do botão de volta em ConversationHeader.tsx — o extrator perdeu o alvo. " +
           "Perder o alvo NÃO é aprovação: conserte o extrator, nunca apague o caso.",
       );
     }
-    return m[1]!;
+    return ultima[1]!;
   }
 
   it("o botão de volta existe e tem um rótulo legível (guarda de vacuidade)", () => {
@@ -535,9 +545,12 @@ describe("os textos do orçamento nomeiam botões que existem", () => {
       't("Voltar para a IA")',
     );
     expect(renomeado).not.toBe(fonteCabecalho);
-    const novo = /t\("([^"]+)"\)/.exec(
-      renomeado.slice(renomeado.indexOf('data-testid="devolver-ao-automatico"')),
-    )?.[1];
+    const blocoRenomeado = renomeado.slice(renomeado.indexOf('data-testid="devolver-ao-automatico"'));
+    const fechamentoRenomeado = blocoRenomeado.indexOf("</Button>");
+    const corpoRenomeado =
+      fechamentoRenomeado === -1 ? blocoRenomeado : blocoRenomeado.slice(0, fechamentoRenomeado);
+    const ocorrenciasRenomeadas = [...corpoRenomeado.matchAll(/t\("([^"]+)"\)/g)];
+    const novo = ocorrenciasRenomeadas[ocorrenciasRenomeadas.length - 1]?.[1];
     expect(novo).toBe("Voltar para a IA");
     expect(corpoDoBloqueio(15_000, 10_000)).not.toContain(novo as string);
   });

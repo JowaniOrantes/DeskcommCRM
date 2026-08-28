@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/hooks/i18n/useT";
 import { cn } from "@/lib/utils";
 
 export type CustomFieldType =
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export function CustomFieldsEditor({ fields, value, onChange, disabled, className }: Props) {
+  const t = useT();
   function set(key: string, v: unknown) {
     onChange({ ...value, [key]: v });
   }

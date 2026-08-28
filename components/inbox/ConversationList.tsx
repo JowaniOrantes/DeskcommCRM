@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo } from "react";
+import { useT } from "@/hooks/i18n/useT";
 import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +40,7 @@ export function ConversationList({
   clientFilter,
   onVisibleChange,
 }: Props) {
+  const t = useT();
   // Só mostra POR ONDE a conversa entrou quando há mais de um número. Com um
   // só, o rótulo seria a mesma palavra em toda linha — ruído que ensina o olho
   // a ignorar a área onde vivem os avisos que importam.
@@ -145,7 +147,7 @@ export function ConversationList({
               onClick={() => q.fetchNextPage()}
               disabled={q.isFetchingNextPage}
             >
-              {q.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+              {q.isFetchingNextPage ? t("Carregando…") : t("Carregar mais")}
             </Button>
           </div>
         )}

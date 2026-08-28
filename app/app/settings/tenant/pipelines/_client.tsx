@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -43,6 +45,7 @@ export function PipelinesClient({
   /** Vocabulário/custom fields são admin (a server action recusa o resto). */
   podeEditarConfig: boolean;
 }) {
+  const t = useT();
   if (pipelines.length === 0) {
     // ⚠️ NÃO PROMETA UM CAMINHO QUE NÃO EXISTE. Criar funil não é feito por
     // nenhuma tela, rota ou action deste produto — só por script de instalação;
@@ -52,10 +55,7 @@ export function PipelinesClient({
     // procurando um botão que não existe em lugar nenhum.
     return (
       <Card className="p-6 text-sm leading-relaxed text-muted-foreground">
-        Você ainda não tem nenhum funil. Enquanto for assim, o agente atende normalmente, mas não
-        tem para onde levar o card de ninguém — não há etapas para onde mover. Criar o funil é
-        feito por quem instalou o sistema, direto no banco; depois ele aparece aqui para você
-        escolher a etapa de cada passo.
+        {t("Você ainda não tem nenhum funil. Enquanto for assim, o agente atende normalmente, mas não tem para onde levar o card de ninguém — não há etapas para onde mover. Criar o funil é feito por quem instalou o sistema, direto no banco; depois ele aparece aqui para você escolher a etapa de cada passo.")}
       </Card>
     );
   }
@@ -84,6 +84,7 @@ export function PipelinesClient({
 }
 
 function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
+  const t = useT();
   const v = pipeline.vocabulary ?? {};
   const [lead, setLead] = useState(v.lead ?? "Lead");
   const [deal, setDeal] = useState(v.deal ?? "Deal");
@@ -98,7 +99,7 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
     for (const f of fields) {
       const parsed = customFieldSchema.safeParse(f);
       if (!parsed.success) {
-        toast.error(parsed.error.issues[0]?.message ?? "Campo inválido.");
+        toast.error(parsed.error.issues[0]?.message ?? t("Campo inválido."));
         return;
       }
       ok.push(parsed.data);
@@ -134,7 +135,7 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
 
   return (
     <div className="space-y-4 border-t border-border pt-6">
-      <h3 className="text-sm font-semibold">Vocabulário e campos</h3>
+      <h3 className="text-sm font-semibold">{t("Vocabulário e campos")}</h3>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="space-y-1">
@@ -156,20 +157,20 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs">Motivos de perda (separados por vírgula)</Label>
+        <Label className="text-xs">{t("Motivos de perda (separados por vírgula)")}</Label>
         <Input value={reasonsText} onChange={(e) => setReasonsText(e.target.value)} />
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">Campos do lead neste funil</Label>
+        <Label className="text-xs">{t("Campos do lead neste funil")}</Label>
         <p className="text-xs text-muted-foreground">
-          Aparecem no dossiê do negócio. No follow-up, você escolhe em qual campo gravar a resposta.
+          {t("Aparecem no dossiê do negócio. No follow-up, você escolhe em qual campo gravar a resposta.")}
         </p>
         {fields.map((f, i) => (
           <div key={`${f.key}-${i}`} className="grid gap-2 rounded-md border border-border p-2 md:grid-cols-[1fr_1fr_8rem_auto]">
             <Input
-              aria-label={`Chave do campo ${i + 1}`}
-              placeholder="chave (endereco)"
+              aria-label={`${t("Chave do campo")} ${i + 1}`}
+              placeholder={t("chave (endereco)")}
               value={f.key}
               onChange={(e) => {
                 const next = [...fields];
@@ -178,8 +179,8 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
               }}
             />
             <Input
-              aria-label={`Rótulo do campo ${i + 1}`}
-              placeholder="Rótulo (Endereço)"
+              aria-label={`${t("Rótulo do campo")} ${i + 1}`}
+              placeholder={t("Rótulo (Endereço)")}
               value={f.label}
               onChange={(e) => {
                 const next = [...fields];
@@ -195,13 +196,13 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
                 setFields(next);
               }}
             >
-              <SelectTrigger aria-label={`Tipo do campo ${i + 1}`}>
+              <SelectTrigger aria-label={`${t("Tipo do campo")} ${i + 1}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
+                {TIPOS.map((tipo) => (
+                  <SelectItem key={tipo} value={tipo}>
+                    {tipo}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -210,7 +211,7 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
               type="button"
               variant="ghost"
               size="sm"
-              aria-label={`Remover campo ${f.label || i + 1}`}
+              aria-label={`${t("Remover campo")} ${f.label || i + 1}`}
               onClick={() => setFields(fields.filter((_, j) => j !== i))}
             >
               <Trash size={14} aria-hidden />
@@ -218,8 +219,8 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
             {f.type === "select" && (
               <Input
                 className="md:col-span-3"
-                aria-label={`Opções do campo ${i + 1}`}
-                placeholder="Opções, separadas por vírgula"
+                aria-label={`${t("Opções do campo")} ${i + 1}`}
+                placeholder={t("Opções, separadas por vírgula")}
                 value={(f.options ?? []).map((o) => o.label).join(", ")}
                 onChange={(e) => {
                   const options = e.target.value
@@ -243,18 +244,18 @@ function PipelineEditor({ pipeline }: { pipeline: PipelineRow }) {
             onClick={() =>
               setFields([
                 ...fields,
-                { key: `campo_${fields.length + 1}`, label: "Novo campo", type: "text" },
+                { key: `campo_${fields.length + 1}`, label: t("Novo campo"), type: "text" },
               ])
             }
           >
-            <Plus size={14} aria-hidden className="mr-1" /> Adicionar campo
+            <Plus size={14} aria-hidden className="mr-1" /> {t("Adicionar campo")}
           </Button>
         )}
       </div>
 
       <div className="flex sm:justify-end">
         <Button onClick={handleSave} disabled={isPending} className="w-full sm:w-auto">
-          {isPending ? "Salvando…" : "Salvar vocabulário e campos"}
+          {isPending ? t("Salvando…") : t("Salvar vocabulário e campos")}
         </Button>
       </div>
     </div>

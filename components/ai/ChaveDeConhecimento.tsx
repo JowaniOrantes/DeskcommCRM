@@ -1,4 +1,6 @@
 "use client";
+
+import { useT } from "@/hooks/i18n/useT";
 /**
  * A CHAVE QUE FAZ O MATERIAL VIRAR CONHECIMENTO — dita na tela, resolvida ali.
  *
@@ -54,24 +56,27 @@ interface Props {
 }
 
 export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
+  const t = useT();
   const [abrindo, setAbrindo] = useState(false);
-  const [rotulo, setRotulo] = useState("Chave da OpenAI");
+  // O rótulo padrão é traduzido porque é o que a pessoa vê preenchido e o que
+  // ela grava — não um identificador técnico.
+  const [rotulo, setRotulo] = useState(t("Chave da OpenAI"));
   const [chave, setChave] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   async function cadastrar() {
     if (chave.trim().length < 8) {
-      toast.error("Cole a chave inteira antes de salvar.");
+      toast.error(t("Cole a chave inteira antes de salvar."));
       return;
     }
     setEnviando(true);
     try {
       await apiClient.post("/api/v1/ai/credentials", {
         provider: "openai",
-        label: rotulo.trim() || "Chave da OpenAI",
+        label: rotulo.trim() || t("Chave da OpenAI"),
         api_key: chave.trim(),
       });
-      toast.success("Chave salva. Estamos conferindo com a OpenAI — leva alguns segundos.");
+      toast.success(t("Chave salva. Estamos conferindo com a OpenAI — leva alguns segundos."));
       setChave("");
       setAbrindo(false);
       // Quem recarrega até a validação voltar é o `refetchInterval` do hook: a
@@ -99,7 +104,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
         className="flex items-center gap-2 text-xs text-text-muted"
       >
         <KeyRound className="h-3.5 w-3.5 animate-pulse" aria-hidden />
-        <span>Conferindo a chave com a OpenAI — leva alguns segundos.</span>
+        <span>{t("Conferindo a chave com a OpenAI — leva alguns segundos.")}</span>
       </div>
     );
   }
@@ -112,18 +117,23 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
       >
         <CheckCircle2 className="h-3.5 w-3.5 text-success-fg" aria-hidden />
         <span>
-          Pronto para preparar material.{" "}
+          {t("Pronto para preparar material.")}{" "}
           {estado.chave_em_uso ? (
             <>
-              Usando a chave <span className="font-medium text-foreground">{estado.chave_em_uso}</span>.
+              {t("Usando a chave")}{" "}
+              <span className="font-medium text-foreground">{estado.chave_em_uso}</span>.
             </>
           ) : (
-            estado.explicacao
+            // `explicacao` e `avisos` vêm do servidor, de catálogos fechados
+            // (`EXPLICACAO_DA_ORIGEM` em `lib/ai/embeddings/chave.ts`). Passar
+            // por um route handler não os tira do alcance do dicionário: a
+            // correspondência é por igualdade de string, venha de onde vier.
+            estado.explicacao ? t(estado.explicacao) : null
           )}
         </span>
         {estado.avisos.map((a) => (
           <span key={a} className="w-full text-warning-fg">
-            {a}
+            {t(a)}
           </span>
         ))}
       </div>
@@ -139,12 +149,12 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
         <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning-fg" aria-hidden />
         <div className="space-y-1">
           <h3 className="text-sm font-medium">
-            Falta uma chave da OpenAI para o agente aprender o seu material
+            {t("Falta uma chave da OpenAI para o agente aprender o seu material")}
           </h3>
           <p className="text-xs text-text-muted">
-            Preparar um documento para o agente encontrá-lo usa a OpenAI, mesmo que o resto
-            do seu assistente rode em outro provedor. Sem ela você consegue cadastrar o
-            material, mas ele fica esperando — e o agente segue sem saber o que está nele.
+            {t(
+              "Preparar um documento para o agente encontrá-lo usa a OpenAI, mesmo que o resto do seu assistente rode em outro provedor. Sem ela você consegue cadastrar o material, mas ele fica esperando — e o agente segue sem saber o que está nele.",
+            )}
           </p>
         </div>
       </div>
@@ -152,7 +162,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
       {abrindo ? (
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="chave-rotulo">Como você quer chamar esta chave</Label>
+            <Label htmlFor="chave-rotulo">{t("Como você quer chamar esta chave")}</Label>
             <Input
               id="chave-rotulo"
               value={rotulo}
@@ -161,7 +171,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="chave-valor">Chave da OpenAI</Label>
+            <Label htmlFor="chave-valor">{t("Chave da OpenAI")}</Label>
             <Input
               id="chave-valor"
               data-testid="conhecimento-chave-input"
@@ -173,7 +183,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
               autoComplete="off"
             />
             <p className="text-xs text-text-muted">
-              Você pega em{" "}
+              {t("Você pega em")}{" "}
               <a
                 href="https://platform.openai.com/api-keys"
                 target="_blank"
@@ -182,7 +192,7 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
               >
                 platform.openai.com/api-keys
               </a>
-              . Ela é guardada cifrada e nunca aparece de volta na tela.
+              . {t("Ela é guardada cifrada e nunca aparece de volta na tela.")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -192,10 +202,10 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
               disabled={enviando}
               data-testid="conhecimento-chave-salvar"
             >
-              {enviando ? "Salvando…" : "Salvar chave"}
+              {enviando ? t("Salvando…") : t("Salvar chave")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setAbrindo(false)} disabled={enviando}>
-              Cancelar
+              {t("Cancelar")}
             </Button>
           </div>
         </div>
@@ -208,15 +218,15 @@ export function ChaveDeConhecimento({ estado, onChaveCadastrada }: Props) {
             data-testid="conhecimento-cadastrar-chave"
           >
             <KeyRound className="mr-2 h-3.5 w-3.5" aria-hidden />
-            Cadastrar a chave aqui
+            {t("Cadastrar a chave aqui")}
           </Button>
           <span className="text-xs text-text-muted">
-            ou veja todas em{" "}
+            {t("ou veja todas em")}{" "}
             <Link
               href="/app/ai/credentials"
               className="font-medium text-foreground underline underline-offset-4"
             >
-              IA › Credenciais
+              {t("IA › Credenciais")}
             </Link>
           </span>
         </div>

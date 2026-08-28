@@ -1,7 +1,10 @@
 "use client";
 
+import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
+
+import { useT } from "@/hooks/i18n/useT";
+
 import { format, isBefore } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +107,8 @@ export function HistoricoDaAgenda({
   onFaltou?: (id: string) => void;
   className?: string;
 }) {
+  const localeDaData = useLocaleDeData();
+  const t = useT();
   const [aba, setAba] = React.useState<AbaDoHistorico>("proximos");
   const grupos = React.useMemo(() => separar(agendamentos, agora), [agendamentos, agora]);
   const daAba = grupos[aba];
@@ -112,7 +117,7 @@ export function HistoricoDaAgenda({
     <div data-testid="historico-da-agenda" data-aba={aba} className={cn("flex min-h-0 flex-col", className)}>
       <div
         role="tablist"
-        aria-label="Filtrar o histórico"
+        aria-label={t("Filtrar o histórico")}
         className="flex flex-wrap items-center gap-0.5 rounded-md border border-border bg-surface p-0.5"
       >
         {ABAS.map((a) => {
@@ -133,7 +138,7 @@ export function HistoricoDaAgenda({
                   : "text-text-muted hover:bg-surface-elevated hover:text-text",
               )}
             >
-              <span>{a.rotulo}</span>
+              <span>{t(a.rotulo)}</span>
               {/* O contador vem SEMPRE, inclusive zero: "Cancelados 0" responde a
                   pergunta sem gastar um clique, e some-lo faria a aba vazia
                   parecer não carregada. */}
@@ -154,10 +159,10 @@ export function HistoricoDaAgenda({
       <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-surface">
         {daAba.length === 0 ? (
           <p data-testid="historico-vazio" className="p-8 text-center text-sm text-text-muted">
-            {aba === "proximos" && "Nada marcado daqui para a frente."}
-            {aba === "aguardando" && "Ninguém esperando confirmação."}
-            {aba === "passados" && "Ainda não há atendimentos concluídos."}
-            {aba === "cancelados" && "Nenhum cancelamento."}
+            {aba === "proximos" && t("Nada marcado daqui para a frente.")}
+            {aba === "aguardando" && t("Ninguém esperando confirmação.")}
+            {aba === "passados" && t("Ainda não há atendimentos concluídos.")}
+            {aba === "cancelados" && t("Nenhum cancelamento.")}
           </p>
         ) : (
           <ul>
@@ -178,7 +183,7 @@ export function HistoricoDaAgenda({
                   />
                   <div className="w-28 shrink-0">
                     <div className="text-sm font-medium tabular-nums first-letter:uppercase">
-                      {format(comeca, "d 'de' MMM", { locale: ptBR })}
+                      {format(comeca, t("d 'de' MMM"), { locale: localeDaData })}
                     </div>
                     <div className="text-[11px] tabular-nums text-text-muted">
                       {format(comeca, "HH:mm")}
@@ -187,15 +192,15 @@ export function HistoricoDaAgenda({
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm">{a.quemSeraAtendido ?? a.titulo}</div>
+                    <div className="truncate text-sm">{a.quemSeraAtendido ?? t(a.titulo)}</div>
                     <div className="truncate text-[11px] text-text-muted">
-                      {a.tipo ?? "Agendamento"}
-                      {pessoa ? ` · com ${pessoa.nome}` : ""}
+                      {a.tipo ? t(a.tipo) : t("Agendamento")}
+                      {pessoa ? ` · ${t("com")} ${pessoa.nome}` : ""}
                     </div>
                   </div>
                   {pessoa && <AvatarDaPessoa pessoa={pessoa} tamanho="sm" />}
                   <Badge variant={variante} className="shrink-0">
-                    {ROTULO_DA_SITUACAO[a.situacao]}
+                    {t(ROTULO_DA_SITUACAO[a.situacao])}
                   </Badge>
                   <div className="flex shrink-0 items-center gap-1">
                     {/*
@@ -213,20 +218,20 @@ export function HistoricoDaAgenda({
                           size="sm"
                           data-testid={`remarcar-${a.id}`}
                           disabled={!onRemarcar}
-                          title={onRemarcar ? undefined : "Disponível quando a agenda estiver conectada"}
+                          title={onRemarcar ? undefined : t("Disponível quando a agenda estiver conectada")}
                           onClick={() => onRemarcar?.(a.id)}
                         >
-                          Remarcar
+                          {t("Remarcar")}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           data-testid={`cancelar-${a.id}`}
                           disabled={!onCancelar}
-                          title={onCancelar ? undefined : "Disponível quando a agenda estiver conectada"}
+                          title={onCancelar ? undefined : t("Disponível quando a agenda estiver conectada")}
                           onClick={() => onCancelar?.(a.id)}
                         >
-                          Cancelar
+                          {t("Cancelar")}
                         </Button>
                       </>
                     )}
@@ -254,7 +259,7 @@ export function HistoricoDaAgenda({
                           disabled={!onRealizado}
                           onClick={() => onRealizado?.(a.id)}
                         >
-                          Realizado
+                          {t("Realizado")}
                         </Button>
                         <Button
                           variant="ghost"
@@ -263,7 +268,7 @@ export function HistoricoDaAgenda({
                           disabled={!onFaltou}
                           onClick={() => onFaltou?.(a.id)}
                         >
-                          Faltou
+                          {t("Faltou")}
                         </Button>
                       </>
                     )}

@@ -6,8 +6,10 @@ import { SourcesTab } from "./SourcesTab";
 import { RulesTab } from "./RulesTab";
 import { ActivityTab } from "./ActivityTab";
 import { CapturasTab } from "./CapturasTab";
+import { useT } from "@/hooks/i18n/useT";
 
 export function WebhooksClient() {
+  const t = useT();
   // Radix Tabs gera ids via useId; com SSR streamado (Next 15) os ids divergem
   // entre server e client e o React acusa hydration mismatch. Nenhuma outra
   // página do app SSRa Tabs no primeiro paint (todas montam pós-fetch) —
@@ -35,10 +37,10 @@ export function WebhooksClient() {
   return (
     <Tabs defaultValue="sources" className="flex-1">
       <TabsList>
-        <TabsTrigger value="sources">Receber dados</TabsTrigger>
-        <TabsTrigger value="capturas">Leads recebidos</TabsTrigger>
-        <TabsTrigger value="rules">Automações</TabsTrigger>
-        <TabsTrigger value="activity">Atividade</TabsTrigger>
+        <TabsTrigger value="sources">{t("Receber dados")}</TabsTrigger>
+        <TabsTrigger value="capturas">{t("Leads recebidos")}</TabsTrigger>
+        <TabsTrigger value="rules">{t("Automações")}</TabsTrigger>
+        <TabsTrigger value="activity">{t("Atividade")}</TabsTrigger>
       </TabsList>
       <TabsContent value="sources"><SourcesTab /></TabsContent>
       <TabsContent value="capturas"><CapturasTab /></TabsContent>
