@@ -10,9 +10,8 @@ import type pg from "pg";
 
 import {
   decidirElegibilidade,
-  lerModoDoGate,
+  montarEstadoDeElegibilidade,
   type DecisaoDeElegibilidade,
-  type EstadoDeElegibilidade,
 } from "./gate";
 
 interface LinhaDeElegibilidade {
@@ -21,14 +20,6 @@ interface LinhaDeElegibilidade {
   assignee_kind: string | null;
   bot_silenced_until: Date | string | null;
   ai_authorized_at: Date | string | null;
-}
-
-function comoData(v: Date | string | null): Date | number | null {
-  if (v === null) return null;
-  if (v instanceof Date) return v;
-  if (v === "infinity") return Number.POSITIVE_INFINITY;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 /**
@@ -57,15 +48,15 @@ export async function decidirElegibilidadeDaConversa(
   const r = rows[0];
   if (r === undefined) return null;
 
-  const aiAuthorizedAt = comoData(r.ai_authorized_at);
-  const estado: EstadoDeElegibilidade = {
-    modo: lerModoDoGate(r.ai_gate),
-    forceHuman: r.force_human === true,
-    botSilencedUntil: comoData(r.bot_silenced_until),
-    assigneeKind: r.assignee_kind,
-    aiAuthorizedAt: aiAuthorizedAt instanceof Date ? aiAuthorizedAt : null,
-    agora: input.agora,
-    ttlMs: input.ttlMs,
-  };
-  return decidirElegibilidade(estado);
+  return decidirElegibilidade(
+    montarEstadoDeElegibilidade({
+      aiGate: r.ai_gate,
+      forceHuman: r.force_human,
+      assigneeKind: r.assignee_kind,
+      botSilencedUntil: r.bot_silenced_until,
+      aiAuthorizedAt: r.ai_authorized_at,
+      agora: input.agora,
+      ttlMs: input.ttlMs,
+    }),
+  );
 }

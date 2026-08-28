@@ -131,3 +131,46 @@ export function ttlDaAutorizacaoMs(env: Record<string, string | undefined>): num
   const efetivo = Number.isFinite(dias) && dias > 0 ? dias : AI_ALLOWLIST_TTL_DAYS_DEFAULT;
   return efetivo * 24 * 60 * 60 * 1000;
 }
+
+/**
+ * Normaliza um instante cru de qualquer transporte para o que `silenciadoAgora`
+ * entende: `Date`, `Infinity` (o `'infinity'` do Postgres, que o `pg` devolve
+ * como string e o supabase-js também) ou `null`. String de data inválida → `null`.
+ */
+export function normalizarInstante(v: Date | string | number | null | undefined): Date | number | null {
+  if (v === null || v === undefined) return null;
+  if (v instanceof Date) return v;
+  if (typeof v === "number") return v;
+  if (v === "infinity") return Number.POSITIVE_INFINITY;
+  if (v === "-infinity") return Number.NEGATIVE_INFINITY;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Monta o `EstadoDeElegibilidade` a partir dos campos crus lidos do banco — a
+ * MESMA normalização para os dois transportes (`consulta-pg.ts` via pool `pg` e
+ * `consulta-supabase.ts` via supabase-js). Uma cópia por transporte divergiria
+ * na primeira vez que alguém tratasse `'infinity'` num lado e esquecesse do
+ * outro. Não roda a regra — só normaliza; quem decide é `decidirElegibilidade`.
+ */
+export function montarEstadoDeElegibilidade(raw: {
+  aiGate: unknown;
+  forceHuman: unknown;
+  assigneeKind: string | null;
+  botSilencedUntil: Date | string | number | null | undefined;
+  aiAuthorizedAt: Date | string | null | undefined;
+  agora: Date;
+  ttlMs: number;
+}): EstadoDeElegibilidade {
+  const autorizadoEm = normalizarInstante(raw.aiAuthorizedAt);
+  return {
+    modo: lerModoDoGate(raw.aiGate),
+    forceHuman: raw.forceHuman === true,
+    botSilencedUntil: normalizarInstante(raw.botSilencedUntil),
+    assigneeKind: raw.assigneeKind,
+    aiAuthorizedAt: autorizadoEm instanceof Date ? autorizadoEm : null,
+    agora: raw.agora,
+    ttlMs: raw.ttlMs,
+  };
+}
