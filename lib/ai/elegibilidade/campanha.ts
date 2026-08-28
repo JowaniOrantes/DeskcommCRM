@@ -27,16 +27,24 @@ export const CAMPANHA_MATCH_TIPOS = ["contains", "starts_with"] as const;
 export const campanhaWhatsappSchema = z.object({
   /** id estável da campanha — entra em `ai_authorized_reason` como `campanha:<id>`. */
   id: z.string().min(1).max(64),
-  /** rótulo legível para a tela. */
+  /** rótulo legível para a tela (a tela ainda não existe — hoje só documenta a config). */
   label: z.string().min(1).max(120).optional(),
   match: z.object({
     tipo: z.enum(CAMPANHA_MATCH_TIPOS),
     /** a frase/prefixo identificador da campanha. */
     valor: z.string().min(3).max(400),
   }),
-  /** agente que deve assumir. Opcional: sem ele, o roteador/agente publicado da sessão resolve. */
+  /**
+   * RESERVADO — ainda NÃO roteado. O match de campanha só torna o contato
+   * elegível (`ai_authorized_reason = campanha:<id>`); quem assume o turno é
+   * sempre o roteador / agente publicado da sessão (`resolve-turn-agent.ts`).
+   * Encaminhar por campanha exige levar o `agent_id` no payload do
+   * `ai_agent.dispatch_requested` e o `resolve-turn-agent` respeitá-lo — não
+   * feito nesta entrega. Aceito no schema para a config não quebrar quando a
+   * rota existir. Ver J19 (dívida declarada) no user-journey-map.
+   */
   agent_id: z.string().uuid().optional(),
-  /** segmento/nicho, só para contexto e exibição. */
+  /** segmento/nicho, só para contexto e exibição (mesma pendência de tela do `label`). */
   segmento: z.string().min(1).max(64).optional(),
   /** limita a campanha a um canal específico; ausente = qualquer canal da org. */
   channel_session_id: z.string().uuid().optional(),

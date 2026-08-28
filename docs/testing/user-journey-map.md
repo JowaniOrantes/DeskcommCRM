@@ -795,8 +795,15 @@ envia). Todos fail-closed: erro de leitura da elegibilidade → não responde.
 Respondi reais, os casos J19.6 e J19.12 — a submissão que autoriza e o
 follow-up que respeita — e J19.18 (resposta pelo celular pausa a IA). **A tela do
 knob `ai_gate` e do editor de `campanhas_whatsapp` ainda não existe** — hoje se
-liga por script/SQL, como o `roteamento_de_formulario`. É a dívida declarada
-desta entrega.
+liga por script/SQL (`scripts/ativar-gate-elegibilidade-ia.ts`), como o
+`roteamento_de_formulario`. É a dívida declarada desta entrega.
+
+**Dívida no `campanhas_whatsapp`:** o campo `agent_id` de uma campanha é aceito
+no schema mas **NÃO é roteado** — o match só torna o contato elegível
+(`ai_authorized_reason = campanha:<id>`); quem assume o turno é sempre o
+roteador / agente publicado da sessão. Encaminhar por campanha exige levar
+`agent_id` no payload de `ai_agent.dispatch_requested` e o `resolve-turn-agent`
+respeitá-lo. `label`/`segmento` são display-only (dependem da tela).
 
 ---
 
