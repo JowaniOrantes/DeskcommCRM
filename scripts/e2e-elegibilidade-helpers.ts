@@ -348,13 +348,61 @@ async function main(): Promise<void> {
 
           let versionId = aRows[0]!.published_version_id;
           if (versionId) {
-            await cli.query(
-              `update ai_agent_versions
-                  set status = 'published', published_at = now(), channel_session_id = $2,
-                      credential_id = $3, followup = $4::jsonb
-                where id = $1`,
-              [versionId, fix.channel_session_id, fix.credential_id, followup],
+            // A versão apontada já existe. `ai_agent_versions` é IMUTÁVEL depois
+            // de sair de 'draft' (trigger trg_ai_agent_versions_content_immutable):
+            // reescrever system_prompt/credential_id/channel_session_id numa linha
+            // já publicada levanta exceção. Então:
+            //   - draft            → pode reescrever tudo e publicar;
+            //   - publicada, mesmo canal/credencial → só o `followup` (coluna
+            //     fora do trigger) precisa acompanhar o pointerId do caso;
+            //   - publicada, canal/credencial diferentes → o trigger MANDA criar
+            //     versão nova (clona + publica), e o pointer passa a apontá-la.
+            const { rows: cur } = await cli.query<{
+              status: string;
+              channel_session_id: string | null;
+              credential_id: string | null;
+            }>(
+              `select status, channel_session_id, credential_id from ai_agent_versions where id = $1`,
+              [versionId],
             );
+            const c0 = cur[0];
+            const conteudoBate =
+              c0 != null &&
+              c0.channel_session_id === fix.channel_session_id &&
+              c0.credential_id === fix.credential_id;
+            if (c0 != null && c0.status === "draft") {
+              await cli.query(
+                `update ai_agent_versions
+                    set status = 'published', published_at = now(), channel_session_id = $2,
+                        credential_id = $3, followup = $4::jsonb
+                  where id = $1`,
+                [versionId, fix.channel_session_id, fix.credential_id, followup],
+              );
+            } else if (conteudoBate) {
+              await cli.query(
+                `update ai_agent_versions set followup = $2::jsonb, published_at = now() where id = $1`,
+                [versionId, followup],
+              );
+            } else {
+              const { rows: mx } = await cli.query<{ n: number }>(
+                `select coalesce(max(version_number), 0) + 1 as n from ai_agent_versions where agent_id = $1`,
+                [agentId],
+              );
+              const { rows: nv } = await cli.query<{ id: string }>(
+                `insert into ai_agent_versions
+                   (organization_id, agent_id, version_number, system_prompt, provider, model,
+                    credential_id, channel_session_id, status, published_at, followup)
+                 values ($1, $2, $3, 'Agente de teste E2E.', 'anthropic', 'claude-sonnet-4-6',
+                         $4, $5, 'published', now(), $6::jsonb)
+                 returning id`,
+                [creds.org_id, agentId, mx[0]!.n, fix.credential_id, fix.channel_session_id, followup],
+              );
+              versionId = nv[0]!.id;
+              await cli.query(`update ai_agents set published_version_id = $2 where id = $1`, [
+                agentId,
+                versionId,
+              ]);
+            }
           } else {
             const { rows: vRows } = await cli.query<{ id: string }>(
               `insert into ai_agent_versions

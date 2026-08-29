@@ -7,9 +7,9 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const sendMessageHandler = vi.fn(async () => ({ id: "msg-1" }));
+const sendMessageHandler = vi.fn(async (..._a: unknown[]) => ({ id: "msg-1" }));
 const decidir = vi.fn();
-const completeTurnForEnrollment = vi.fn(async () => {});
+const completeTurnForEnrollment = vi.fn(async (..._a: unknown[]) => {});
 
 vi.mock("@/app/api/v1/messages/_handler", () => ({ sendMessageHandler: (...a: unknown[]) => sendMessageHandler(...a) }));
 vi.mock("@/lib/automation/start-conversation", () => ({

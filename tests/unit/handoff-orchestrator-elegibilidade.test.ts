@@ -11,7 +11,7 @@ const CONV = "44444444-4444-4444-8444-444444444444";
 const ORG = "22222222-2222-4222-8222-222222222222";
 const CONTACT = "66666666-6666-4666-8666-666666666666";
 
-const avisarLeadDoCrm = vi.fn(async () => ({ avisado: true }));
+const avisarLeadDoCrm = vi.fn(async (..._a: unknown[]) => ({ avisado: true }));
 const decidir = vi.fn();
 
 vi.mock("@/lib/ai/handoff/aviso-ao-lead", () => ({ avisarLeadDoCrm: (...a: unknown[]) => avisarLeadDoCrm(...a) }));
