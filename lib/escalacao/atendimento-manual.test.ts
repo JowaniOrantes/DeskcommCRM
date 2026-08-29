@@ -30,7 +30,7 @@ describe("pausarIaPorAtendimentoManual", () => {
     const pausou = await pausarIaPorAtendimentoManual(admin, {
       organizationId: ORG,
       conversationId: CONV,
-      canal: "waha",
+      canal: "canal-x",
     });
     expect(pausou).toBe(true);
     expect(updates).toHaveLength(1);

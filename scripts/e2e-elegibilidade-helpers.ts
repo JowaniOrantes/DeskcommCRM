@@ -324,12 +324,21 @@ async function main(): Promise<void> {
       // para o gate de follow-up abrir. Idempotente por (org, name).
       //   - sem pointerId: `followup` fica desligado (J19.6)
       //   - com pointerId: `followup = {enabled:true, flow_pointer_ids:[id]}` (J19.12)
+      //
+      // O NOME depende de ter pointerId: as specs J19 rodam em paralelo contra o
+      // mesmo banco e o `followup` é coluna compartilhada — se J19.6 e J19.12
+      // dividissem a linha, o publish-agent de um sobrescreveria o `followup` do
+      // outro (J19.12 quer `enabled:true`; J19.6, `false`). Agentes separados não
+      // colidem, e `resolveAgentForAutomaticTrigger` do sweep escolhe justamente
+      // o que ARMA o pointer, então o agente "sem followup" nunca é candidato.
       case "publish-agent": {
         const pointerId = args[0] ?? null;
         const creds = loadCreds();
         const fix = creds.elegibilidade;
         if (!fix) throw new Error("bloco `elegibilidade` ausente — rode scripts/seed-e2e-elegibilidade.ts");
-        const nome = "E2E Elegibilidade — agente publicado";
+        const nome = pointerId
+          ? "E2E Elegibilidade — agente publicado (followup)"
+          : "E2E Elegibilidade — agente publicado";
         const followup = pointerId
           ? JSON.stringify({ enabled: true, flow_pointer_ids: [pointerId] })
           : JSON.stringify({ enabled: false, flow_pointer_ids: [] });
@@ -337,6 +346,16 @@ async function main(): Promise<void> {
         const cli = await pool.connect();
         try {
           await cli.query("begin");
+          // As specs J19 rodam em paralelo contra o MESMO banco e mais de uma
+          // chama `publish-agent` para o MESMO agente (mesmo `name`). Sem
+          // serializar, dois workers leem `published_version_id` nulo ao mesmo
+          // tempo, os dois entram no ramo de INSERT e o segundo colide (ou pior:
+          // um deles tenta reescrever coluna vetada de uma versão que o outro
+          // acabou de publicar → `trg_ai_agent_versions_content_immutable`).
+          // O advisory lock de transação faz a segunda chamada esperar a
+          // primeira COMMITAR e então enxergar o estado final.
+          await cli.query("select pg_advisory_xact_lock(hashtext($1))", [`publish-agent:${creds.org_id}:${nome}`]);
+
           const { rows: aRows } = await cli.query<{ id: string; published_version_id: string | null }>(
             `insert into ai_agents (organization_id, name, system_prompt, kind, archived_at)
              values ($1, $2, 'Agente de teste E2E do gate de elegibilidade.', 'mcp_agent', null)
@@ -346,83 +365,63 @@ async function main(): Promise<void> {
           );
           const agentId = aRows[0]!.id;
 
-          let versionId = aRows[0]!.published_version_id;
-          if (versionId) {
-            // A versão apontada já existe. `ai_agent_versions` é IMUTÁVEL depois
-            // de sair de 'draft' (trigger trg_ai_agent_versions_content_immutable):
-            // reescrever system_prompt/credential_id/channel_session_id numa linha
-            // já publicada levanta exceção. Então:
-            //   - draft            → pode reescrever tudo e publicar;
-            //   - publicada, mesmo canal/credencial → só o `followup` (coluna
-            //     fora do trigger) precisa acompanhar o pointerId do caso;
-            //   - publicada, canal/credencial diferentes → o trigger MANDA criar
-            //     versão nova (clona + publica), e o pointer passa a apontá-la.
-            const { rows: cur } = await cli.query<{
-              status: string;
-              channel_session_id: string | null;
-              credential_id: string | null;
-            }>(
-              `select status, channel_session_id, credential_id from ai_agent_versions where id = $1`,
-              [versionId],
+          // Uma versão publicada cujo canal/credencial JÁ batem com a fixture
+          // serve os três casos — só o `followup` (coluna FORA do trigger de
+          // imutabilidade) precisa acompanhar o `pointerId`. Procuramos por
+          // conteúdo, não pelo ponteiro: o ponteiro pode estar atrás de um
+          // INSERT concorrente que ainda não o moveu.
+          const { rows: pub } = await cli.query<{ id: string }>(
+            `select id from ai_agent_versions
+              where agent_id = $1 and status = 'published'
+                and channel_session_id = $2 and credential_id = $3
+              order by version_number desc limit 1`,
+            [agentId, fix.channel_session_id, fix.credential_id],
+          );
+
+          let versionId: string;
+          if (pub[0]) {
+            versionId = pub[0].id;
+            await cli.query(
+              `update ai_agent_versions set followup = $2::jsonb, published_at = now() where id = $1`,
+              [versionId, followup],
             );
-            const c0 = cur[0];
-            const conteudoBate =
-              c0 != null &&
-              c0.channel_session_id === fix.channel_session_id &&
-              c0.credential_id === fix.credential_id;
-            if (c0 != null && c0.status === "draft") {
+          } else {
+            // Nenhuma versão publicada com o conteúdo certo. Um draft existente
+            // pode ser promovido (o trigger só veta UPDATE de linha NÃO-draft);
+            // senão, versão nova. Em ambos os casos, um número maior que o atual.
+            const { rows: dr } = await cli.query<{ id: string }>(
+              `select id from ai_agent_versions where agent_id = $1 and status = 'draft'
+                order by version_number desc limit 1`,
+              [agentId],
+            );
+            if (dr[0]) {
+              versionId = dr[0].id;
               await cli.query(
                 `update ai_agent_versions
-                    set status = 'published', published_at = now(), channel_session_id = $2,
-                        credential_id = $3, followup = $4::jsonb
+                    set status = 'published', published_at = now(),
+                        channel_session_id = $2, credential_id = $3, followup = $4::jsonb
                   where id = $1`,
                 [versionId, fix.channel_session_id, fix.credential_id, followup],
               );
-            } else if (conteudoBate) {
-              await cli.query(
-                `update ai_agent_versions set followup = $2::jsonb, published_at = now() where id = $1`,
-                [versionId, followup],
-              );
             } else {
-              const { rows: mx } = await cli.query<{ n: number }>(
-                `select coalesce(max(version_number), 0) + 1 as n from ai_agent_versions where agent_id = $1`,
-                [agentId],
-              );
               const { rows: nv } = await cli.query<{ id: string }>(
                 `insert into ai_agent_versions
                    (organization_id, agent_id, version_number, system_prompt, provider, model,
                     credential_id, channel_session_id, status, published_at, followup)
-                 values ($1, $2, $3, 'Agente de teste E2E.', 'anthropic', 'claude-sonnet-4-6',
-                         $4, $5, 'published', now(), $6::jsonb)
+                 values ($1, $2,
+                         (select coalesce(max(version_number), 0) + 1 from ai_agent_versions where agent_id = $2),
+                         'Agente de teste E2E.', 'anthropic', 'claude-sonnet-4-6',
+                         $3, $4, 'published', now(), $5::jsonb)
                  returning id`,
-                [creds.org_id, agentId, mx[0]!.n, fix.credential_id, fix.channel_session_id, followup],
+                [creds.org_id, agentId, fix.credential_id, fix.channel_session_id, followup],
               );
               versionId = nv[0]!.id;
-              await cli.query(`update ai_agents set published_version_id = $2 where id = $1`, [
-                agentId,
-                versionId,
-              ]);
             }
-          } else {
-            const { rows: vRows } = await cli.query<{ id: string }>(
-              `insert into ai_agent_versions
-                 (organization_id, agent_id, version_number, system_prompt, provider, model,
-                  credential_id, channel_session_id, status, published_at, followup)
-               values ($1, $2, 1, 'Agente de teste E2E.', 'anthropic', 'claude-sonnet-4-6',
-                       $3, $4, 'published', now(), $5::jsonb)
-               on conflict (agent_id, version_number) do update
-                 set status = 'published', published_at = now(),
-                     channel_session_id = excluded.channel_session_id,
-                     credential_id = excluded.credential_id, followup = excluded.followup
-               returning id`,
-              [creds.org_id, agentId, fix.credential_id, fix.channel_session_id, followup],
-            );
-            versionId = vRows[0]!.id;
-            await cli.query(`update ai_agents set published_version_id = $2 where id = $1`, [
-              agentId,
-              versionId,
-            ]);
           }
+          await cli.query(`update ai_agents set published_version_id = $2 where id = $1`, [
+            agentId,
+            versionId,
+          ]);
           await cli.query("commit");
           out({ agentId, versionId });
         } catch (e) {

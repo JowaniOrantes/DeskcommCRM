@@ -7,10 +7,10 @@
  *
  * `app/api/v1/messages/_handler.ts` (composer) já silencia o bot quando o ATOR é
  * uma pessoa — mas por uma janela deslizante de 5 min. O envio feito do celular
- * do operador NÃO passa por ali: ele entra pelo webhook do provider
- * (`lib/waha/ingest.ts` `handleOutboundFromUserPhone`, `lib/channels/zernio`) e
- * era gravado como histórico sem tocar em trava nenhuma. Resultado: a IA
- * continuava respondendo por cima de quem estava atendendo à mão.
+ * do operador NÃO passa por ali: ele entra pela ingestão de saída do canal (o
+ * caminho `fromMe` do webhook, mensagem enviada fora do CRM) e era gravado como
+ * histórico sem tocar em trava nenhuma. Resultado: a IA continuava respondendo
+ * por cima de quem estava atendendo à mão.
  *
  * ## O que grava, e o que NÃO grava
  *
@@ -51,7 +51,7 @@ const MOTIVO = "Atendimento manual pelo canal (resposta fora do CRM)";
 export interface PausaPorAtendimentoManualInput {
   organizationId: string;
   conversationId: string;
-  /** Rótulo da origem só para log (ex.: "waha", "zernio"). */
+  /** Rótulo da origem do evento, só para log (o adapter que chamou se identifica). */
   canal?: string;
 }
 
