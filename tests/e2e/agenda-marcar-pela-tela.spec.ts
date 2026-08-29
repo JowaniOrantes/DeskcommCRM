@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { test, expect } from "@playwright/test";
 
+import { escolherDiaDesenhado, irParaASemanaSeguinte } from "./helpers/agenda-semana-integra";
+
 /**
  * A PROVA EM TELA DA FRENTE 1 (API + motor) — agora ESCRITA, e o caminho até aqui
  * é o registro que interessa.
@@ -131,6 +133,20 @@ test("marcar um horário pela tela e vê-lo aparecer na grade — sem recarregar
   await page.goto("/app/agenda");
   await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: 20_000 });
 
+  // ⚠️ A SEMANA SEGUINTE, e ela é a condição de o caso poder passar.
+  //
+  // A asserção final desta spec é `faixa-<id>` DESENHADO NA GRADE — e a grade
+  // desenha uma semana só. Enquanto o painel escolhia "o primeiro dia com vaga"
+  // e a grade ficava na semana de hoje, os dois falavam de períodos diferentes
+  // assim que hoje esgotava: depois das 17h o painel oferecia a segunda-feira, o
+  // compromisso nascia na semana seguinte, e a grade — parada na semana de sexta
+  // — nunca o desenhava. A falha lia "a grade não repinta sem F5", acusando o
+  // produto de um defeito que era do período escolhido pelo teste.
+  //
+  // Navegando primeiro, alvo e grade passam a sair da MESMA fonte: os dias que
+  // a tela desenhou. Tabela medida em `helpers/agenda-semana-integra`.
+  const diasDaSemana = await irParaASemanaSeguinte(page);
+
   const antes = await cartoesDaGrade(page).count();
 
   // ── marcar, pela tela, como um humano faria ────────────────────────────
@@ -152,9 +168,8 @@ test("marcar um horário pela tela e vê-lo aparecer na grade — sem recarregar
   await expect(page.getByTestId("tipos-de-agendamento")).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: new RegExp(`^${creds.agenda.tipo_nome}`) }).click();
 
-  const dia = page.locator('[data-testid^="dia-"]:not([disabled])').first();
   try {
-    await expect(dia).toBeVisible({ timeout: 15_000 });
+    await escolherDiaDesenhado(page, diasDaSemana);
   } catch (erro) {
     // A mensagem do `expect` é avaliada ANTES de a asserção rodar, então ela não
     // pode carregar o que a rota respondeu. Enriquecer no catch é o que permite
@@ -165,7 +180,6 @@ test("marcar um horário pela tela e vê-lo aparecer na grade — sem recarregar
         `\n\n${(erro as Error).message}`,
     );
   }
-  await dia.click();
 
   const horario = page.locator('[data-testid^="horario-"]').first();
   await expect(horario, "o dia foi escolhido e não veio horário nenhum").toBeVisible({ timeout: 15_000 });

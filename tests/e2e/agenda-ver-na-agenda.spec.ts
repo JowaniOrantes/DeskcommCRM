@@ -3,6 +3,8 @@ import * as path from "node:path";
 
 import { test, expect, type Page } from "@playwright/test";
 
+import { escolherUltimoDiaCheio } from "./helpers/agenda-semana-integra";
+
 /**
  * "VER NA AGENDA" LEVA ATÉ O COMPROMISSO — o botão que não fazia nada.
  *
@@ -76,9 +78,12 @@ test("marcar, clicar em 'Ver na agenda', e ENCONTRAR o compromisso na grade", as
   // mais o defeito aparece. Com o primeiro dia (quase sempre nesta semana) a
   // grade já mostraria o compromisso sem precisar navegar, e o caso passaria
   // mesmo com o botão mudo — verde pelo motivo errado.
-  const dias = page.locator('[data-testid^="dia-"][data-disponivel="true"]');
-  await expect(dias.first()).toBeVisible({ timeout: 20_000 });
-  await dias.last().click();
+  // ⚠️ ERA `dias.last()`, e o último da lista pode ser HOJE. `.last()` é o último
+  // dia disponível do MÊS EM TELA — no último dia útil do mês, esse último é o
+  // próprio hoje, e o que a spec pegaria seria o resto de um dia já gasto (2
+  // horários às 16h, ZERO das 17h em diante). `escolherUltimoDiaCheio` mantém a
+  // intenção — o mais longe possível da semana corrente — e exclui hoje.
+  await escolherUltimoDiaCheio(page);
 
   const horario = page.locator('[data-testid^="horario-"]').first();
   await expect(horario, "o dia foi escolhido e não veio horário nenhum").toBeVisible({ timeout: 15_000 });

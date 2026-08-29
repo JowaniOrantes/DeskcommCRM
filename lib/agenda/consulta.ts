@@ -194,7 +194,13 @@ export async function horariosLivresDaOrg(
     return {
       ok: false,
       codigo: "jornada_mal_configurada",
-      motivoParaOperador: `A disponibilidade deste responsável está mal configurada: ${leitura.motivoParaOperador}`,
+      // `leitura.motivoParaOperador` já vem como fragmento pensado para
+      // encaixar aqui ("ainda não foi configurada. Configure em…" ou "está mal
+      // configurada: <motivo>") — ver `lerJornadaDoBanco`. Duas recusas
+      // diferentes ("nunca configurou" vs. "configurou errado") não podem virar
+      // a mesma frase, senão o operador lê "mal configurada" para um caso que é
+      // só "ainda não configurada".
+      motivoParaOperador: `A disponibilidade deste responsável ${leitura.motivoParaOperador}`,
       motivoParaCliente: `${leitura.motivoParaCliente} ${NAO_OFERECA}`,
     };
   }

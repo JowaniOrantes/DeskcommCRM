@@ -14,6 +14,52 @@
  * Rodar: `pnpm worker` (tsx) — dev com --env-file=.env.local; container via
  * Dockerfile.worker (serviço `worker` do docker-compose).
  */
+
+// Sentry precisa iniciar antes de qualquer import de lógica de negócio: os
+// imports abaixo são avaliados em ordem textual, e cada `import` só avança
+// para o próximo depois de o módulo importado terminar de rodar — então
+// colocar o `Sentry.init` aqui (antes dos imports do agent-engine) garante
+// que ele está de pé antes de qualquer código do worker executar.
+//
+// Mesma lógica de `sentry.server.config.ts`/`sentry.edge.config.ts`
+// (reaproveitada, não duplicada): DSN resolvido por `resolveSentryDsn`,
+// amostragem de trace condicionada ao Sentry da comunidade via
+// `isCommunityDsn` (issue #100), e os hooks de scrub de `lib/sentry/scrub.ts`.
+// O `@sentry/nextjs` funciona fora do Next — aqui é só `Sentry.init` puro,
+// sem `instrumentation.ts` porque o worker não é um processo Next.
+import * as Sentry from '@sentry/nextjs';
+import { resolveSentryDsn, isCommunityDsn, DEFAULT_SENTRY_DSN } from '@/lib/sentry/dsn';
+import { sentryScrubHooks } from '@/lib/sentry/scrub';
+
+const sentryDsn = resolveSentryDsn(process.env.SENTRY_DSN);
+const sentryCommunity = isCommunityDsn(sentryDsn);
+
+Sentry.init({
+  dsn: sentryDsn,
+
+  // No Sentry da comunidade, só erro (issue #100). Ver isCommunityDsn().
+  tracesSampleRate: sentryCommunity ? 0 : 1,
+  enableLogs: true,
+  sendDefaultPii: false,
+
+  ...sentryScrubHooks,
+});
+
+// Transparência de telemetria (mesma mensagem de sentry.server.config.ts,
+// adaptada para o processo worker): uma linha no boot dizendo o que está
+// ativo e como desligar.
+if (!sentryDsn) {
+  console.info('[telemetria] worker: Desligada (SENTRY_DSN=off) — nenhum erro é enviado.');
+} else if (sentryDsn === DEFAULT_SENTRY_DSN) {
+  console.info(
+    '[telemetria] worker: Relatórios de erro anonimizados ATIVOS (Sentry da comunidade). ' +
+      'Sem rastreamento de performance nem replay de sessão. ' +
+      'Desligue com SENTRY_DSN=off, ou envie pro seu com SENTRY_DSN=<seu-dsn>.',
+  );
+} else {
+  console.info('[telemetria] worker: Erros sendo enviados ao Sentry configurado em SENTRY_DSN.');
+}
+
 import http from 'node:http';
 import { hostname } from 'node:os';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -347,6 +393,12 @@ export async function startWorker(
         });
       } else {
         log.error('job falhou', { job_id: job.id, kind: job.kind, error: errMsg(err) });
+        // Só o caminho não-terminal: veto de negócio (acima) é o sistema
+        // funcionando como configurado, não um incidente — mandar isso pro
+        // Sentry afogaria o painel com o mesmo ruído que `ehVetoPermanenteDeNegocio`
+        // existe para evitar (ver comentário da função, "16 alertas críticos
+        // idênticos"). Isto aqui é falha real e não tratada do turno/job.
+        Sentry.captureException(err);
       }
       try {
         if (terminal) {
@@ -359,6 +411,10 @@ export async function startWorker(
           job_id: job.id,
           error: errMsg(failErr),
         });
+        // Falha dupla: o job falhou E a fila não conseguiu registrar a falha
+        // (banco fora do ar, tipicamente). O job só se recupera pelo reaper —
+        // vale saber que isto aconteceu.
+        Sentry.captureException(failErr);
       }
     }
   };
@@ -529,5 +585,10 @@ export async function main(): Promise<void> {
 // tsx roda este arquivo como entrypoint direto.
 main().catch((err: unknown) => {
   process.stderr.write(`boot falhou: ${errMsg(err)}\n`);
-  process.exit(1);
+  Sentry.captureException(err);
+  // `captureException` só enfileira — sem o flush, o `process.exit` teria boa
+  // chance de matar o processo antes do envio sair (é exatamente o cenário:
+  // boot falhou, o processo já está de saída). 2s é o mesmo teto usado pelo
+  // `SHUTDOWN_GRACE_MS` default deste worker para não pendurar o exit.
+  void Sentry.flush(2000).finally(() => process.exit(1));
 });

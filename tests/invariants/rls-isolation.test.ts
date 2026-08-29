@@ -216,7 +216,7 @@ beforeAll(() => {
  * checagens de catálogo e devolve a org inteira do vizinho. Medido — ver o
  * cabeçalho do caso de `contact_field_proposals` abaixo.
  */
-const TABLES = [
+export const TABLES = [
   "conversations",
   "messages",
   "contacts",

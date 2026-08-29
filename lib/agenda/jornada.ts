@@ -133,19 +133,37 @@ export type LeituraDaJornada =
  * ninguém descobre.
  */
 export function lerJornadaDoBanco(scheduleDoBanco: unknown): LeituraDaJornada {
+  // A LINHA QUE NÃO EXISTE (nenhuma disponibilidade cadastrada para este
+  // responsável) é um estado diferente de "cadastrou errado": é "ainda não
+  // cadastrou". Sem esta guarda ela caía no `safeParse` de baixo com
+  // `scheduleDoBanco ?? undefined` — que é `undefined` de qualquer jeito — e
+  // saía como "Invalid input: expected object, received undefined": frase que
+  // não erra, mas não diz ao operador ONDE resolver, justamente o vício que o
+  // resto desta função evita em toda outra recusa (ver `onde` abaixo). É o
+  // estado documentado como "o que uma instalação fresca produz"
+  // (`app/app/agenda/_client.tsx`) — comum, não exceção — e por isso merece
+  // nome próprio em vez do fallback genérico do Zod.
+  if (scheduleDoBanco === null || scheduleDoBanco === undefined) {
+    return {
+      ok: false,
+      motivoParaOperador: "ainda não foi configurada. Configure em Equipe → Atendimento.",
+      motivoParaCliente: RECUSA_PARA_O_CLIENTE,
+    };
+  }
+
   // ANTES do parse, e só aqui: depois dele o default já preencheu o fuso e a
   // suposição some sem rastro.
-  const cru = (scheduleDoBanco ?? {}) as { timezone?: unknown };
+  const cru = scheduleDoBanco as { timezone?: unknown };
   const fusoSuposto = typeof cru.timezone !== "string" || cru.timezone.trim() === "";
 
-  const lido = availabilityScheduleSchema.safeParse(scheduleDoBanco ?? undefined);
+  const lido = availabilityScheduleSchema.safeParse(scheduleDoBanco);
 
   if (!lido.success) {
     const primeiro = lido.error.issues[0];
     const onde = primeiro?.path?.length ? ` (em \`${primeiro.path.join(".")}\`)` : "";
     return {
       ok: false,
-      motivoParaOperador: `${primeiro?.message ?? "formato inesperado"}${onde}`,
+      motivoParaOperador: `está mal configurada: ${primeiro?.message ?? "formato inesperado"}${onde}`,
       motivoParaCliente: RECUSA_PARA_O_CLIENTE,
     };
   }

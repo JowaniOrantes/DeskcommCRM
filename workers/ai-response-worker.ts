@@ -35,6 +35,7 @@ import {
 } from "@/lib/agent-engine/edge/llm/orcamento";
 import { computeCost } from "@/lib/ai/cost";
 import { logInvocation } from "@/lib/ai/log-invocation";
+import { elegivelParaWorkerLegado } from "@/lib/ai/agents/no-ar";
 import { renderSystemPrompt } from "@/lib/ai/render-system-prompt";
 import { triggerHandoff } from "@/lib/ai/handoff/orchestrator";
 import { decidirElegibilidadeDaConversaViaSupabase } from "@/lib/ai/elegibilidade/consulta-supabase";
@@ -664,18 +665,40 @@ async function buildContext(input: BuildContextInput): Promise<GuardDecision> {
   const inbound_body = (msg.body ?? "").trim();
   if (!inbound_body) return skip("empty_inbound_body");
 
-  // Default agent for this tenant.
-  const { data: agent } = await admin
+  // O agente legado desta organização.
+  //
+  // `is_active` sozinho NÃO é "quem atende", e tratá-lo como se fosse era o
+  // buraco: pausar um `mcp_agent` limpa `published_version_id` e deixa
+  // `is_active` de pé, então este SELECT continuava trazendo o agente que o dono
+  // acabara de pausar — e a trava `engine_owns_reply` logo abaixo, que é
+  // ORG-WIDE, deixa de valer exatamente quando o último publicado é pausado.
+  // Resultado medido em produção: pausar o agente o fazia VOLTAR a responder,
+  // com o `system_prompt` do cadastro no lugar do da versão publicada.
+  //
+  // A régua agora é a mesma que a tela usa (`lib/ai/agents/no-ar.ts`).
+  //
+  // ⚠️ Quem PROTEGE é a régua, não o `.is("archived_at", null)` abaixo — medido
+  // por sabotagem: apagar o filtro deixa os 4 casos de
+  // `tests/unit/agente-pausado-nao-atende.test.ts` verdes, porque
+  // `estadoDoAgente` já devolve "arquivado". O filtro fica por ser mais barato
+  // não trazer do banco o que vai ser descartado; não confie nele como guarda.
+  // Sem `.limit(1)`: o primeiro da ordem pode ser justamente o que a régua
+  // recusa, e cortar antes de filtrar faria um `mcp_agent` pausado — que é
+  // `is_default` na instalação que o onboarding cria — esconder o `rag_bot`
+  // legítimo logo abaixo dele. A ordem (`is_default`, depois `created_at`) é a
+  // de sempre; o que muda é que ela agora escolhe entre os ELEGÍVEIS.
+  const { data: candidatos } = await admin
     .from("ai_agents")
     .select(
-      "id, organization_id, model, system_prompt, config, guardrails, active_kb_version_id, is_active, is_default",
+      "id, organization_id, model, system_prompt, config, guardrails, active_kb_version_id, is_active, is_default, kind, published_version_id, archived_at",
     )
     .eq("organization_id", input.organizationId)
     .eq("is_active", true)
+    .is("archived_at", null)
     .order("is_default", { ascending: false })
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
+
+  const agent = (candidatos ?? []).find(elegivelParaWorkerLegado) ?? null;
 
   if (!agent) return skip("agent_inactive_or_missing");
 

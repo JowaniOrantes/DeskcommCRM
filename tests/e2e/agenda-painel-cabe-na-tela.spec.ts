@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { test, expect, type Page } from "@playwright/test";
 
+import { escolherPrimeiroDiaCheio } from "./helpers/agenda-semana-integra";
+
 /**
  * O PAINEL DE MARCAR CABE NA TELA — medido por GEOMETRIA, não por presença.
  *
@@ -112,71 +114,11 @@ async function abrirPainelComDiaEscolhido(page: Page, nomeDoTipo: string): Promi
 
   // ⚠️ UM DIA INTEIRO, e NÃO o primeiro clicável — que é HOJE, já meio gasto.
   //
-  // Era `[data-disponivel="true"]`.first(), e o primeiro clicável é hoje: os dias
-  // passados não têm slot nenhum. Só que a jornada do seed é 09:00–18:00 e o tipo
-  // exige 60min de antecedência, então o que HOJE ainda oferece é o RESTO do dia —
-  // um número que é função do relógio de parede, não do seed:
-  //
-  //     run 33183384573, main, 15:27 UTC → 9 horários — "Received: 450"
-  //     run 33189014104, main, 16:37 UTC → 7 horários — "Received: 350"
-  //
-  // Mesmo commit, mesmo seed, contagens diferentes: a variável é a hora. Antes das
-  // ~15:00 UTC sobram 10+ horários e a pré-condição de suficiência passa; depois
-  // dela o caso reprova por FALTA DE CENÁRIO — a lista cabe na tela e, como a
-  // própria mensagem diz, o verde ali não seria evidência. A main ficou vermelha
-  // ao meio-dia sem ninguém ter mexido em nada.
-  //
-  // Um dia FUTURO oferece a janela inteira: 09:00–17:30 de 30 em 30 = 18 horários,
-  // 900px de lista, independentes de que horas são. O cenário deixa de depender do
-  // relógio sem que asserção nenhuma afrouxe — a pré-condição continua exatamente
-  // onde estava, e continua reprovando uma lista que não precise rolar.
-  const chavesCheias = async (): Promise<string[]> => {
-    const hoje = await page.evaluate(() => {
-      // Calculado DENTRO do browser de propósito: é o mesmo relógio e o mesmo fuso
-      // que formatam o `data-testid` de cada dia. Comparar com a data do processo
-      // do Node erraria por um dia sempre que os dois discordassem.
-      const d = new Date();
-      const dd = (n: number) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}`;
-    });
-    const chaves = await page
-      .locator('[data-testid^="dia-"][data-disponivel="true"]')
-      .evaluateAll((els) => els.map((el) => el.getAttribute("data-testid")!.slice(4)));
-    // `yyyy-MM-dd` compara como texto na mesma ordem em que compara como data.
-    return chaves.filter((k) => k > hoje).sort();
-  };
-
-  // `data-disponivel` é o que a tela usa para decidir o clique, então esperar por
-  // ele mede o mesmo estado que o usuário enxerga — e é o que dá tempo à consulta
-  // de horários responder: até ela chegar, TODO dia nasce indisponível, e uma
-  // varredura feita antes disso leria "não há dia cheio" onde há.
-  await expect(
-    page.locator('[data-testid^="dia-"][data-disponivel="true"]').first(),
-    "nenhum dia disponível — o seed da agenda não deixou jornada publicada, e sem " +
-      "dia clicável a coluna de horários nunca abre (o defeito ficaria invisível)",
-  ).toBeVisible({ timeout: 20_000 });
-
-  let cheios = await chavesCheias();
-  if (cheios.length === 0) {
-    // Hoje é o último dia útil do mês visível: o próximo dia com jornada cai no mês
-    // seguinte, e o mini-calendário só torna clicável o que é `isSameMonth` do mês
-    // em tela. Sem este passo a spec reprovaria nos dias 30/31 — a mesma classe de
-    // vermelho-por-calendário que ela acabou de sair.
-    await page.getByTestId("mes-seguinte").click();
-    await expect(
-      page.locator('[data-testid^="dia-"][data-disponivel="true"]').first(),
-      "nem o mês seguinte oferece dia — a janela de busca da tela é de 30 dias",
-    ).toBeVisible({ timeout: 20_000 });
-    cheios = await chavesCheias();
-  }
-
-  const dia = cheios[0];
-  expect(
-    dia,
-    "nenhum dia FUTURO disponível — sem um dia com a jornada inteira, a contagem de " +
-      "horários volta a depender da hora em que a suíte roda",
-  ).toBeTruthy();
-  await page.getByTestId(`dia-${dia}`).click();
+  // A razão medida (9 horários às 15:27 UTC e 7 às 16:37, mesmo commit e mesmo
+  // seed) mora com a função, em `helpers/agenda-semana-integra`. Ela está lá e
+  // não aqui de propósito: três outras specs de agenda pisaram na mesma pedra no
+  // mesmo dia, e a regra só fecha a classe se tiver um dono só.
+  await escolherPrimeiroDiaCheio(page);
 
   const coluna = page.getByTestId("coluna-de-horarios");
   await expect(coluna).toHaveAttribute("data-aberta", "true", { timeout: 15_000 });

@@ -193,7 +193,7 @@ describe("devolver o atendimento ao agente", () => {
       noContato,
       "sem esta escrita o agente continua morto nos três guards (worker nativo, harness e before-send)",
     ).toContainEqual({ tabela: "contacts", valores: { force_human: false } });
-    // Retomada manual = re-autoriza o contato (gate opt-in 'allowlist', 0202):
+    // Retomada manual = re-autoriza o contato (gate opt-in 'allowlist', 0203):
     // sem isto, "devolver ao automático" apagaria as travas de handoff e a IA
     // seguiria muda porque ai_authorized_at continuaria nulo/expirado.
     expect(noContato).toContainEqual(

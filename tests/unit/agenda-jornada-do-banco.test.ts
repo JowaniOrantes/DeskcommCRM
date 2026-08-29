@@ -127,6 +127,33 @@ describe("o que o banco pode devolver e NÃO pode passar", () => {
     expect(lerJornadaDoBanco(null).ok).toBe(false);
     expect(lerJornadaDoBanco(undefined).ok).toBe(false);
   });
+
+  it("a linha ausente diz ONDE configurar, e não vaza o jargão do Zod", () => {
+    // Antes desta guarda, `undefined` caía direto no `safeParse` e saía como
+    // "Invalid input: expected object, received undefined" — frase correta e
+    // inútil: não diz que é ISTO que está faltando, nem onde resolver.
+    for (const semLinha of [lerJornadaDoBanco(null), lerJornadaDoBanco(undefined)]) {
+      expect(semLinha.ok).toBe(false);
+      if (semLinha.ok) continue;
+      expect(semLinha.motivoParaOperador).toMatch(/equipe/i);
+      expect(semLinha.motivoParaOperador).toMatch(/atendimento/i);
+      expect(semLinha.motivoParaOperador).not.toMatch(/expected|received|\bundefined\b/i);
+    }
+  });
+
+  it("'ainda não configurou' e 'configurou errado' não podem virar a mesma frase", () => {
+    // São dois estados que a doutrina deste arquivo já separa em todo outro
+    // ponto (`publicouHorarios`, `fusoSuposto`) — a mensagem de erro não pode
+    // ser o lugar onde os dois colapsam de volta em um só.
+    const semLinha = lerJornadaDoBanco(undefined);
+    const corrompida = lerJornadaDoBanco({ windows: null });
+    expect(semLinha.ok).toBe(false);
+    expect(corrompida.ok).toBe(false);
+    if (semLinha.ok || corrompida.ok) return;
+    expect(semLinha.motivoParaOperador).not.toBe(corrompida.motivoParaOperador);
+    expect(semLinha.motivoParaOperador).not.toMatch(/mal configurada/i);
+    expect(corrompida.motivoParaOperador).toMatch(/mal configurada/i);
+  });
 });
 
 /**

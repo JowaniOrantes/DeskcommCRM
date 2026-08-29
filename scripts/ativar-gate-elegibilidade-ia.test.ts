@@ -11,7 +11,7 @@ import {
   campanhaPerigosa,
   checkCampanhas,
   checkPlanoDeEscrita,
-  checkSchema0202,
+  checkSchema0203,
   checkDenyByDefault,
   type ConsultaPg,
   type CtxAtivacao,
@@ -75,14 +75,14 @@ function ctx(pool: ConsultaPg, over: Partial<CtxAtivacao> = {}): CtxAtivacao {
   };
 }
 
-describe("checkSchema0202", () => {
+describe("checkSchema0203", () => {
   it("colunas ausentes → FAIL", async () => {
-    const r = await checkSchema0202(ctx(poolFake([{ casa: /information_schema/, rows: [] }])));
+    const r = await checkSchema0203(ctx(poolFake([{ casa: /information_schema/, rows: [] }])));
     expect(r.status).toBe("FAIL");
-    expect(r.detalhe).toMatch(/migration 0202/);
+    expect(r.detalhe).toMatch(/migration 0203/);
   });
   it("colunas certas → PASS", async () => {
-    const r = await checkSchema0202(
+    const r = await checkSchema0203(
       ctx(
         poolFake([
           {
@@ -98,7 +98,7 @@ describe("checkSchema0202", () => {
     expect(r.status).toBe("PASS");
   });
   it("coluna com NOT NULL ou default → FAIL", async () => {
-    const r = await checkSchema0202(
+    const r = await checkSchema0203(
       ctx(
         poolFake([
           {

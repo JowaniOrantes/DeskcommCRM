@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { test, expect, type Page } from "@playwright/test";
 
+import { irParaASemanaSeguinte } from "./helpers/agenda-semana-integra";
+
 /**
  * A GRADE COMO AGENDA DE VERDADE — clicar num bloco marca, arrastar um card
  * remarca, e o que não dá para fazer DIZ por quê.
@@ -107,8 +109,20 @@ function blocoBloqueado(page: Page) {
     .first();
 }
 
-/** Espera a consulta de horários da grade responder antes de medir qualquer coisa. */
-async function esperarADisponibilidade(page: Page) {
+/**
+ * Leva a grade para a semana SEGUINTE e espera a disponibilidade dela responder.
+ *
+ * ⚠️ A NAVEGAÇÃO NÃO É CONVENIÊNCIA, é a condição de o caso existir. A grade
+ * pede horários para exatamente a semana que desenha, e a semana de HOJE só
+ * oferece o resto de hoje: medido com o motor real numa sexta, 16 vagas às 9h,
+ * 4 às 15h, ZERO das 17h em diante — e zero o sábado inteiro, porque ali a
+ * semana desenhada só tem dias úteis já passados. Foi assim que estas specs
+ * derrubaram a `main` em quatro runs seguidos a partir das ~15h50.
+ *
+ * A razão inteira, com a tabela medida, está em `helpers/agenda-semana-integra`.
+ */
+async function irParaASemanaIntegra(page: Page) {
+  await irParaASemanaSeguinte(page);
   await expect(
     blocoLivre(page),
     "nenhum bloco livre na semana desenhada — a rota de horários respondeu vazio, " +
@@ -132,7 +146,7 @@ test("clicar num bloco livre abre a marcação NAQUELE horário", async ({ page 
   const creds = lerCreds();
   await entrar(page, creds);
   await escolherOTipoDoSeed(page, creds.agenda!.tipo_nome);
-  await esperarADisponibilidade(page);
+  await irParaASemanaIntegra(page);
 
   const bloco = blocoLivre(page);
   // O bloco oferece o horário PUBLICADO que começa dentro dele, e o anuncia no
@@ -164,7 +178,7 @@ test("bloco fora da disponibilidade não marca — e diz por quê", async ({ pag
   const creds = lerCreds();
   await entrar(page, creds);
   await escolherOTipoDoSeed(page, creds.agenda!.tipo_nome);
-  await esperarADisponibilidade(page);
+  await irParaASemanaIntegra(page);
 
   const bloqueado = blocoBloqueado(page);
   await expect(bloqueado).toBeAttached({ timeout: 15_000 });
@@ -193,7 +207,7 @@ test("arrastar um card remarca — e o horário novo sobrevive ao reload", async
   const creds = lerCreds();
   await entrar(page, creds);
   await escolherOTipoDoSeed(page, creds.agenda!.tipo_nome);
-  await esperarADisponibilidade(page);
+  await irParaASemanaIntegra(page);
 
   // ── o compromisso de trabalho, criado pelo caminho novo ────────────────
   const respostas: string[] = [];
@@ -315,6 +329,16 @@ test("arrastar um card remarca — e o horário novo sobrevive ao reload", async
 
   await page.reload();
   await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: 20_000 });
+  // ⚠️ O F5 DESFAZ A NAVEGAÇÃO — a âncora da grade é estado do React (`useState(new
+  // Date())`), então recarregar devolve a tela para a semana de HOJE. O
+  // compromisso vive na semana seguinte, e sem voltar até ele a asserção abaixo
+  // procura um cartão que a grade não tem por que desenhar: a falha lê "o
+  // horário novo não sobreviveu ao reload", que é a acusação errada.
+  //
+  // Medido: sem esta linha o caso reprova com `element(s) not found` no
+  // `faixa-<id>`, com o servidor tendo confirmado o horário novo dois `await`
+  // acima. O que não sobrevive ao F5 é a NAVEGAÇÃO, não o dado.
+  await irParaASemanaSeguinte(page);
   const cardDepois = page.locator(`button:has([data-testid="faixa-${id}"])`);
   await expect(cardDepois).toHaveAttribute("aria-label", new RegExp(`${horarioOferecido} às`), {
     timeout: 20_000,
@@ -346,7 +370,7 @@ test("arrastar para fora da disponibilidade é RECUSADO e o card volta", async (
   const creds = lerCreds();
   await entrar(page, creds);
   await escolherOTipoDoSeed(page, creds.agenda!.tipo_nome);
-  await esperarADisponibilidade(page);
+  await irParaASemanaIntegra(page);
 
   const respostas: string[] = [];
   page.on("response", (r) => {

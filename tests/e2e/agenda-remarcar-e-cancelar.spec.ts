@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { test, expect } from "@playwright/test";
 
+import { escolherDiaDesenhado, irParaASemanaSeguinte } from "./helpers/agenda-semana-integra";
+
 /**
  * REMARCAR E CANCELAR PELA TELA — as duas ações que só a IA conseguia fazer.
  *
@@ -69,7 +71,7 @@ function lerCreds(): Creds {
   return c;
 }
 
-async function entrar(page: import("@playwright/test").Page, creds: Creds) {
+async function entrar(page: import("@playwright/test").Page, creds: Creds): Promise<string[]> {
   const usuario = creds.users.manager;
   if (!usuario) throw new Error(".e2e-creds.json sem o usuário `manager`");
   await page.goto("/login");
@@ -79,17 +81,28 @@ async function entrar(page: import("@playwright/test").Page, creds: Creds) {
   await page.waitForURL(/\/app(\/|$)/, { timeout: 20_000 });
   await page.goto("/app/agenda");
   await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: 20_000 });
+  // ⚠️ A SEMANA SEGUINTE, e ela é a condição de os dois casos existirem.
+  //
+  // O caso de remarcar precisa de DOIS horários livres no mesmo dia ("só havia
+  // um horário livre — o cenário não distingue remarcar de repetir"), e o dia
+  // que o painel oferecia era hoje. Medido com o motor real numa sexta: 4 vagas
+  // às 15h, 2 às 16h, ZERO das 17h em diante — e zero o sábado inteiro. Um dia
+  // inteiro da semana seguinte oferece 18, a qualquer hora e em qualquer dia da
+  // semana. Tabela em `helpers/agenda-semana-integra`.
+  return irParaASemanaSeguinte(page);
 }
 
 /** Marca um compromisso pela tela e devolve o rótulo do horário escolhido. */
-async function marcarUm(page: import("@playwright/test").Page, tipoNome: string): Promise<string> {
+async function marcarUm(
+  page: import("@playwright/test").Page,
+  tipoNome: string,
+  dias: readonly string[],
+): Promise<string> {
   await page.getByRole("button", { name: /novo agendamento/i }).click();
   await expect(page.getByTestId("painel-de-marcacao")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId("tipos-de-agendamento")).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: new RegExp(`^${tipoNome}`) }).click();
-  const dia = page.locator('[data-testid^="dia-"]:not([disabled])').first();
-  await expect(dia).toBeVisible({ timeout: 15_000 });
-  await dia.click();
+  await escolherDiaDesenhado(page, dias);
   const horario = page.locator('[data-testid^="horario-"]').first();
   await expect(horario).toBeVisible({ timeout: 15_000 });
   const rotulo = (await horario.getAttribute("data-testid"))!.replace("horario-", "");
@@ -108,8 +121,8 @@ test.describe.configure({ timeout: 120_000 });
 test("cancelar pela tela: o motivo é exigido, e o compromisso sai dos próximos", async ({ page }) => {
   const creds = lerCreds();
   if (!creds.agenda) throw new Error("sem bloco agenda");
-  await entrar(page, creds);
-  await marcarUm(page, creds.agenda.tipo_nome);
+  const diasDaSemana = await entrar(page, creds);
+  await marcarUm(page, creds.agenda.tipo_nome, diasDaSemana);
 
   const historico = page.getByTestId("historico-da-agenda");
   const cancelarBotao = historico.getByRole("button", { name: /^Cancelar$/ }).first();
@@ -158,8 +171,8 @@ test("cancelar pela tela: o motivo é exigido, e o compromisso sai dos próximos
 test("remarcar pela tela: o painel abre em modo remarcar e o horário muda", async ({ page }) => {
   const creds = lerCreds();
   if (!creds.agenda) throw new Error("sem bloco agenda");
-  await entrar(page, creds);
-  const rotuloOriginal = await marcarUm(page, creds.agenda.tipo_nome);
+  const diasDaSemana = await entrar(page, creds);
+  const rotuloOriginal = await marcarUm(page, creds.agenda.tipo_nome, diasDaSemana);
 
   const historico = page.getByTestId("historico-da-agenda");
   const remarcarBotao = historico.getByRole("button", { name: /^Remarcar$/ }).first();
@@ -176,9 +189,7 @@ test("remarcar pela tela: o painel abre em modo remarcar e o horário muda", asy
     timeout: 10_000,
   });
 
-  const dia = page.locator('[data-testid^="dia-"]:not([disabled])').first();
-  await expect(dia).toBeVisible({ timeout: 15_000 });
-  await dia.click();
+  await escolherDiaDesenhado(page, diasDaSemana);
 
   // Um horário DIFERENTE do original — senão "remarcou" e "não mudou nada" são
   // indistinguíveis, e a asserção passaria pelo motivo errado.

@@ -10,7 +10,7 @@ import {
   checkPlanoDeEscrita,
   checkQueryElegibilidade,
   checkRespondiAutoriza,
-  checkSchema0202,
+  checkSchema0203,
   type CtxAtivacao,
 } from "../../scripts/lib/gate-ativacao";
 
@@ -147,8 +147,8 @@ afterAll(async () => {
 });
 
 describe("preflight do ativar-gate contra Postgres real", () => {
-  it("checkSchema0202 · PASS (0202 está no baseline)", async () => {
-    const r = await checkSchema0202(ctx());
+  it("checkSchema0203 · PASS (0203 está no baseline)", async () => {
+    const r = await checkSchema0203(ctx());
     expect(r.status).toBe("PASS");
   });
 

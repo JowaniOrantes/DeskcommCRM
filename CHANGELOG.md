@@ -8,6 +8,225 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ## [Não lançado]
 
+## [1.10.1] — 2026-08-28
+
+### Corrigido
+
+- **A Central de atendimento abre mais rápido quando a equipe é grande** Cada vez que a Central era aberta, o sistema perguntava o nome de cada pessoa
+  da equipe que aparecia na página — uma pergunta separada para cada uma, toda
+  vez, mesmo quando o nome nem ia ser mostrado na tela.
+
+  Numa equipe pequena isso passava despercebido. Numa equipe grande, não: o
+  tempo medido era de cerca de 350 milissegundos com dez pessoas atendendo, e de
+  mais de um segundo com cinquenta — só para descobrir nomes que o sistema já
+  poderia ter guardado.
+
+  Agora o nome de quem atende fica guardado junto com a conversa, e é atualizado
+  sozinho sempre que o atendimento troca de mãos. A Central abre no mesmo tempo
+  com uma pessoa ou com cinquenta.
+
+  Nada a fazer: a atualização do banco acontece sozinha quando você roda a
+  atualização normal, e os nomes de quem já estava atendendo são preenchidos na
+  hora.
+
+- **Quem administra duas empresas entra sempre na mesma** Quem participa de mais de uma empresa na mesma instalação podia entrar numa ou na
+  outra sem critério, ao acessar o sistema sem uma escolha anterior guardada — no
+  primeiro acesso, numa sessão nova ou depois de a preferência expirar. O sistema
+  não tinha regra para decidir qual delas abrir. Agora abre sempre a mais antiga, e
+  a escolha feita no seletor de empresa continua valendo por cima disso. Quem tem
+  uma empresa só não vê diferença.
+
+- **Agenda sem responsável configurado: o aviso agora diz onde resolver** Numa instalação nova, ou quando um novo tipo de agendamento aponta para alguém
+  que ainda não cadastrou horário de atendimento, tentar ver ou marcar um horário
+  mostrava "Invalid input: expected object, received undefined" — frase correta
+  para quem lê o código e inútil para quem opera a clínica.
+
+  Agora a mensagem diz o que realmente falta e onde resolver: "A disponibilidade
+  deste responsável ainda não foi configurada. Configure em Equipe →
+  Atendimento." Continua sendo a mesma recusa de antes (nenhum horário é
+  oferecido enquanto isso não for configurado) — só a explicação ficou legível.
+
+  Quem já tinha disponibilidade cadastrada não percebe nenhuma diferença.
+
+- **Quem publica o sistema com a própria marca passa a checar a atualização no lugar certo** Se você mantém uma cópia própria do projeto e publica as imagens do sistema com
+  o seu próprio endereço, o comando de atualização olhava para o endereço do
+  projeto original — e não para o seu — quando a configuração do servidor não
+  dizia explicitamente qual imagem usar. Ele então comparava a versão instalada
+  com a de outra pessoa, e podia anunciar que havia atualização quando não havia,
+  ou o contrário.
+
+  O endereço agora é lido de um ponto único do próprio kit, o mesmo que o resto
+  da instalação usa. Quem opera com o projeto original não percebe diferença: o
+  endereço lido é exatamente o que já estava escrito antes.
+
+- **Quatro consertos que a versão anterior anunciou e não trouxe chegam agora** A lista de mudanças da versão 1.10.0 anunciou quatro consertos que não estavam
+  dentro dela. Foi um erro nosso de ordem: os textos que descrevem os consertos
+  entraram no projeto antes do código deles, e a versão foi fechada no meio.
+
+  Se você atualizou para a 1.10.0 esperando alguma destas quatro coisas, elas
+  chegam agora:
+
+  - **A instalação nova não obriga mais a verificação em duas etapas.**
+    Quem instalava pelo instalador automático era parado por uma tela de
+    verificação em duas etapas logo depois do primeiro acesso, sem nunca ter
+    sido avisado disso.
+  - **Quando a inteligência artificial falha ao responder, o erro deixa de sumir.**
+    A falha ficava só no registro técnico do servidor e não chegava a ninguém.
+  - **O instalador para de confundir comentário com valor de configuração.**
+    No arquivo de exemplo da VPS, um comentário escrito na mesma linha do valor
+    era lido como parte do valor.
+  - **Uma rede a mais contra vazamento entre empresas.**
+    Esta é sobre as próximas versões, não sobre a sua instalação de hoje: uma
+    tabela nova que seja criada sem a proteção que separa os dados de cada
+    empresa passa a ser recusada na nossa conferência, antes de virar uma
+    atualização que chega até você.
+
+  Nada a fazer além de atualizar normalmente. Quem instalar do zero a partir
+  desta versão nunca viu o problema.
+
+- **O que você marca no Google passa a aparecer na agenda do CRM** Compromissos criados direto no Google Agenda já bloqueavam o horário — ninguém
+  conseguia marcar por cima —, mas não apareciam na tela: a agenda parecia vazia e
+  o horário indisponível ao mesmo tempo. Agora eles aparecem como faixa de
+  ocupação, com visual próprio e sem clique, porque não são compromissos do CRM:
+  não têm cliente, tipo nem responsável, e remarcá-los teria de ser feito no
+  Google.
+
+  A faixa mostra apenas o horário ocupado, **não o nome do evento**. A agenda
+  conectada é pessoal de quem atende, e esta tela é vista por outras pessoas da
+  empresa — o título de um compromisso particular não deve aparecer aí.
+
+- **Os compromissos do CRM voltam a aparecer no Google Agenda** Quem conectou o Google Agenda não via os compromissos marcados no CRM chegarem
+  lá — nenhum, nunca. O sistema tentava a cada cinco minutos e o Google recusava
+  todas as vezes, porque o pedido usava a operação de "alterar um evento
+  existente" para criar um evento que ainda não existia. Agora ele cria com a
+  operação certa e só altera o que já está lá. Os compromissos pendentes sobem na
+  primeira rodada após a atualização, sem duplicar os que porventura já existam.
+
+  A falha também deixou de ser silenciosa: quando o Google recusar, o motivo passa
+  a aparecer no registro do sistema, e não só numa coluna interna que ninguém abre.
+
+## [1.10.0] — 2026-08-28
+
+### Adicionado
+
+- **O sistema inteiro em espanhol, com o idioma trocável em três lugares** Quem instala na América Latina agora escolhe o idioma **na própria instalação**,
+  e o sistema abre em espanhol para todo mundo da empresa — inclusive para quem
+  for convidado depois e nunca abriu o próprio perfil.
+
+  Antes, o espanhol existia pela metade: só as telas do dia a dia estavam
+  traduzidas, e o resto aparecia em português para quem tinha escolhido espanhol.
+  Agora a tradução cobre Agenda, Desempenho, Radar, Respostas rápidas, IA e o
+  painel de administração, com um teste automático que reprova qualquer texto novo
+  que apareça sem tradução.
+
+  O idioma se troca em três lugares, na ordem em que se costuma precisar deles:
+
+  - **No topo de qualquer tela** — o botão `PT`/`ES` ao lado do controle de tema.
+    Um clique, sem procurar nada. É onde recorre quem abriu o sistema num idioma
+    que não lê.
+  - **Na instalação** — o `install.sh` pergunta, e a resposta define o idioma da
+    empresa inteira.
+  - **Em Configurações** — no seu perfil (só para você) ou em Organização (para
+    todo mundo que entrar sem preferência própria).
+
+  Também está consertado um controle que não fazia nada: o seletor de Idioma em
+  Configurações › Organização era gravado no banco e nunca era lido. Quem o
+  mudasse não via diferença nenhuma. Agora ele vale para toda pessoa da empresa
+  que não tenha escolhido um idioma seu.
+
+  **As datas também acompanham o idioma.** "quinta-feira, 3 de março" vira
+  "jueves, 3 de marzo" — não sobrou aquele meio-termo em que a tela fala espanhol
+  e a data insiste no português.
+
+  Duas exceções, de propósito: os **e-mails** que o sistema envia seguem em
+  português (quem recebe um convite ainda não tem conta, então não há preferência
+  de idioma para consultar), e o **relatório de LGPD** também — ele responde a uma
+  lei brasileira, e mudar a forma dele conforme quem apertou o botão seria errado.
+
+  ---
+
+  A tradução para espanhol é, em boa parte, contribuição de **@JowaniOrantes**, que
+  abriu três frentes de trabalho por conta própria: as áreas de IA e administração
+  (#352), o módulo de Agenda (#379) e as correções que vieram do QA visual dele.
+  São 57 commits e mais de 460 entradas de dicionário que este release não teria
+  sem esse trabalho.
+
+### Corrigido
+
+- **Pausar um agente de IA agora o cala de verdade** Pausar o único agente publicado da organização fazia um agente que a tela
+  chamava de "Rascunho" voltar a responder no WhatsApp pelo caminho antigo de
+  resposta — com o texto do cadastro, sem as ferramentas nem os limites da versão
+  publicada.
+
+  Junto disso, a tela passou a dizer a mesma coisa que o motor faz: o seletor de
+  dono de negócio deixou de esconder agentes publicados (e de oferecer os
+  pausados), e o selo da Inbox só diz "Automático" quando existe mesmo alguém para
+  atender.
+
+- **Instalação nova não obriga mais a verificação em duas etapas logo de cara** Quem instalava pelo instalador automático caía, logo depois do primeiro acesso,
+  numa tela obrigatória pedindo para cadastrar a verificação em duas etapas — um
+  passo que o assistente de instalação nunca anunciou. A verificação é opcional
+  desde a versão 1.0 e se liga em Configurações › Segurança, mas o instalador não
+  acompanhou essa decisão e deixava o valor obrigatório.
+
+  Quem já instalou e já configurou a verificação não é afetado: nada é desligado
+  de quem já tem. A mudança vale só para instalações novas, que passam a nascer
+  como sempre foi a intenção — com a escolha nas mãos de quem administra.
+
+- **O mesmo celular escrito das duas formas passa a cair sempre no mesmo cadastro** Quando um celular ainda existia gravado nas duas formas — com e sem o nono
+  dígito —, o sistema podia escolher qualquer uma das duas ao reencontrar a
+  pessoa. Na prática isso aparecia no pior momento: a resposta do cliente entrava
+  no cadastro errado, o follow-up não a reconhecia como resposta, e a mesma
+  pergunta era enviada de novo.
+
+  Agora a escolha é sempre a mesma e é sempre a forma com o nono dígito, que é a
+  que o CRM guarda e mostra. Você não precisa fazer nada.
+
+- **Quando a IA falha ao responder, o erro deixa de sumir** A peça que faz a IA responder às conversas registrava as próprias falhas apenas
+  num log que ninguém lê. Se ela parava de responder por um erro, não havia sinal
+  em lugar nenhum — só o silêncio no WhatsApp do cliente. Agora esse erro é
+  enviado ao serviço de monitoramento, o mesmo que o resto do sistema já usava.
+
+  Quem opera não precisa fazer nada, e nenhum dado de conversa é enviado: o
+  sistema já limpa o conteúdo antes de mandar.
+
+- **O instalador para de confundir comentário com valor de configuração** No arquivo de exemplo que serve de base para a configuração da VPS, as
+  explicações ficavam na mesma linha dos valores. O instalador lê esse arquivo
+  linha a linha e tratava a explicação como parte do valor — então uma senha, um
+  endereço ou uma chave podiam chegar ao servidor com um texto extra colado no
+  fim, e o erro só aparecia depois, num lugar sem relação com a causa.
+
+  As explicações passaram para a linha de cima. Quem já tem o servidor rodando não
+  precisa refazer nada; a mudança protege quem instala do zero a partir de agora.
+
+- **Quem baixa o projeto no Windows consegue rodar os testes** Isto é do nosso processo de desenvolvimento, não do sistema que você usa. Quem
+  baixava o projeto no Windows não conseguia rodar a bateria de testes do banco:
+  o sistema operacional alterava os arquivos de banco de dados na cópia, e uma
+  conferência de integridade recusava tudo antes de o primeiro teste rodar.
+
+  Para quem opera uma VPS nada muda — o servidor sempre rodou em Linux, onde a
+  alteração não acontece.
+
+- **O relógio externo do follow-up passou a ser testado de ponta a ponta** Quem roda o sistema numa hospedagem sem agendador próprio — o plano gratuito da
+  Vercel é o caso comum — depende de um serviço de cron externo bater de tempos em
+  tempos para os follow-ups andarem. Esse caminho tinha runbook e nunca tinha sido
+  exercitado: se ele parasse de funcionar, ninguém receberia erro, e os follow-ups
+  simplesmente ficariam parados.
+
+  Agora um teste automático dispara a batida de fora, como o cron real faz, e
+  confere que o follow-up de fato anda — e que uma batida sem a chave certa é
+  recusada sem mexer em nada. Você não precisa fazer nada: nada mudou no
+  comportamento, só passou a existir uma rede que avisa se ele quebrar.
+
+- **Uma rede a mais contra vazamento entre empresas** O sistema separa os dados de cada empresa por uma regra no banco, e essa regra
+  precisa ser ligada tabela por tabela. Faltava uma verificação automática que
+  recusasse uma tabela nova sem essa proteção — a conferência dependia de alguém
+  lembrar. Agora ela é feita a cada mudança, e o que já existe está registrado
+  como dívida conhecida, para a lista só diminuir.
+
+  Nada muda para quem opera: é uma proteção contra um erro futuro, não a correção
+  de um vazamento existente.
+
 ## [1.9.1] — 2026-08-28
 
 ### Corrigido
@@ -1321,7 +1540,9 @@ Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publ
 
 - **Node 22 é obrigatório para desenvolvimento.** A suíte de invariantes instancia o cliente do Supabase, que exige o `WebSocket` global — nativo apenas a partir do Node 22. Isso não afeta quem apenas hospeda: a VPS roda a imagem pronta.
 
-[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.9.1...HEAD
+[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.10.1...HEAD
+[1.10.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.10.0...v1.10.1
+[1.10.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.7.0...v1.8.0

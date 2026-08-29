@@ -54,6 +54,15 @@ export type DesfechoDoGoogle =
   | "sem_permissao"
   /** O evento não está mais lá — nossa referência ficou órfã. */
   | "evento_sumiu"
+  /**
+   * O CALENDÁRIO não existe ou a conta perdeu acesso a ele.
+   *
+   * Separado de `evento_sumiu` porque o conserto é outro: aqui não há o que
+   * reconciliar, a pessoa precisa reconectar (ou o calendário foi apagado no
+   * Google). Enquanto os dois eram o mesmo desfecho, um 404 de criação mandava
+   * quem lia procurar um evento que nunca existiu.
+   */
+  | "calendario_sumiu"
   /** O `syncToken` morreu: limpar e ressincronizar a agenda inteira. */
   | "ressincronizar"
   /** O estado desejado já vale. Não é falha. */
@@ -227,6 +236,7 @@ const FRASE: Record<DesfechoDoGoogle, string> = {
   recuar: "o Google pediu para desacelerar (limite de uso)",
   sem_permissao: "sem permissão de escrita neste calendário",
   evento_sumiu: "o evento não existe mais no Google",
+  calendario_sumiu: "o calendário do Google não existe mais, ou a conta perdeu acesso a ele",
   ressincronizar: "a sincronização incremental expirou — recomeçar do zero",
   ja_esta_feito: "o Google já estava no estado desejado",
   transitorio: "falha passageira do Google — tentar de novo",
@@ -257,7 +267,23 @@ export function classificarErroDoGoogle(erro: unknown, operacao: OperacaoNoGoogl
     if (status === 429) return "recuar";
     if (status === 403) return temCota ? "recuar" : "sem_permissao";
 
-    if (status === 404) return operacao === "apagar" ? "ja_esta_feito" : "evento_sumiu";
+    // ⚠️ O 404 TEM TRÊS LEITURAS, e tratá-lo como uma só foi o que fez a VPS do
+    // dono registrar `evento_sumiu` três vezes para eventos que NUNCA existiram.
+    //
+    //   apagar  → o evento já não está lá: é o estado desejado, não falha.
+    //   criar   → a URL do POST é a COLEÇÃO e não leva id de evento nenhum, então
+    //             404 aqui só pode ser o CALENDÁRIO que não existe (ou ao qual a
+    //             conta perdeu acesso). Dizer "o evento sumiu" manda quem lê
+    //             procurar um evento — e o que falta é o calendário.
+    //   demais  → tínhamos o id guardado e ele não está mais lá: órfão de verdade.
+    //
+    // A distinção não é cosmética: `evento_sumiu` pede reconciliar (recriar),
+    // `calendario_sumiu` pede reconectar. Consertos opostos.
+    if (status === 404) {
+      if (operacao === "apagar") return "ja_esta_feito";
+      if (operacao === "criar") return "calendario_sumiu";
+      return "evento_sumiu";
+    }
     if (status === 410) {
       if (operacao === "apagar") return "ja_esta_feito";
       if (operacao === "listar" || operacao === "sincronizar") return "ressincronizar";
@@ -325,6 +351,12 @@ export function estadoDaConexaoApos(desfecho: DesfechoDoGoogle): SituacaoDaConex
     // "quebrada": a conexão está boa, só não pode ser consultada agora.
     case "recuar":
       return "rate_limited";
+    // O CALENDÁRIO sumiu, e isso É sobre a conexão — ao contrário de um evento
+    // órfão, que é caso isolado. Sem calendário alcançável não há sincronização
+    // nenhuma, e deixar a conexão `healthy` faria a tela dizer que está tudo bem
+    // enquanto nada sai nem entra.
+    case "calendario_sumiu":
+      return "error";
     case "transitorio":
     case "ressincronizar":
     case "evento_sumiu":

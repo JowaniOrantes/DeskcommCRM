@@ -45,7 +45,17 @@ vi.mock("@/lib/supabase/server", () => ({
       const chain = {
         select: () => chain,
         eq: () => chain,
-        is: () => (alvo === "platformAdmins" ? { maybeSingle: async () => resultado() } : resultado()),
+        // ⚠️ `is()` para memberships devolve o RESULTADO, e não a cadeia — o que
+        // fazia dele o terminal obrigatório. A consulta de memberships passou a
+        // ordenar (a lista decide qual organização fica ativa sem cookie, e sem
+        // `ORDER BY` "a primeira" é o que o Postgres devolver), então o terminal
+        // agora pode vir depois de `.order()`. O dublê precisa aceitar as duas
+        // formas — e é thenable, então `await` no fim resolve igual.
+        is: () =>
+          alvo === "platformAdmins"
+            ? { maybeSingle: async () => resultado() }
+            : { ...chain, then: chain.then },
+        order: () => ({ ...chain, then: chain.then }),
         maybeSingle: async () => resultado(),
         then: (r: (v: unknown) => unknown) => Promise.resolve(resultado()).then(r),
       };

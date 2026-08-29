@@ -918,38 +918,17 @@ ALTER FUNCTION "public"."retrieve_top_k_chunks"("p_organization_id" "uuid", "p_k
 
 COMMENT ON FUNCTION "public"."retrieve_top_k_chunks"("p_organization_id" "uuid", "p_kb_version_id" "uuid", "p_embedding" "public"."vector", "p_k" integer, "p_threshold" real) IS 'Top-K cosine similarity over ai_chunks. SECURITY DEFINER + programmatic org_id filter. Caller must validate p_organization_id matches authenticated tenant.';
 
-
-
-CREATE OR REPLACE FUNCTION "public"."rls_auto_enable"() RETURNS "event_trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'pg_catalog'
-    AS $$
-DECLARE
-  cmd record;
-BEGIN
-  FOR cmd IN
-    SELECT *
-    FROM pg_event_trigger_ddl_commands()
-    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
-      AND object_type IN ('table','partitioned table')
-  LOOP
-     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
-      BEGIN
-        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
-        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
-      END;
-     ELSE
-        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
-     END IF;
-  END LOOP;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."rls_auto_enable"() OWNER TO "postgres";
+-- `rls_auto_enable()` (event trigger candidato para ligar RLS automaticamente em
+-- toda CREATE TABLE) foi removida em 2026-08-27: nunca existiu um `CREATE EVENT
+-- TRIGGER ... EXECUTE FUNCTION rls_auto_enable()` em lugar nenhum do baseline ou
+-- das migrations, então a função nunca foi de fato invocada pelo Postgres — e,
+-- sendo do tipo `event_trigger`, também não pode ser chamada manualmente via
+-- SQL. Era uma promessa de proteção automática que o código nunca cumpriu; quem
+-- lesse o baseline podia concluir, errado, que tabela nova nascia com RLS
+-- ligada sozinha. A garantia real de isolamento por tabela é comportamental
+-- (tests/invariants/rls-isolation.test.ts + rls-completude-varredura.test.ts),
+-- não um event trigger. Ligar o event trigger de verdade é mudança de
+-- comportamento de runtime do banco e mereceria revisão própria — não esta.
 
 SET default_tablespace = '';
 
@@ -4656,12 +4635,6 @@ GRANT ALL ON FUNCTION "public"."midpoint"("p_prev" numeric, "p_next" numeric) TO
 REVOKE ALL ON FUNCTION "public"."retrieve_top_k_chunks"("p_organization_id" "uuid", "p_kb_version_id" "uuid", "p_embedding" "public"."vector", "p_k" integer, "p_threshold" real) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."retrieve_top_k_chunks"("p_organization_id" "uuid", "p_kb_version_id" "uuid", "p_embedding" "public"."vector", "p_k" integer, "p_threshold" real) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."retrieve_top_k_chunks"("p_organization_id" "uuid", "p_kb_version_id" "uuid", "p_embedding" "public"."vector", "p_k" integer, "p_threshold" real) TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "anon";
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
@@ -10202,7 +10175,6 @@ revoke execute on function public.fn_user_role_in(uuid) from public, anon;
 revoke execute on function public.fn_role_at_least(uuid, text) from public, anon;
 revoke execute on function public.fn_publish_ai_agent_version(uuid, uuid, uuid) from public, anon;
 revoke execute on function public.fn_emit_conversation_routing() from public, anon;
-revoke execute on function public.rls_auto_enable() from public, anon;
 
 -- ---- authenticated: definer volátil sem call site de sessão de usuário ----
 revoke execute on function public.fn_upsert_wa_contact(uuid, text, text, text, text, text) from authenticated;
@@ -10213,7 +10185,6 @@ revoke execute on function public.activate_kb_version(uuid, uuid) from authentic
 -- Funções de TRIGGER: ninguém as chama por RPC, e o disparo do trigger não
 -- consulta EXECUTE. O grant só existia por herança dos padrões do Postgres.
 revoke execute on function public.fn_emit_conversation_routing() from authenticated;
-revoke execute on function public.rls_auto_enable() from authenticated;
 
 -- ---- re-grant explícito: quem precisa continua podendo (probe positivo) ----
 grant execute on function public.fn_upsert_wa_contact(uuid, text, text, text, text, text) to service_role;
@@ -10222,7 +10193,6 @@ grant execute on function public.fn_mark_conversation_message(uuid, text, text, 
 grant execute on function public.fn_publish_ai_agent_version(uuid, uuid, uuid) to service_role;
 grant execute on function public.activate_kb_version(uuid, uuid) to service_role;
 grant execute on function public.fn_emit_conversation_routing() to service_role;
-grant execute on function public.rls_auto_enable() to service_role;
 -- Helpers de RLS: as policies são avaliadas com o papel de quem consulta, então
 -- `authenticated` PRECISA de EXECUTE — sem isto toda leitura logada quebra.
 grant execute on function public.fn_is_platform_admin() to authenticated, service_role;
@@ -16926,7 +16896,115 @@ create trigger trg_platform_google_oauth_updated_at
   before update on public.platform_google_oauth
   for each row execute function public.fn_set_updated_at();
 
--- ---- elegibilidade da IA por origem do lead (migration 0202) ----
+-- ---- desnormaliza assigned_to_user_name em conversations (migration 0202) ----
+--
+-- GET /api/v1/conversations resolvia o nome do atendente via N chamadas ao
+-- GoTrue Admin API (uma por atendente único da página, medido em
+-- lib/users/nome-do-atendente.ts: ~1,2s para 50 atendentes). Toda atribuição
+-- de conversa passa por fn_conversation_assign (claim/release/transfer e o
+-- roteamento automático) — grava o nome ali, uma vez, no mesmo UPDATE que
+-- grava o id, em vez de replicar a resolução em 4 call sites TS.
+
+alter table public.conversations
+  add column if not exists assigned_to_user_name text;
+
+comment on column public.conversations.assigned_to_user_name is
+  'Cópia do nome de quem atende (auth.users.raw_user_meta_data->>''full_name''), escrita por fn_conversation_assign no mesmo UPDATE que grava assigned_to_user_id, e zerada junto quando a atribuição é removida. Existe para evitar 1 chamada HTTP ao GoTrue Admin API por atendente único na listagem do Inbox — ver lib/users/nome-do-atendente.ts. NULL quando a conversa não está atribuída, ou quando o atendente não tem full_name em user_metadata.';
+
+-- Backfill: só linhas já atribuídas, e só quando o nome ainda não está
+-- presente — não sobrescreve dado que uma reaplicação já preencheu.
+update public.conversations c
+   set assigned_to_user_name = u.raw_user_meta_data ->> 'full_name'
+  from auth.users u
+ where c.assigned_to_user_id = u.id
+   and c.assigned_to_user_name is null;
+
+create or replace function public.fn_conversation_assign(
+  p_organization_id uuid,
+  p_conversation_id uuid,
+  p_to_user_id uuid,
+  p_reason text,
+  p_expected_assignee uuid default null,
+  p_enforce_expected boolean default false
+) returns setof public.conversations
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_from uuid;
+  v_conv public.conversations%rowtype;
+begin
+  if auth.uid() is not null
+     and not public.fn_role_at_least(p_organization_id, 'agent') then
+    raise exception 'caller_not_authorized_for_org'
+      using hint = 'caller must be an active agent+ member of the organization';
+  end if;
+
+  if p_to_user_id is not null then
+    if coalesce(public.fn_member_role_in_org(p_to_user_id, p_organization_id), 'none')
+         not in ('agent','manager','admin') then
+      raise exception 'assignee_not_eligible_member'
+        using hint = 'target must be an active agent+ member of the organization';
+    end if;
+  end if;
+
+  select assigned_to_user_id into v_from
+    from public.conversations
+   where id = p_conversation_id
+     and organization_id = p_organization_id
+   for update;
+
+  if not found then
+    return;
+  end if;
+
+  if p_enforce_expected and v_from is distinct from p_expected_assignee then
+    return;
+  end if;
+
+  update public.conversations
+     set assigned_to_user_id = p_to_user_id,
+         -- Desnormalizado JUNTO com o dono, na mesma transação: nunca existe
+         -- uma janela em que id e nome discordam. NULL junto com o id quando
+         -- a atribuição é removida (release) — nunca sobra um nome órfão de
+         -- dono nenhum. Lido de auth.users porque quem chama esta função
+         -- (RPC) não necessariamente tem acesso ao Admin API — a definer
+         -- resolve por dentro.
+         assigned_to_user_name = case
+           when p_to_user_id is null then null
+           else (select raw_user_meta_data ->> 'full_name' from auth.users where id = p_to_user_id)
+         end,
+         assigned_at = case when p_to_user_id is null then null else now() end,
+         assignee_kind = case when p_to_user_id is null then null else 'user' end,
+         status = case when p_to_user_id is null then 'open' else 'claimed' end,
+         status_changed_at = now(),
+         unread_count_for_assignee = 0,
+         bot_silenced_until = case
+           when p_reason = 'routing'  then bot_silenced_until
+           when p_to_user_id is null  then (case when last_handoff_at is null
+                                                 then null
+                                                 else bot_silenced_until end)
+           else 'infinity'::timestamptz
+         end,
+         updated_at = now()
+   where id = p_conversation_id
+   returning * into v_conv;
+
+  insert into public.conversation_assignment_events
+    (organization_id, conversation_id, from_user_id, to_user_id, changed_by, reason)
+  values
+    (p_organization_id, p_conversation_id, v_from, p_to_user_id, auth.uid(), p_reason);
+
+  return next v_conv;
+end;
+$$;
+
+revoke all     on function public.fn_conversation_assign(uuid, uuid, uuid, text, uuid, boolean) from public;
+revoke execute on function public.fn_conversation_assign(uuid, uuid, uuid, text, uuid, boolean) from anon;
+grant  execute on function public.fn_conversation_assign(uuid, uuid, uuid, text, uuid, boolean)
+  to authenticated, service_role;
+
+-- ---- elegibilidade da IA por origem do lead (migration 0203) ----
 --
 -- Gate OPT-IN por canal (`channel_sessions.metadata.ai_gate = 'allowlist'`):
 -- ausente / 'open' = comportamento de hoje (a IA responde todo inbound quando há

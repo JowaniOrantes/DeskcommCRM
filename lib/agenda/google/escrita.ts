@@ -18,14 +18,36 @@
  * que não estava implementado — ele existia para ignorar eventos que nós
  * criaríamos, e nós nunca criávamos nenhum.
  *
- * ═══ Por que `PUT` com id nosso, e não `POST` ═══
+ * ═══ POST para criar, PUT para atualizar — e a premissa que estava errada ═══
  *
- * O Google aceita o id do evento vindo de quem cria (`events.insert` com `id`,
- * ou `events.update` num id que ainda não existe). Usar um id DERIVADO do
- * agendamento torna a operação IDEMPOTENTE: reenviar o mesmo compromisso
- * atualiza o mesmo evento em vez de criar um segundo. Num worker que pode rodar
- * duas vezes — e todo cron pode —, isso é a diferença entre "reenviou" e
- * "duplicou a agenda do cliente".
+ * ⚠️ ESTE PARÁGRAFO AFIRMAVA QUE `events.update` CRIA NUM ID QUE NÃO EXISTE.
+ * **É FALSO, e custou a sincronização inteira.** Medido na VPS do dono (v1.9.1):
+ * o cron devolveu `{"candidatos":3,"publicados":0,"falhas":3}` e as três linhas
+ * gravaram `evento_sumiu: HTTP 404`. Nenhum compromisso jamais chegou ao Google,
+ * e a tentativa se repetia a cada 5 minutos porque `google_event_id` continuava
+ * nulo.
+ *
+ * O que a documentação oficial sustenta (conferido, não lembrado):
+ *
+ *   `events.insert` (POST) ACEITA o `id` no corpo — base32hex (a-v, 0-9), de 5 a
+ *   1024 caracteres, único por calendário. É o que preserva a idempotência do id
+ *   derivado.
+ *     https://developers.google.com/workspace/calendar/api/v3/reference/events/insert
+ *
+ *   Id que já existe devolve **409 `duplicate`**, e a ação que a própria doc
+ *   sugere é: *"use the `events.update` method"*.
+ *     https://developers.google.com/workspace/calendar/api/guides/errors
+ *
+ *   Sobre `events.update` exigir evento existente, a doc **não afirma nada** — o
+ *   que a sustenta é o 404 do guia de erros ("has never existed") mais a medição
+ *   da VPS. E upsert nativo numa chamada só: NÃO EXISTE na doc.
+ *
+ * Então o caminho é: POST primeiro; se 409, PUT. Que é o que está abaixo.
+ *
+ * ⚠️ E A DOC NÃO GARANTE O 409: *"we cannot guarantee that ID collisions will be
+ * detected at event creation time"*. Por isso o POST só é tentado quando NÃO
+ * temos `google_event_id` guardado — quem já foi publicado vai direto de PUT, e
+ * não depende de uma colisão ser detectada para não duplicar.
  *
  * O id do Google aceita apenas [a-v0-9] e no mínimo 5 caracteres, então o uuid
  * do agendamento é normalizado: hífens fora e dígitos w–z remapeados. É função
@@ -70,13 +92,18 @@ export function idDeEventoDoGoogle(idDoAgendamento: string): string {
 const PREFIXO = SUFIXO_ICAL_UID.toLowerCase().replace(/[^a-v0-9]/g, "");
 
 async function chamar(
-  metodo: "PUT" | "DELETE",
+  metodo: "POST" | "PUT" | "DELETE",
   accessToken: string,
   calendarId: string,
-  eventoId: string,
+  eventoId: string | null,
   corpo?: unknown,
 ): Promise<Response> {
-  const url = `${ENDERECO_DE_EVENTOS}/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventoId)}`;
+  // POST vai para a COLEÇÃO (`/events`) e leva o id no CORPO; PUT e DELETE vão
+  // para o RECURSO (`/events/{id}`). Misturar os dois é o que produziria um
+  // `PUT /events` sem id, que o Google recusa por outro motivo — e o erro
+  // apontaria para o lugar errado.
+  const base = `${ENDERECO_DE_EVENTOS}/${encodeURIComponent(calendarId)}/events`;
+  const url = eventoId === null ? base : `${base}/${encodeURIComponent(eventoId)}`;
   return fetch(url, {
     method: metodo,
     headers: {
@@ -90,34 +117,78 @@ async function chamar(
 }
 
 /**
- * Cria OU atualiza o evento — a mesma chamada, de propósito.
+ * Cria OU atualiza o evento — agora com o verbo certo para cada caso.
  *
- * Remarcar não é uma operação diferente de marcar aos olhos do Google: é o mesmo
- * evento com outro `start`. Ter dois caminhos aqui obrigaria o chamador a saber
- * se o evento já existe lá, que é uma pergunta que ele não tem como responder
- * sem uma ida a mais.
+ * `googleEventId` é o que o chamador JÁ tem guardado na linha
+ * (`calendar_appointments.google_event_id`). Ele é a única resposta confiável
+ * para "isto já existe lá?", e é por isso que ele entra na assinatura em vez de
+ * ser adivinhado: a doc do Google não garante que uma colisão de id seja
+ * detectada na criação, então depender do 409 para não duplicar seria apostar
+ * num comportamento que a própria doc recusa prometer.
+ *
+ *   sem `googleEventId`  → POST (cria, com o id derivado no corpo)
+ *   com `googleEventId`  → PUT  (atualiza o que já está lá)
+ *   POST devolvendo 409  → o id já existe: cai para PUT (é a ação que a doc
+ *                          sugere para `duplicate`)
  */
 export async function publicarNoGoogle(
   accessToken: string,
   calendarId: string,
   agendamento: AgendamentoParaGoogle,
+  googleEventId?: string | null,
 ): Promise<EscritaNoGoogle> {
   const eventoId = idDeEventoDoGoogle(agendamento.id);
-  let resposta: Response;
-  try {
-    resposta = await chamar("PUT", accessToken, calendarId, eventoId, paraEventoDoGoogle(agendamento));
-  } catch (erro) {
-    return {
-      ok: false,
-      classificacao: classificarErroDoGoogle(erro, "sincronizar"),
-      detalhe: erro instanceof Error ? erro.message : String(erro),
-    };
+  const corpoDoEvento = paraEventoDoGoogle(agendamento);
+
+  /** Uma tentativa, já com a classificação do erro que ela produziu. */
+  async function tentar(
+    metodo: "POST" | "PUT",
+  ): Promise<{ resposta: Response } | EscritaNoGoogle> {
+    try {
+      const resposta = await chamar(
+        metodo,
+        accessToken,
+        calendarId,
+        // POST manda o id NO CORPO, não na URL — é assim que `events.insert`
+        // aceita id de quem cria.
+        metodo === "POST" ? null : eventoId,
+        metodo === "POST" ? { ...corpoDoEvento, id: eventoId } : corpoDoEvento,
+      );
+      return { resposta };
+    } catch (erro) {
+      return {
+        ok: false,
+        classificacao: classificarErroDoGoogle(erro, "sincronizar"),
+        detalhe: erro instanceof Error ? erro.message : String(erro),
+      };
+    }
   }
+
+  // Já publicado uma vez? Atualiza. Nunca publicado? Cria.
+  const jaExisteLa = typeof googleEventId === "string" && googleEventId.length > 0;
+  let primeira = await tentar(jaExisteLa ? "PUT" : "POST");
+  if (!("resposta" in primeira)) return primeira;
+
+  // 409 na criação significa que o id derivado já está no calendário — o evento
+  // existe e o que falta é atualizá-lo. A doc do `duplicate` manda exatamente
+  // isto: "use the events.update method".
+  if (primeira.resposta.status === 409 && !jaExisteLa) {
+    const segunda = await tentar("PUT");
+    if (!("resposta" in segunda)) return segunda;
+    primeira = segunda;
+  }
+
+  const resposta = primeira.resposta;
   if (!resposta.ok) {
     const cru = await resposta.json().catch(() => ({ status: resposta.status }));
     return {
       ok: false,
-      classificacao: classificarErroDoGoogle(cru, "sincronizar"),
+      // A OPERAÇÃO diz ao classificador como ler o 404, e as duas leituras são
+      // opostas: num PUT de evento que tínhamos, 404 é "existia e sumiu" e pede
+      // reconciliação; num POST, o evento nunca existiu e 404 só pode ser o
+      // CALENDÁRIO que não existe. Classificar os dois como `evento_sumiu` foi o
+      // que fez a VPS registrar três vezes um diagnóstico que não descrevia nada.
+      classificacao: classificarErroDoGoogle(cru, jaExisteLa ? "sincronizar" : "criar"),
       detalhe: `HTTP ${resposta.status}`,
     };
   }

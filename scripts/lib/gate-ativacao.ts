@@ -125,7 +125,7 @@ function lerFonte(raiz: string, arq: string): string | null {
 // Preflights
 // ───────────────────────────────────────────────────────────────────────────
 
-export async function checkSchema0202(ctx: CtxAtivacao): Promise<Resultado> {
+export async function checkSchema0203(ctx: CtxAtivacao): Promise<Resultado> {
   const { rows } = await ctx.pool.query(
     `select column_name, data_type, is_nullable, column_default
        from information_schema.columns
@@ -138,7 +138,7 @@ export async function checkSchema0202(ctx: CtxAtivacao): Promise<Resultado> {
     return {
       status: "FAIL",
       detalhe:
-        "colunas ausentes — a migration 0202 não foi aplicada nesta instalação. " +
+        "colunas ausentes — a migration 0203 não foi aplicada nesta instalação. " +
         "Aplique o supabase/baseline.sql (o `update.sh` do kit) ANTES de ligar o gate.",
       linhas: [`encontradas: ${nomes.join(", ") || "(nenhuma)"}`],
     };
@@ -522,7 +522,7 @@ export function montarPreflights(
   ctx: CtxAtivacao,
 ): Array<{ nome: string; run: () => Promise<Resultado> }> {
   return [
-    { nome: "Schema · migration 0202 (contacts.ai_authorized_at)", run: () => checkSchema0202(ctx) },
+    { nome: "Schema · migration 0203 (contacts.ai_authorized_at)", run: () => checkSchema0203(ctx) },
     { nome: "Query de elegibilidade · executa sem erro", run: () => checkQueryElegibilidade(ctx) },
     { nome: "Agente · há quem a IA use neste canal", run: () => checkAgentePublicado(ctx) },
     { nome: "Cobertura · todo caminho de resposta automática respeita o gate", run: () => checkCoberturaDosCaminhos(ctx) },

@@ -1,4 +1,4 @@
--- 0202 · Elegibilidade da IA por ORIGEM do lead — o "deny by default" por canal.
+-- 0203 · Elegibilidade da IA por ORIGEM do lead — o "deny by default" por canal.
 --
 -- ## O defeito
 --

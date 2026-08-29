@@ -136,7 +136,7 @@ it('sem agente MAS com roteador que resolve alguém: turno segue (caminho genér
 });
 
 /**
- * Anti-backlog + gate de elegibilidade (migration 0202).
+ * Anti-backlog + gate de elegibilidade (migration 0203).
  *
  * `poolElegibilidade` estende o pool falso com as duas consultas novas: a de
  * supersessão (última inbound da conversa) e a de elegibilidade (gate do canal

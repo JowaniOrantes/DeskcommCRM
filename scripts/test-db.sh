@@ -224,9 +224,14 @@ create table if not exists storage.objects (
 );
 
 -- Stub de auth.users (FKs do baseline apontam pra cá).
+--
+-- `raw_user_meta_data` entrou com a migration 0202 (fn_conversation_assign
+-- passou a ler `raw_user_meta_data->>'full_name'` dentro da definer) — é o
+-- nome real da coluna no GoTrue, não um apelido do stub.
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text unique,
+  raw_user_meta_data jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 

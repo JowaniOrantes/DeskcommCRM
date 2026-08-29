@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { test, expect } from "@playwright/test";
 
+import { irParaASemanaDoCompromisso } from "./helpers/agenda-semana-integra";
+
 /**
  * O AGENTE MARCA CONSULTA, E O EFEITO APARECE NA AGENDA — a prova em tela da frente 4.
  *
@@ -245,6 +247,19 @@ test.describe("o agente marca consulta", () => {
     await page.waitForURL(/\/app(\/|$)/, { timeout: 20_000 });
 
     await page.goto(`${APP_URL}/app/agenda`);
+
+    // ⚠️ A GRADE DESENHA UMA SEMANA SÓ, e quem marca por API não escolhe qual.
+    //
+    // O horário acima é o PRIMEIRO livre dos próximos 14 dias: antes das 17h ele
+    // é hoje e a grade já o mostra; depois das 17h, quando o resto de hoje
+    // acabou, ele é a segunda-feira — e a grade, parada na semana corrente,
+    // nunca desenha o cartão. A asserção abaixo reprovava com `element(s) not
+    // found`, acusando a Agenda de não mostrar o que a IA marcou.
+    //
+    // Ir até a semana DO COMPROMISSO mantém o que este caso prova (o que a IA
+    // marcou aparece na tela do humano) e tira a hora do run da conta.
+    await irParaASemanaDoCompromisso(page, livres.horarios[0]!.inicio);
+
     // O nome do CONTATO é o que prova que é o compromisso certo: o título do tipo
     // apareceria mesmo num card de outro cliente.
     await expect(page.getByText(creds.agenda.contato_nome).first()).toBeVisible({ timeout: 15_000 });

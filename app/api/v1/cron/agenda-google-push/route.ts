@@ -73,6 +73,22 @@ async function executar(req: NextRequest): Promise<Response> {
 
   const admin = createAdminClient();
   const resumo = { candidatos: 0, publicados: 0, apagados: 0, falhas: 0, semConexao: 0 };
+  /**
+   * POR QUE as falhas falharam — e não só quantas.
+   *
+   * ⚠️ ESTE É O TERCEIRO DEFEITO DA v1.9.1, e o que fez os outros dois custarem
+   * uma sessão de investigação: o audit registrava `{"falhas": 3}` sem motivo, e
+   * o log do app não tinha UMA linha sobre isso (conferido com controle: 27
+   * linhas no período, nenhuma de push). O erro existia só dentro da coluna
+   * `google_sync_error`, que ninguém abre sem já saber que ela existe.
+   *
+   * O comentário abaixo dizia "erro que só existe em log é estoque morto", e
+   * está certo — mas a recíproca também vale, e foi ela que nos custou caro:
+   * erro que só existe na COLUNA é invisível para quem opera a VPS. As duas
+   * superfícies servem a leitores diferentes: a coluna é para a tela do dono, o
+   * log é para quem investiga por que nada chega ao Google.
+   */
+  const motivos: string[] = [];
 
   const { data: pendentes, error: erroLeitura } = await admin
     .from("calendar_appointments")
@@ -140,7 +156,21 @@ async function executar(req: NextRequest): Promise<Response> {
     const accessToken = await decryptWebhookSecret(admin, conexao.oauth_access_token_encrypted);
     const calendario = conexao.account_email;
     if (!accessToken || !calendario) {
+      // Esta saída não deixava rastro NENHUM — nem log, nem coluna. Uma
+      // instalação com o token indecifrável somava `falhas` para sempre sem uma
+      // pista de onde olhar.
       resumo.falhas += 1;
+      motivos.push("credencial_ilegivel");
+      logger.warn("[agenda-google-push] token ou calendário ausentes", {
+        agendamento: linha.id,
+        organizacao: linha.organization_id,
+        temToken: Boolean(accessToken),
+        temCalendario: Boolean(calendario),
+      });
+      await admin
+        .from("calendar_appointments")
+        .update({ google_sync_error: "credencial_ilegivel: token ou calendário ausentes" })
+        .eq("id", linha.id);
       continue;
     }
 
@@ -158,12 +188,27 @@ async function executar(req: NextRequest): Promise<Response> {
           status: linha.status,
           location_kind: linha.location_kind,
           location_details: linha.location_details,
-        } as AgendamentoParaGoogle);
+        } as AgendamentoParaGoogle,
+        // O ID QUE JÁ TEMOS decide o verbo: sem ele, `publicarNoGoogle` cria com
+        // POST; com ele, atualiza com PUT. A linha já trazia a coluna no
+        // `select` e ela morria aqui — e era essa a informação que faltava para
+        // o worker parar de mandar PUT em evento que nunca existiu.
+        linha.google_event_id);
 
     if (!efeito.ok) {
       resumo.falhas += 1;
-      // O erro FICA NA LINHA, não só no log: `google_sync_error` é o que a tela
-      // pode mostrar. Erro que só existe em log é estoque morto.
+      motivos.push(efeito.classificacao.desfecho);
+      // NAS DUAS SUPERFÍCIES, e cada uma tem o seu leitor: a coluna é o que a
+      // tela do dono pode mostrar; o log é o que quem opera a VPS lê quando os
+      // compromissos não chegam ao Google. Só a coluna foi o que escondeu um 404
+      // que se repetia a cada 5 minutos.
+      logger.warn("[agenda-google-push] publicação recusada pelo Google", {
+        agendamento: linha.id,
+        organizacao: linha.organization_id,
+        desfecho: efeito.classificacao.desfecho,
+        detalhe: efeito.detalhe,
+        operacao: cancelado ? "apagar" : "publicar",
+      });
       await admin
         .from("calendar_appointments")
         .update({ google_sync_error: `${efeito.classificacao.desfecho}: ${efeito.detalhe}` })
@@ -192,7 +237,15 @@ async function executar(req: NextRequest): Promise<Response> {
     await audit({
       action: "agenda.google.sync_executado",
       organizationId: doTime[0]?.organization_id ?? "",
-      metadata: { direcao: "ida", ...resumo },
+      // Os MOTIVOS junto da contagem: `{"falhas": 3}` sozinho não distingue
+      // "o Google recusou" de "a credencial não decifra", e são consertos
+      // opostos. `motivosDistintos` e não a lista inteira, para uma rodada com
+      // 500 candidatos não escrever 500 strings iguais no audit.
+      metadata: {
+        direcao: "ida",
+        ...resumo,
+        motivosDistintos: [...new Set(motivos)],
+      },
     });
   }
 

@@ -1803,8 +1803,37 @@ begin
   values (v_uid, v_org, 'admin', now())
   on conflict (user_id, organization_id) do update set role='admin', revoked_at=null;
   if not exists (select 1 from public.platform_admins where user_id=v_uid and revoked_at is null) then
-    insert into public.platform_admins (user_id, granted_by, scope, reason)
-    values (v_uid, v_uid, 'full', 'Bootstrap inicial do self-host');
+    -- ⚠️ ATENÇÃO: este heredoc NÃO é citado, então o bash expande crase aqui
+    -- dentro. Crase em volta de nome de coluna vira substituição de comando e o
+    -- instalador morre com "command not found" no meio da criação do dono.
+    -- Medido: a primeira versão deste comentário usava crase e a suíte do kit
+    -- reprovou em três casos. Nome de coluna aqui vai sem crase.
+    --
+    -- mfa_required EXPLÍCITO, contra o default "true" da coluna — a MESMA razão
+    -- que scripts/bootstrap-owner.ts:201 já documenta, e que este INSERT não
+    -- acompanhou.
+    --
+    -- Medido numa instalação self-host recém-feita por este script:
+    --
+    --   select column_default from information_schema.columns
+    --    where table_name='platform_admins' and column_name='mfa_required';
+    --   -> true
+    --
+    -- Como o INSERT abaixo não informava a coluna, TODA instalação nascia
+    -- exigindo TOTP do dono. lib/auth/politica-mfa.ts passou a LER essa coluna
+    -- (antes o gate olhava só is_platform_admin), e o cabeçalho dele registra
+    -- que o cadastro virou opcional exatamente para acabar com o bloqueador de
+    -- tela cheia logo depois do onboarding — "segurança que expulsa o usuário na
+    -- primeira tela não protege ninguém".
+    --
+    -- Ou seja: o defeito que a mudança de doutrina eliminou continuava vivo pelo
+    -- caminho do instalador, que é justamente o caminho de TODO self-hoster. O
+    -- bootstrap-owner.ts estava certo; este INSERT é que ficou para trás.
+    --
+    -- false e não omitir: quem quiser exigir liga em Configurações › Segurança,
+    -- e a decisão fica visível na linha em vez de herdada de um default.
+    insert into public.platform_admins (user_id, granted_by, scope, mfa_required, reason)
+    values (v_uid, v_uid, 'full', false, 'Bootstrap inicial do self-host');
   end if;
 end \$\$;
 SQL

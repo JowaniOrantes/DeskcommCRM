@@ -2770,6 +2770,7 @@ export type Database = {
           active_intent: string | null
           assigned_at: string | null
           assigned_to_user_id: string | null
+          assigned_to_user_name: string | null
           assignee_kind: string | null
           bot_silenced_until: string | null
           channel: string
@@ -2807,6 +2808,7 @@ export type Database = {
           active_intent?: string | null
           assigned_at?: string | null
           assigned_to_user_id?: string | null
+          assigned_to_user_name?: string | null
           assignee_kind?: string | null
           bot_silenced_until?: string | null
           channel?: string
@@ -2844,6 +2846,7 @@ export type Database = {
           active_intent?: string | null
           assigned_at?: string | null
           assigned_to_user_id?: string | null
+          assigned_to_user_name?: string | null
           assignee_kind?: string | null
           bot_silenced_until?: string | null
           channel?: string
@@ -6868,6 +6871,7 @@ export type Database = {
           active_intent: string | null
           assigned_at: string | null
           assigned_to_user_id: string | null
+          assigned_to_user_name: string | null
           assignee_kind: string | null
           bot_silenced_until: string | null
           channel: string
