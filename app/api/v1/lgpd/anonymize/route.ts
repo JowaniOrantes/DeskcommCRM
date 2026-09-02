@@ -71,23 +71,32 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
   if (!authz.ok) return authz.response;
 
-  // Idempotency.
-  if (existing.is_anonymized) {
-    return ok(
-      {
-        contact_id: existing.id,
-        anonymized_at: existing.anonymized_at,
-        action: "already_anonymized",
-      },
-      { requestId },
-    );
-  }
+  // ─── RETOMADA, NÃO PORTA FECHADA ───────────────────────────────────────
+  //
+  // Aqui havia um early-return que devolvia 200 `already_anonymized` ANTES dos
+  // passos 2 e 3. Se o passo 1 já tivesse rodado numa requisição que caiu no
+  // meio (timeout de cliente, contêiner reiniciado), os outros dois nunca mais
+  // rodavam — e não havia como retomá-los, porque a MESMA checagem que decidia
+  // "já foi anonimizado" decidia "não faço mais nada". O botão da tela dizia
+  // "já anonimizado" e não fazia nada, e o contato ficava com títulos de lead e
+  // atividades PERMANENTEMENTE não redigidos.
+  //
+  // Isso é violação direta do direito do titular: a cascata promete remover PII
+  // de contacts + crm_leads + crm_lead_activities e entregava um terço.
+  // (issue #310)
+  //
+  // O passo 1 continua rodando uma vez só — repetí-lo reescreveria
+  // `anonymized_at` e apagaria a data real do exercício do direito, que é o que
+  // responde ao prazo legal.
+  const retomada = existing.is_anonymized === true;
 
   const nowIso = new Date().toISOString();
   const shortId = existing.id.slice(0, 8);
 
   // Step 1 — contacts.
-  const { error: c1Err } = await supabase
+  const { error: c1Err } = retomada
+    ? { error: null }
+    : await supabase
     .from("contacts")
     .update({
       name: null,
@@ -105,7 +114,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       anonymized_at: nowIso,
       updated_at: nowIso,
     })
-    .eq("id", existing.id);
+        .eq("id", existing.id);
   if (c1Err) {
     return fail("internal_error", `contacts: ${c1Err.message}`, 500, { requestId });
   }
@@ -116,8 +125,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     .select("id, title")
     .eq("contact_id", existing.id);
   const redactedLeadIds: string[] = [];
+  const SUFIXO = " (anonimizado)";
   for (const row of (leadRows ?? []) as { id: string; title: string | null }[]) {
-    const newTitle = `${(row.title ?? "").slice(0, 20)} (anonimizado)`;
+    // Idempotente: sem isto, a retomada que existe para CURAR estragaria. O
+    // título é cortado em 20 caracteres antes do sufixo, então reescrever um
+    // título já redigido produz "Orçamento telhado (an (anonimizado)" e, na
+    // terceira rodada, come o resto.
+    if ((row.title ?? "").endsWith(SUFIXO)) continue;
+    const newTitle = `${(row.title ?? "").slice(0, 20)}${SUFIXO}`;
     const { error: leadErr } = await supabase
       .from("crm_leads")
       .update({ title: newTitle })
@@ -157,7 +172,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
 
   await audit({
-    action: "lgpd.anonymize_executed",
+    // Uma retomada auditada como execução original mentiria sobre a data em que
+    // o direito foi exercido — e é a auditoria que responde ao titular.
+    action: retomada ? "lgpd.anonymize_catchup" : "lgpd.anonymize_executed",
     actorUserId: user.id,
     organizationId: existing.organization_id,
     resourceType: "contact",
@@ -172,5 +189,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     },
   });
 
-  return ok({ contact_id: existing.id, anonymized_at: nowIso }, { requestId });
+  // `action` nos DOIS caminhos: o caminho feliz omitia o campo, e quem consome
+  // não distinguia os desfechos sem inspecionar o corpo inteiro.
+  return ok(
+    {
+      contact_id: existing.id,
+      anonymized_at: retomada ? existing.anonymized_at : nowIso,
+      action: retomada ? "already_anonymized" : "anonymized",
+    },
+    { requestId },
+  );
 }
