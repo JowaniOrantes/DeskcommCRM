@@ -1291,7 +1291,11 @@ montar_vps() {
   local raiz="$1" pasta="$2"
   VPS_RAIZ="$raiz"; VPS_PROJ="$raiz/$pasta"; VPS_LOG="$raiz/docker.log"
   mkdir -p "$raiz/bin" "$VPS_PROJ"
-  cp install.sh update.sh backup.sh _common.sh "$raiz/"
+  # `marca-emails.sh` entra porque o install.sh o INVOCA no fim (passo 7). Sem
+  # ele no sandbox, aquele `bash` falhava, o `|| true` engolia, e todo cenário
+  # media uma instalação em que o passo dos e-mails de acesso simplesmente não
+  # aconteceu — o elo mais fácil de quebrar sem ninguém ver.
+  cp install.sh update.sh backup.sh _common.sh marca-emails.sh "$raiz/"
   : > "$VPS_PROJ/docker-compose.prod.yml"
   cat > "$raiz/bin/docker"
   # Só o v_supabase_url exige resposta online (000 reprova); os outros toleram.
@@ -1407,16 +1411,17 @@ chegou_na_deteccao() {
 #   printf '%s' "${RESTO_DAS_PERGUNTAS%%c*}" | grep -c ''
 # → era 9 antes de APP_ACCENT_HEX entrar em FIELDS, 10 depois dela, e é 11
 #   desde que APP_LOCALE (o idioma da instalação) entrou logo após APP_NAME.
-RESTO_DAS_PERGUNTAS=$'\n\n\n\n\n\n\n\n\n\n\nc\n'
+RESTO_DAS_PERGUNTAS=$'\n\n\n\n\n\n\n\n\n\n\n\nc\n'
 
-# A posição da cor DENTRO da fila acima — 1 provedor + APP_IMAGE + OPENAI +
-# APP_NAME + APP_LOCALE e ela é a 6ª. Fica numa variável porque a fila com a cor RESPONDIDA
+# A posição da cor DENTRO da fila acima — SUPABASE_ACCESS_TOKEN + 1 provedor +
+# APP_IMAGE + OPENAI + APP_NAME + APP_LOCALE e ela é a 7ª. Fica numa variável porque a fila com a cor RESPONDIDA
 # (abaixo) é DERIVADA da de cima em vez de copiada: duas filas posicionais
 # mantidas à mão desincronizam no primeiro campo novo, e aí uma passa e a outra
 # reprova com um nome que não é o dela.
-POSICAO_DA_COR=6
-# O idioma vem logo antes da cor: 1 provedor + APP_IMAGE + OPENAI + APP_NAME.
-POSICAO_DO_IDIOMA=5
+POSICAO_DA_COR=7
+# O idioma vem logo antes da cor: SUPABASE_ACCESS_TOKEN + 1 provedor + APP_IMAGE
+# + OPENAI + APP_NAME.
+POSICAO_DO_IDIOMA=6
 COR_DE_TESTE='#f2c94c'
 # fila_com <fila> <posição> <valor> → a mesma fila, com uma resposta no lugar de
 # um Enter. `awk` porque a substituição é por NÚMERO DE LINHA: um `sed s///`
@@ -2419,6 +2424,76 @@ elif ! cmp -s "$CRONTAB_REAL_ANTES" "$CRONTAB_REAL_DEPOIS"; then
 else
   printf '  ✓ o kit agendou %s linha(s) — todas no sandbox, o crontab real intacto\n' \
     "$(grep -c '# deskcomm:' "$CRONTAB_SANDBOX")"
+fi
+
+# ───────────────────────────────────────────────────────────────────────────
+# A URL DOS E-MAILS DE ACESSO — a pendência aparece na TELA FINAL (#431/#426)
+# ───────────────────────────────────────────────────────────────────────────
+#
+# Sem `SUPABASE_ACCESS_TOKEN`, o Site URL do projeto Supabase fica em
+# `localhost:3000`, e o link de "esqueci minha senha" leva a uma máquina que não
+# existe fora do laptop de quem desenvolve. O `marca-emails.sh` já avisava — no
+# meio de um log de dez minutos, ~200 linhas antes de uma tela verde escrita
+# "Instalação concluída!". Ninguém volta para ler.
+#
+# O que este cenário mede é a TELA FINAL: ela tem de nomear o passo que falta e
+# trazer o domínio já preenchido, para o dono resolver sem procurar nada.
+TMP_URL_EMAIL="$(mktemp -d)"
+(
+  montar_vps "$TMP_URL_EMAIL" "crmurl" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$DOCKER_LOG"
+case "$1" in
+  compose) case "$*" in *" exec "*) printf 'healthy\n{"data":{"status":"healthy"}}\n' ;; esac; exit 0 ;;
+esac
+exit 0
+STUB
+  mkdir -p "$VPS_PROJ/supabase"; : > "$VPS_PROJ/supabase/baseline.sql"
+  # O estado de TODA instalação feita pelo caminho documentado: sem o token.
+  unset SUPABASE_ACCESS_TOKEN
+  saida="$(rodar install.sh --yes)"
+
+  # CONTROLE POSITIVO: se a instalação nem chegou ao fim, a ausência do bloco
+  # abaixo não significa nada — seria sonda cega lida como aprovação.
+  if ! printf '%s' "$saida" | grep -q "Instalação concluída"; then
+    printf '  ✗ a instalação não chegou à tela final — cenário inconclusivo, não verde\n'; exit 1
+  fi
+
+  # ⚠ A MEDIÇÃO É SOBRE O QUE VEM DEPOIS DA TELA FINAL, e isso não é detalhe.
+  # O `marca-emails.sh` já imprime "URL Configuration" e o domínio ~200 linhas
+  # ANTES — que é justamente o problema desta issue. Procurar essas strings na
+  # saída INTEIRA aprova o defeito: medido, com o bloco novo removido o cenário
+  # ficava verde. Só o rabo da saída distingue "avisou onde ninguém lê" de
+  # "avisou onde a pessoa está olhando".
+  rabo="${saida##*Instalação concluída}"
+  faltou=""
+  printf '%s' "$rabo" | grep -q "URL Configuration" || faltou="${faltou} URL-Configuration"
+  printf '%s' "$rabo" | grep -q "Site URL" || faltou="${faltou} Site-URL"
+  # O domínio PREENCHIDO, não um placeholder: quem instala não deve ter de
+  # descobrir qual endereço escrever.
+  printf '%s' "$rabo" | grep -q "https://crm.exemplo.com.br/auth/confirm" \
+    || faltou="${faltou} Redirect-URL-com-o-dominio"
+  if [ -n "$faltou" ]; then
+    printf '  ✗ a tela final não avisa o que falta para os e-mails de acesso funcionarem:%s\n' "$faltou"
+    printf '     (sem isso, ninguém consegue redefinir a própria senha e o dono não sabe por quê)\n'
+    exit 1
+  fi
+  printf '  ✓ a tela final repete a pendência do Site URL, com o domínio preenchido\n'
+) || fail=1
+
+# A entrevista PERGUNTA o token — senão o caminho automático nunca é alcançado
+# por quem segue o README, e a pendência acima seria permanente.
+if ! grep -q 'SUPABASE_ACCESS_TOKEN|' ./install.sh; then
+  printf '  ✗ a entrevista do install.sh não pergunta o SUPABASE_ACCESS_TOKEN\n'
+  printf '     (sem ele o marca-emails.sh sai calado e o Site URL fica em localhost)\n'
+  fail=1
+elif grep -qE '^\s*envq SUPABASE_ACCESS_TOKEN' ./install.sh; then
+  # Ele abre a Management API, que cria e apaga projetos. Guardá-lo numa VPS
+  # trocaria um bug de primeira impressão por um passivo de segurança.
+  printf '  ✗ o SUPABASE_ACCESS_TOKEN está sendo gravado no .env — ele é token de CONTA\n'
+  fail=1
+else
+  printf '  ✓ a entrevista pergunta o token e não o guarda no .env\n'
 fi
 
 echo

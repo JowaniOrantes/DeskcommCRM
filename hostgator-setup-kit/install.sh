@@ -1178,6 +1178,16 @@ FIELDS=(
   "NEXT_PUBLIC_SUPABASE_ANON_KEY|Supabase anon key (Settings > API)||v_anon||"
   "SUPABASE_SERVICE_ROLE_KEY|Supabase service_role key (Settings > API)||v_service|secret|"
   "SUPABASE_DB_URL|Supabase connection string — Session pooler, modo URI (Settings > Database)||v_db_url|secret|"
+  # Token de conta, e por isso NÃO vai para o `.env` (não há `envq` para ele):
+  # a Management API que ele abre cria e apaga projetos, e guardá-lo numa VPS
+  # seria trocar um bug de primeira impressão por um passivo de segurança. Ele
+  # é usado uma vez, aqui, e some com o processo.
+  #
+  # Sem ele, o Site URL do projeto Supabase fica em `localhost:3000` — e o reset
+  # de senha, a confirmação de e-mail e o aceite de convite chegam com link para
+  # uma máquina que não existe fora do laptop de quem desenvolve. Era o estado
+  # de TODA instalação feita pelo caminho documentado. (issue #431/#426)
+  "SUPABASE_ACCESS_TOKEN|Token de acesso do Supabase — configura os links de e-mail (supabase.com/dashboard/account/tokens). NÃO fica salvo. Enter pula|||secret|opcional"
   "$CAMPO_IA"
   ${CAMPO_OPENAI_EXTRA:+"$CAMPO_OPENAI_EXTRA"}
   "OWNER_EMAIL|E-mail do primeiro admin (dono)||v_email||"
@@ -1736,7 +1746,42 @@ fi
 #
 # `|| true` como cinto de segurança: o script já promete nunca sair diferente de
 # 0, e mesmo assim a instalação não pode morrer por causa do e-mail.
-bash "$KIT_DIR/marca-emails.sh" --projeto "$PROJECT_DIR" || true
+# O que o `marca-emails.sh` não conseguiu fazer sozinho, repetido na TELA FINAL
+# com o domínio já preenchido.
+#
+# O aviso dele existe desde sempre, e sai ~200 linhas antes do fim — no meio de
+# um log de dez minutos, seguido de uma tela verde de "Instalação concluída!".
+# Quem instala não volta para lê-lo, e descobre o problema quando um usuário
+# clica em "esqueci minha senha" e cai num `localhost:3000` que não existe fora
+# da máquina de quem desenvolve. (issue #431/#426)
+pendencia_dos_emails() {
+  [ -s "${PENDENCIA_EMAIL:-/dev/null}" ] || return 0
+  cat <<PEND
+
+$(c_ylw "  ─── FALTA UM PASSO, e ele é no painel do Supabase ─────")
+
+  Os e-mails de acesso (esqueci minha senha, confirmação de cadastro e
+  aceite de convite) ainda apontam para um endereço que não existe. Sem
+  este passo, ninguém consegue redefinir a própria senha.
+
+  Em https://supabase.com/dashboard → seu projeto → Authentication →
+  URL Configuration, preencha:
+
+       Site URL:       https://${DOMAIN}
+       Redirect URLs:  https://${DOMAIN}/auth/confirm
+
+  Depois é só salvar — não precisa reiniciar nada aqui.
+
+  Para o instalador fazer isso sozinho da próxima vez, rode
+  \`bash hostgator-setup-kit/install.sh\` de novo e informe o token de
+  acesso quando ele perguntar (supabase.com/dashboard/account/tokens).
+PEND
+}
+
+PENDENCIA_EMAIL="$(mktemp)"
+PENDENCIA_ARQUIVO="$PENDENCIA_EMAIL" \
+  SUPABASE_ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN:-}" \
+  bash "$KIT_DIR/marca-emails.sh" --projeto "$PROJECT_DIR" || true
 
 # ── 8. Bootstrap do 1º dono (cria no Auth + promove via psql) ───────────────
 step "Criando o primeiro admin (${OWNER_EMAIL})"
@@ -1930,6 +1975,7 @@ $(c_grn "═══════════════════════�
 $(c_grn " Instalação concluída!")
 $(c_grn "═══════════════════════════════════════════════════════")
 
+$(pendencia_dos_emails)
   1. Acesse:  https://${DOMAIN}
      (o SSL leva ~1min pra emitir no primeiro acesso)
 

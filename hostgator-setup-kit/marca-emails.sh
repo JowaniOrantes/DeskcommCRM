@@ -77,6 +77,13 @@ done
 # Sai bem-sucedido depois de ensinar o passo manual. É o contrato deste script:
 # ele informa, não interrompe.
 instrua_e_saia() {
+  # A pendência sai também em ARQUIVO, quando quem chama pede. Sem isso, este
+  # aviso morre no meio de um log de 10 minutos e a instalação termina com uma
+  # tela verde de "concluído" — e o dono só descobre que o reset de senha aponta
+  # para localhost quando alguém tenta usá-lo. (issue #431/#426)
+  if [ -n "${PENDENCIA_ARQUIVO:-}" ]; then
+    printf '%s\n' "$1" > "$PENDENCIA_ARQUIVO" 2>/dev/null || true
+  fi
   printf '\n' >&2
   c_ylw "⚠ $1"
   printf '\n' >&2
