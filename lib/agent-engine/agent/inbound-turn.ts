@@ -1504,7 +1504,7 @@ async function executarTurnoDoAgente(
   const openingContext = await getLeadContext(
     pool,
     deps.crmCfg,
-    { tenantId, leadId, conversationId: input.conversationId },
+    { tenantId, leadId, conversationId: input.conversationId, fuso: fusoDaOrg },
     turnContextKnobs,
   );
   if (!openingContext.ok) {
@@ -1864,7 +1864,7 @@ async function executarTurnoDoAgente(
           const releitura = await getLeadContext(
             pool,
             deps.crmCfg,
-            { tenantId, leadId, conversationId: input.conversationId },
+            { tenantId, leadId, conversationId: input.conversationId, fuso: fusoDaOrg },
             turnContextKnobs,
           );
           // Sem esta linha a projeção da abertura seria decorativa: bastaria o
