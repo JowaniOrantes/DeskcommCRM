@@ -16,7 +16,17 @@ saía no meio de um registro de dez minutos, logo antes de uma tela verde dizend
 "Instalação concluída". Ninguém voltava para ler.
 
 Agora o instalador pergunta esse token. Ele é opcional e **não fica salvo** —
-abre a conta inteira do Supabase, então é usado uma vez e descartado. Quem
-preferir pular continua podendo: a instalação termina repetindo o passo que
+abre a conta inteira do Supabase, então é usado uma vez e descartado, e nem
+sequer entra no rascunho que guarda suas respostas para o caso de a instalação
+ser interrompida. Por isso, se você recomeçar uma instalação, ele é a única
+pergunta que volta a ser feita; a tela diz isso na hora, e apertar Enter pula.
+
+Quem preferir pular continua podendo: a instalação termina repetindo o passo que
 falta, com o seu domínio já preenchido, em vez de deixar a descoberta para o dia
-em que alguém esquecer a senha.
+em que alguém esquecer a senha. E quando o passo automático roda mas o endereço
+não fica como este sistema precisa — porque o seu projeto já tinha outro
+endereço escolhido, por exemplo —, ele passou a dizer isso em vez de terminar
+com um "pronto" verde.
+
+**Se você já tinha instalado antes desta versão**, a próxima atualização mostra
+esse mesmo passo uma vez, com o seu domínio preenchido, e não repete depois.

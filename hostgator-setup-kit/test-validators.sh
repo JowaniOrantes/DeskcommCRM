@@ -2228,6 +2228,59 @@ NEXT_PUBLIC_APP_URL='https://crm.exemplo.com.br'")"
 ) || fail=1
 rm -rf "$TMP_DDL_C"
 
+echo "e-mails de acesso: quem JÁ instalou também é avisado — uma vez só"
+# A população realmente quebrada hoje é quem instalou ANTES de a entrevista pedir
+# o token: o Site URL do projeto dela está em `localhost:3000` e nada a alcança.
+# O `install.sh` dela não perguntou nada, e o bloco de e-mails do `update.sh` só
+# roda COM token — então a atualização passava calada por cima do defeito.
+#
+# As DUAS metades são medidas aqui, e a segunda é a que impede o conserto de
+# virar um resmungo mensal: avisa na primeira atualização, e nunca mais.
+TMP_AVISO="$(mktemp -d)"
+(
+  montar_vps "$TMP_AVISO" "crmaviso" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$DOCKER_LOG"
+case "$1" in
+  compose) case "$*" in *" exec "*) printf 'healthy\n{"data":{"status":"healthy"}}\n' ;; esac; exit 0 ;;
+esac
+exit 0
+STUB
+  mkdir -p "$VPS_PROJ/supabase"; : > "$VPS_PROJ/supabase/baseline.sql"
+  (cd "$VPS_PROJ" && git init -q -b main . \
+    && git -c user.email=t@exemplo -c user.name=teste add -A \
+    && git -c user.email=t@exemplo -c user.name=teste commit -qm base \
+    && git tag v9.9.9) >/dev/null 2>&1
+
+  extra="INTERNAL_SECRET='segredo-de-teste'
+NEXT_PUBLIC_APP_URL='https://crm.exemplo.com.br'"
+  # Sem token — o estado de quem instalou pelo caminho documentado.
+  unset SUPABASE_ACCESS_TOKEN
+  um="$(rodar update.sh "" "$extra")"
+  dois="$(rodar update.sh "" "$extra")"
+
+  # CONTROLE POSITIVO: sem chegar ao fim, a ausência do aviso não mede nada.
+  if ! printf '%s' "$um" | grep -q 'Atualização concluída'; then
+    printf '  ✗ o update.sh não chegou ao fim — cenário inconclusivo, não verde\n'
+    printf '     última linha: %s\n' "$(printf '%s' "$um" | sed -E 's/\x1b\[[0-9;]*m//g' | grep -v '^$' | tail -1)"
+    exit 1
+  fi
+  if ! printf '%s' "$um" | grep -q 'URL Configuration'; then
+    printf '  ✗ a 1ª atualização passou calada pelo Site URL — quem já instalou não fica sabendo\n'
+    printf '     (o Site URL dele está em localhost:3000 e ninguém consegue redefinir a senha)\n'
+    exit 1
+  fi
+  # O domínio PREENCHIDO, não um placeholder.
+  if ! printf '%s' "$um" | grep -q 'https://crm.exemplo.com.br/auth/confirm'; then
+    printf '  ✗ o aviso não traz o domínio preenchido — quem lê não sabe o que escrever\n'; exit 1
+  fi
+  if printf '%s' "$dois" | grep -q 'URL Configuration'; then
+    printf '  ✗ a 2ª atualização repetiu o aviso — atualização que resmunga ensina a ignorar a saída\n'; exit 1
+  fi
+  printf '  ✓ a 1ª atualização avisa (com o domínio preenchido) e a 2ª fica calada\n'
+) || fail=1
+rm -rf "$TMP_AVISO"
+
 echo "DDL: nenhum script do kit manda a string do APP para o Postgres"
 # A guarda de CLASSE. Os três cenários acima provam o install.sh e o update.sh
 # pelo comportamento; esta linha alcança os irmãos que nenhuma fixture roda
@@ -2494,6 +2547,97 @@ elif grep -qE '^\s*envq SUPABASE_ACCESS_TOKEN' ./install.sh; then
   fail=1
 else
   printf '  ✓ a entrevista pergunta o token e não o guarda no .env\n'
+fi
+
+# ───────────────────────────────────────────────────────────────────────────
+# O ✓ VERDE DOS E-MAILS TEM DE PROVAR O SITE URL, não só os modelos
+# ───────────────────────────────────────────────────────────────────────────
+#
+# `marca-emails.sh` declarava sucesso relendo o MARCADOR — que prova os MODELOS
+# e nada mais. O `site_url` viaja no MESMO PATCH e pode não pegar: a API aceita e
+# ignora (o cabeçalho do próprio script adverte contra isso), ou o passo 4
+# preserva de propósito um Site URL que o operador escolheu. Nos dois casos saía
+# "✓ configurados e CONFERIDOS", exit 0, NENHUMA pendência escrita — e a tela
+# final da instalação ficava muda enquanto o link do "esqueci minha senha"
+# continuava levando para outro lugar. Falha em verde, que é a pior.
+#
+# O dublê de `curl` reproduz exatamente isso: devolve o que o PATCH mandou (logo,
+# COM o marcador — o caminho verde é alcançado de verdade) e força o `site_url`
+# de volta para outro domínio.
+TMP_SITEURL="$(mktemp -d)"
+(
+  KIT_AQUI="$PWD"
+  cp "$KIT_AQUI/marca-emails.sh" "$KIT_AQUI/_common.sh" "$TMP_SITEURL/" || exit 1
+  mkdir -p "$TMP_SITEURL/../supabase/templates" 2>/dev/null
+  # Os modelos moram em ../supabase/templates relativo ao script.
+  mkdir -p "$TMP_SITEURL/kit" "$TMP_SITEURL/supabase/templates"
+  cp "$KIT_AQUI/marca-emails.sh" "$KIT_AQUI/_common.sh" "$TMP_SITEURL/kit/"
+  cp "$KIT_AQUI/../supabase/templates/confirmation.html" \
+     "$KIT_AQUI/../supabase/templates/recovery.html" "$TMP_SITEURL/supabase/templates/" || exit 1
+
+  mkdir -p "$TMP_SITEURL/bin"
+  cat > "$TMP_SITEURL/bin/curl" <<'STUB'
+#!/usr/bin/env bash
+# Dublê da Management API. Guarda o corpo do PATCH e o devolve nos GETs
+# seguintes — com o site_url trocado por outro domínio, que é o defeito.
+ESTADO="$TMPDIR_STUB/estado.json"
+corpo=""; metodo=GET
+prev=""
+for a in "$@"; do
+  case "$prev" in -X) metodo="$a";; -d) corpo="$a";; esac
+  prev="$a"
+done
+if [ "$metodo" = PATCH ]; then
+  printf '%s' "$corpo" > "$ESTADO"
+  printf '{}'
+  exit 0
+fi
+if [ -s "$ESTADO" ]; then
+  sed 's#"site_url": "[^"]*"#"site_url": "https://outro-dominio.exemplo.com"#' "$ESTADO"
+else
+  printf '{"site_url": "https://outro-dominio.exemplo.com", "uri_allow_list": ""}'
+fi
+STUB
+  chmod +x "$TMP_SITEURL/bin/curl"
+
+  PEND="$TMP_SITEURL/pendencia.txt"
+  saida="$(cd "$TMP_SITEURL/kit" && PATH="$TMP_SITEURL/bin:$PATH" \
+    TMPDIR_STUB="$TMP_SITEURL" PENDENCIA_ARQUIVO="$PEND" \
+    SUPABASE_ACCESS_TOKEN=sbp_de_teste \
+    NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklm.supabase.co \
+    NEXT_PUBLIC_APP_URL=https://crm.exemplo.com.br \
+    APP_NAME='Loja Teste' bash ./marca-emails.sh --env /dev/null 2>&1)"; rc=$?
+
+  # CONTROLE POSITIVO: se o dublê não levou o script até o caminho VERDE, a
+  # ausência de pendência abaixo não mede nada — mediria um script que morreu.
+  if ! printf '%s' "$saida" | grep -q 'CONFERIDOS'; then
+    printf '  ✗ o dublê não levou o script ao caminho verde — cenário inconclusivo, não verde\n'
+    printf '     (rc=%s, última linha: %s)\n' "$rc" \
+      "$(printf '%s' "$saida" | sed -E 's/\x1b\[[0-9;]*m//g' | grep -v '^$' | tail -1)"
+    exit 1
+  fi
+  if [ "$rc" -ne 0 ]; then
+    printf '  ✗ o script saiu %s — ele NÃO pode derrubar o install.sh\n' "$rc"; exit 1
+  fi
+  if [ ! -s "$PEND" ]; then
+    printf '  ✗ o Site URL ficou em outro domínio e NENHUMA pendência foi escrita\n'
+    printf '     (o ✓ verde provou só os modelos; a tela final da instalação fica muda\n'
+    printf '      e ninguém consegue redefinir a própria senha)\n'
+    exit 1
+  fi
+  if ! grep -q 'outro-dominio.exemplo.com' "$PEND"; then
+    printf '  ✗ a pendência não diz ONDE o Site URL está — quem lê não sabe o que conferir\n'; exit 1
+  fi
+  printf '  ✓ modelos no ar mas Site URL em outro domínio: o script anota a pendência (não some no verde)\n'
+) || fail=1
+rm -rf "$TMP_SITEURL"
+
+# E a tela final da instalação REPETE o motivo, em vez de descartá-lo: o arquivo
+# de pendência já era escrito e nunca lido.
+if ! grep -q 'PENDENCIA_EMAIL"$' ./install.sh && ! grep -q 'sed .*PENDENCIA_EMAIL' ./install.sh; then
+  printf '  ✗ a tela final não mostra o motivo gravado pelo marca-emails.sh\n'; fail=1
+else
+  printf '  ✓ a tela final repete o motivo que o passo automático encontrou\n'
 fi
 
 # —— ...e também não o guarda no RASCUNHO de retomada ——

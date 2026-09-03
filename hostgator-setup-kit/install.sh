@@ -1788,8 +1788,12 @@ pendencia_dos_emails() {
 $(c_ylw "  ─── FALTA UM PASSO, e ele é no painel do Supabase ─────")
 
   Os e-mails de acesso (esqueci minha senha, confirmação de cadastro e
-  aceite de convite) ainda apontam para um endereço que não existe. Sem
-  este passo, ninguém consegue redefinir a própria senha.
+  aceite de convite) ainda não levam para este app. Sem este passo,
+  ninguém consegue redefinir a própria senha.
+
+  O que o passo automático encontrou:
+
+$(sed 's/^/    /' "$PENDENCIA_EMAIL")
 
   Em https://supabase.com/dashboard → seu projeto → Authentication →
   URL Configuration, preencha:
