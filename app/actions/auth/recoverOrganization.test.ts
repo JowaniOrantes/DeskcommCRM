@@ -25,7 +25,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { ensureTenantForUser } from "@/lib/auth/provision";
