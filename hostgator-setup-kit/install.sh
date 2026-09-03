@@ -507,7 +507,8 @@ envq() { printf '%s="%s"\n' "$1" "$(printf '%s' "${2-}" | sed 's/[\\"$`]/\\&/g')
 # mais difícil, e a última das credenciais — perdia tudo o que já tinha digitado
 # e recomeçava do zero na tentativa seguinte. Justamente quem mais precisa de
 # uma segunda tentativa é quem tem menos paciência para redigitar 11 campos.
-# Mesma permissão do .env (600): o conteúdo é o mesmo, inclusive os segredos.
+# Mesma permissão do .env (600): o conteúdo é quase o mesmo, segredos inclusive
+# — a exceção é o token de CONTA, e o bloco abaixo explica por quê.
 PARTIAL_FILE="${PARTIAL_FILE:-.env.partial}"
 
 # A exceção: segredo de CONTA não entra no rascunho, nem por um instante.
