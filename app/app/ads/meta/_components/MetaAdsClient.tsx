@@ -15,6 +15,7 @@ import {
 import { useT } from "@/hooks/i18n/useT";
 import { useMetaAdAccounts, useMetaCampaigns } from "@/hooks/ads/useMetaAds";
 import { ApiError } from "@/lib/api/types";
+import { useTagDeIdioma } from "@/hooks/i18n/useLocaleDeData";
 import type { Idioma } from "@/lib/i18n/idiomas";
 
 import { TabelaDeCampanhas } from "./TabelaDeCampanhas";
@@ -94,6 +95,9 @@ interface Props {
 
 export function MetaAdsClient({ contaPadrao }: Props) {
   const t = useT();
+  // O carimbo "lido em" é uma DATA, e data segue o idioma de quem lê — fixar
+  // "pt-BR" deixaria a tela em espanhol com a hora em português.
+  const tagDoIdioma = useTagDeIdioma();
 
   const [conta, setConta] = useState<string | null>(contaPadrao);
   const [preset, setPreset] = useState<string>("7");
@@ -249,7 +253,7 @@ export function MetaAdsClient({ contaPadrao }: Props) {
           */}
           <p className="text-xs text-muted-foreground">
             {t("Período")}: {intervalo.de} {t("a")} {intervalo.ate} · {t("lido em")}{" "}
-            {new Date(campanhas.data.data.lido_em).toLocaleString("pt-BR")}
+            {new Date(campanhas.data.data.lido_em).toLocaleString(tagDoIdioma)}
           </p>
         </>
       )}

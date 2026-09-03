@@ -6454,6 +6454,57 @@ export const DICIONARIO: Traducoes = {
     { es: "Desconectar borra el token guardado. La pantalla de Meta Ads vuelve a pedir una conexión, y no se pierde ningún dato histórico — aquí no se almacena nada." },
   "Não consegui desconectar agora.": { es: "No pude desconectar ahora." },
 
+  // ─── Configurações → Conversões (0208) e o convidado da agenda (0207) ───
+  //
+  // Estas duas telas entraram na mesma leva do painel de Meta Ads e ficaram sem
+  // espanhol: o `i18n-espanhol-cobre-a-tela` as pegou com 27 chamadas caindo no
+  // português. Ao acrescentar campo em qualquer uma delas, volte aqui.
+  //
+  // ⚠️ `Conversões` também é o rótulo no menu lateral (`lib/navigation/registry.ts`),
+  // e é a MESMA chave: mudar a tradução aqui muda os dois lugares.
+  "Conversões": { es: "Conversiones" },
+  "Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.":
+    { es: "Cuando un negocio que vino de un anuncio se marca como ganado, el valor de la venta vuelve a la plataforma que trajo al cliente. Es ese retorno el que le enseña al anuncio a buscar más gente parecida a quien compró." },
+  "O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma enquanto isto estiver desligado.":
+    { es: "El envío está pausado. Las ventas se siguen registrando aquí, pero no van a la plataforma mientras esto esté apagado." },
+  "Modo de teste ligado: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.":
+    { es: "Modo de prueba encendido: las ventas van marcadas como prueba y no cuentan para la optimización. Borra el código de prueba cuando termines de revisar." },
+  "Vendas que não foram reportadas": { es: "Ventas que no fueron reportadas" },
+  "reportadas com sucesso": { es: "reportadas con éxito" },
+  "Nenhuma pendência. Ou tudo que veio de anúncio foi reportado, ou ainda não fechou nenhuma venda com origem em anúncio.":
+    { es: "Ninguna pendencia. O todo lo que vino de anuncios fue reportado, o todavía no se cerró ninguna venta con origen en anuncios." },
+  "Negócio": { es: "Negocio" },
+  "O que houve": { es: "Qué pasó" },
+  "(sem título)": { es: "(sin título)" },
+
+  // Formulário da conexão de conversões
+  "Conexão salva.": { es: "Conexión guardada." },
+  "Identificador do destino de conversões": { es: "Identificador del destino de conversiones" },
+  "Só números. Você encontra no gerenciador de anúncios, na fonte de dados que recebe as conversões.":
+    { es: "Solo números. Lo encuentras en el administrador de anuncios, en la fuente de datos que recibe las conversiones." },
+  "Gravado. Deixe em branco para manter.": { es: "Guardado. Déjalo en blanco para mantenerlo." },
+  "Cole o token gerado na plataforma": { es: "Pega el token generado en la plataforma" },
+  "Guardado criptografado. Ele nunca volta para esta tela depois de salvo.":
+    { es: "Guardado cifrado. Nunca vuelve a esta pantalla después de guardarlo." },
+  "Código de teste (opcional)": { es: "Código de prueba (opcional)" },
+  "Enquanto preenchido, as vendas vão marcadas como teste e não contam para a otimização. Apague quando terminar de conferir.":
+    { es: "Mientras esté completo, las ventas van marcadas como prueba y no cuentan para la optimización. Bórralo cuando termines de revisar." },
+  "Reportar vendas automaticamente": { es: "Reportar ventas automáticamente" },
+  "Desligar pausa o envio e mantém a credencial gravada.":
+    { es: "Apagarlo pausa el envío y mantiene la credencial guardada." },
+  "Salvar conexão": { es: "Guardar conexión" },
+  "Preencha o identificador e o token para poder salvar.":
+    { es: "Completa el identificador y el token para poder guardar." },
+
+  // Convidado do compromisso (agenda)
+  "E-mail do convidado": { es: "Correo del invitado" },
+  "opcional": { es: "opcional" },
+  "cliente@empresa.com": { es: "cliente@empresa.com" },
+  "Endereço inválido — confira antes de marcar.":
+    { es: "Dirección inválida — revísala antes de agendar." },
+  "Preenchido, o Google envia o convite por e-mail para esta pessoa.":
+    { es: "Si se completa, Google envía la invitación por correo a esta persona." },
+
 };
 
 /**
