@@ -766,3 +766,64 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     Isto é o passe 6-bis olhando para o outro lado: lá a pergunta é *"o dado atravessa uma porta
     sem guarda?"*; aqui é *"a chamada acontece numa porta onde ela não devia?"*. As duas se provam
     do mesmo jeito — sabotando e exigindo vermelho.
+
+    ### A classe é maior que o caso, e esta casa já pagou duas irmãs
+
+    | irmã | forma | o que custou |
+    |---|---|---|
+    | consulta ao banco desnecessária por turno | roundtrip a mais | o caso acima |
+    | **chamada de LLM a mais por turno** | mesma forma, **custo por unidade muito maior** | não medido aqui |
+    | **linha de audit por rodada de cron VAZIA** | escrita a mais por minuto | **95% do audit log** numa VPS real, e ~51.840 linhas/mês numa instalação que não atende ninguém |
+
+    A terceira já tem gate, e o desenho dele é o molde a copiar:
+    `tests/unit/cron-audita-so-quando-ha-efeito.test.ts` percorre o **AST** de **toda** rota de
+    `app/api/v1/cron/` — **21** hoje — em vez de uma lista fixa, então alcança rota que ainda não
+    existe. E ele mede as **duas** direções: *auditar quando houve efeito* **e** *não parar de
+    auditar*. Um gate que só proibisse a escrita seria satisfeito por "nunca audite", que é o
+    conserto degenerado do passe 21.
+
+    O que une as três: **nenhum gate mede fatura.** O efeito não aparece em teste, em lint, em
+    tipo, em build — aparece semanas depois, num lugar onde ninguém está procurando um PR.
+25. **Alegação COMPOSTA: separe antes de aceitar ou descartar inteira.** Uma alegação com duas
+    afirmações dentro pode ter uma metade falsa e outra verdadeira, e o trabalho é **separar**.
+    Retratar tudo leva a parte boa junto; defender tudo mantém a ruim.
+
+    Medido em 2026-09-03. A alegação era: *"`pnpm typecheck` verde e `next build` vermelho, mesmo
+    arquivo, mesma linha — dois checadores discordando"*.
+
+    - **Caiu:** não havia dois checadores. O gate é `tsc --noEmit -p tsconfig.typecheck.json` e o
+      que rodou foi `tsc --noEmit` (modo 23).
+    - **Ficou:** o `next build` imprime `✓ Compiled successfully` e só **depois** roda
+      `Running TypeScript`, e o erro saiu no segundo passo (modo 14).
+
+    ### O sinal barato que diz se são duas — use antes de retratar
+
+    > **Liste as afirmações atômicas e veja para QUEM cada uma aponta a culpa. Se apontam para
+    > agentes diferentes, quase nunca é uma alegação só.**
+
+    Aqui: a metade falsa culpava a **ferramenta** (ela seria inconsistente); a verdadeira culpa
+    **quem para de ler cedo**. Culpados distintos, alegações distintas.
+
+    E há um viés que o sinal desarma: a metade que culpa a ferramenta é sempre a mais confortável de
+    manter, porque ela inocenta quem mediu. Foi ela que caiu.
+26. **O desfecho bom esconde o erro de método — e é o caso mais perigoso, porque não deixa
+    vermelho.** Quando o conserto está certo, ninguém volta a olhar como ele foi verificado. O
+    acerto vira álibi da verificação.
+
+    Medido em 2026-09-03, e o relato é de quem cometeu: um erro de tipo **dentro de um arquivo de
+    teste** foi consertado, e a verificação declarada foi *"(vazio = typecheck ok)"* — rodando `tsc`
+    **pelado**. Só que o `tsconfig.json` **exclui** `**/*.test.ts` e `tests/**`. Aquele verde era
+    **vazio**: não disse nada sobre o arquivo que acabara de ser consertado. **O conserto estava
+    certo, e quem provou isso foi o CI, não a medição.**
+
+    Compare com os outros erros do mesmo dia: os que produziram vermelho foram achados em minutos,
+    porque o vermelho reclama. Este ficou de pé até alguém reabrir o caso **contra si mesmo**, sem
+    nenhum sintoma pedindo atenção.
+
+    **A pergunta que desarma:** *o que eu rodei teria ficado VERMELHO se o conserto estivesse
+    errado?* Se você não consegue responder com um controle — um erro deliberado que a sua sonda
+    **enxerga** —, você tem um desfecho, não uma verificação. E vale para qualquer sonda, não só
+    typecheck: `grep` que volta vazio, teste que passa, script que sai 0.
+
+    É o irmão exato do modo 7 (`grep` vazio precisa de controle positivo), promovido de sonda para
+    **método**: o controle positivo não é um capricho do `grep`, é o que separa medir de lembrar.
