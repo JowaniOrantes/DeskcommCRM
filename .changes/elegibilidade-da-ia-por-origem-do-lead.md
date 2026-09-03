@@ -19,10 +19,11 @@ de IA para uma conversa não autorizada.
 
 Além disso, e independentemente desse modo: quando você responde um cliente à
 mão pelo próprio WhatsApp (celular, ou outra plataforma na mesma conta), a IA
-para naquela conversa para não responder junto. **Essa pausa dura uma hora e se
-renova a cada mensagem sua** — enquanto você estiver atendendo, ela continua
-calada; quando você para, a hora corre e a IA volta a atender aquela conversa
-sozinha. Você não precisa lembrar de religar nada.
+para naquela conversa para não responder junto.
+**Essa pausa dura uma hora, e se renova a cada mensagem sua.**
+Enquanto você estiver atendendo, a IA continua calada; quando você para, a hora
+corre e ela volta a atender aquela conversa sozinha. Você não precisa lembrar de
+religar nada.
 
 Se quiser a IA de volta antes da hora, é o botão "devolver ao automático" na
 conversa. E se quiser que ela fique parada por tempo indeterminado, é o mesmo de

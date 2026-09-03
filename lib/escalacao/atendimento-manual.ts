@@ -34,8 +34,8 @@
  * digitar dentro do CRM) e é curto o bastante para que um engano se pague
  * sozinho no mesmo turno de trabalho, em vez de virar uma conversa morta.
  *
- * ⚠️ Quem quiser outro prazo mexe AQUI, num lugar só: a constante é lida pelos
- * dois canais (WAHA e Zernio) e pelo teste.
+ * ⚠️ Quem quiser outro prazo mexe AQUI, num lugar só: a constante é lida por
+ * TODO canal cuja ingestão reconhece saída feita fora do CRM, e pelo teste.
  *
  * ## Cada mensagem nova do humano RENOVA o prazo
  *
