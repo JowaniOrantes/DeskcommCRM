@@ -263,7 +263,16 @@ async function handle(req: NextRequest): Promise<Response> {
     // O client aqui é o de SERVICE ROLE, que bypassa a RLS — por isso
     // `completarRedacaoDoContato` filtra `organization_id` à mão em toda query,
     // com a org vinda da própria linha de `contacts` (fonte confiável).
-    varredura = await varrerRedacoesIncompletas(admin as unknown as ClienteDaCascata);
+    //
+    // Try PRÓPRIO, e não o de fora: uma varredura que explodisse derrubaria o
+    // relatório da PODA junto, e o cron passaria a auditar `falhou: true` num
+    // dia em que o expurgo funcionou. As duas tarefas dividem o relógio, não o
+    // desfecho — quem falha aqui falha aqui, e a falha é dita, não engolida.
+    try {
+      varredura = await varrerRedacoesIncompletas(admin as unknown as ClienteDaCascata);
+    } catch (err) {
+      varredura.falhas.push(err instanceof Error ? err.message : String(err));
+    }
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     logger.error("[data-retention] poda falhou", { error: detail, requestId });
@@ -306,6 +315,8 @@ async function handle(req: NextRequest): Promise<Response> {
 
   // Uma linha POR CONTATO, na org dele: é a auditoria que responde ao titular, e
   // uma linha global `retention.sweep_run` não responde a ninguém em particular.
+  // Ela aparece em `/app/audit` como qualquer outra (a tela filtra por `action`
+  // em campo livre, não por lista fechada) — é o laço de retorno desta peça.
   // Só para quem TINHA resíduo — `completados` já é a lista filtrada, e o `if`
   // deixa isso explícito para o guarda de AST que varre esta pasta (ele não
   // conta `for` como condição, e está certo em não contar).

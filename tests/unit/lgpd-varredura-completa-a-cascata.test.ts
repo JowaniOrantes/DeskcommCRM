@@ -311,10 +311,12 @@ describe("o laço de retorno: a varredura deixa rastro por contato", () => {
   });
 
   it("⭐ o cron completa a cascata e audita NA ORG do contato, não numa linha global", async () => {
-    // Esta é a resposta ao DoD 13: a peça aparece na trilha de auditoria, que é
-    // tela consultável (`lgpd.anonymize_catchup` já está em AUDIT_ACTIONS, então
-    // entra no filtro do painel sozinho). Uma linha `retention.sweep_run` global
-    // não responderia ao titular — e é a auditoria que responde a ele.
+    // Esta é a resposta ao DoD 13: a peça aparece em `/app/audit`, que lista as
+    // linhas de `api_audit_log` e filtra por `action` digitada — conferido em
+    // `app/app/audit/_client.tsx`, que é campo livre e não uma lista fechada, ou
+    // seja, a linha aparece sem ninguém cadastrar nada. Uma linha
+    // `retention.sweep_run` global não responderia ao titular, e é a auditoria
+    // que responde a ele: por isso a org e o contato vão na linha.
     const b = banco([
       contatoAnonimizado(),
       { id: "crm_leads:1", organization_id: ORG, contact_id: "contacts:a", title: "Orçamento com PII" },
@@ -354,5 +356,33 @@ describe("o laço de retorno: a varredura deixa rastro por contato", () => {
     await GET(requisicaoAutorizada());
 
     expect(auditou, "auditou uma varredura que não fez nada").not.toHaveBeenCalled();
+  });
+});
+
+describe("a varredura não derruba a poda junto com ela", () => {
+  function requisicaoAutorizada() {
+    return { headers: new Headers({ authorization: "Bearer segredo" }) } as never;
+  }
+
+  it("⭐ varredura que EXPLODE não faz o cron auditar a poda como falha", async () => {
+    // Sem um try próprio, uma exceção aqui cairia no catch do handler: o cron
+    // responderia 500 e gravaria `retention.sweep_run { falhou: true }` num dia
+    // em que o expurgo do audit funcionou — a trilha passaria a mentir sobre a
+    // peça que ela existe para vigiar.
+    auditou.mockClear();
+    bancoDoCron = {
+      cliente: {
+        from: () => {
+          throw new Error("função ausente neste clone");
+        },
+      } as unknown as ClienteDaCascata,
+    };
+
+    const { GET } = await import("@/app/api/v1/cron/data-retention/route");
+    const resposta = await GET(requisicaoAutorizada());
+
+    expect(resposta.status, "a poda foi reportada como falha por causa da varredura").toBe(200);
+    const acoes = auditou.mock.calls.map((c) => (c[0] as { action: string }).action);
+    expect(acoes).not.toContain("retention.sweep_run");
   });
 });
