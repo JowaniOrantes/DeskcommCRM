@@ -650,3 +650,44 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     erro.** Quem achou foi uma revisão adversarial rodando a função com casos que separavam os
     caminhos — e quem confirmou foi o autor, remedindo contra o próprio PR em vez de deferir ao
     relatório. É o passe 7 aplicado a si mesmo, e é o que se espera de quem contribui aqui.
+21. **O teste que prende o SINTOMA reprova o conserto certo.** Um caso escrito durante a
+    investigação tende a codificar *a circunstância em que o defeito apareceu*, não *a propriedade
+    que deve valer*. Enquanto o defeito existe, os dois são indistinguíveis — e o teste passa. Ele
+    só se revela no dia em que alguém conserta de verdade.
+
+    Medido em 2026-09-03, no PR #544. O caso escrito foi *"com `count` nulo, não afirme ausência"*.
+    Depois do conserto ele ficou **vermelho — e estava certo em ficar**: com o conserto, quem prova
+    o fim da varredura passa a ser a **página vazia** (fato independente do `count`), então numa
+    loja de 3000 itens a quarta página volta vazia, a varredura **é** completa, e afirmar ausência
+    passa a ser **correto**. O `count` nulo tinha deixado de significar qualquer coisa.
+
+    **Isso é pior que teste ausente**, e é o ponto: um vermelho que aponta para o conserto empurra
+    quem vem depois a desfazer o conserto para "consertar" o teste. O invariante certo — *só afirme
+    ausência se chegou ao fim de verdade* — foi escrito com 12.000 itens, acima do teto de páginas,
+    onde a varredura é parcial **de fato**.
+
+    **E todo teste de "não faça X" precisa do irmão "mas ainda faça X quando é certo".** Sem ele, o
+    conserto **degenerado** passa: *"nunca afirme ausência"* satisfaria o caso original e tornaria o
+    agente **eternamente evasivo** — outro defeito, na direção de que ninguém reclama, porque
+    excesso de cautela não gera reclamação de cliente. O controle que fecha essa porta aqui foi um
+    caso de 2.500 itens que chega ao fim sem `count` e **deve** poder dizer que não tem.
+
+    Ao revisar um teste novo, pergunte: *este caso descreve a CIRCUNSTÂNCIA em que o bug foi visto,
+    ou a PROPRIEDADE que precisa valer?* E: *qual conserto degenerado passaria por ele?*
+22. **Fragmento ainda não lançado é PROMESSA, não histórico.** Um PR que faz uma promessa já escrita
+    virar verdade **não precisa de fragmento próprio** — enquanto a versão não foi cortada, o texto
+    que o operador vai ler é o que está em `.changes/`, e ele ainda não foi lido por ninguém.
+
+    Medido no par #520 → #544: o fragmento do #520 promete *"a busca percorre o catálogo em páginas,
+    na ordem do código, **até encontrar ou terminar**"*. Essa frase não era inteiramente verdadeira
+    num dos ramos, e o #544 a torna verdadeira. A última release era a **v1.12.0**, anterior aos
+    dois — logo não havia nada a corrigir do lado de fora.
+
+    Um segundo fragmento diria *"consertamos o conserto"*, que é ruído para quem opera: **a versão
+    sai inteira ou não sai**. O critério é este, e não a existência de código novo:
+
+    | o PR… | fragmento próprio? |
+    |---|---|
+    | faz verdadeira uma promessa já escrita e ainda não lançada | **não** — confira que o texto existente segue verdadeiro |
+    | muda o que o operador vai ler, ou acrescenta efeito | **sim** |
+    | corrige algo já lançado numa versão anterior | **sim** — aquele texto já foi lido |
