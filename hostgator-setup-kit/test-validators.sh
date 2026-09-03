@@ -2496,6 +2496,70 @@ else
   printf '  ✓ a entrevista pergunta o token e não o guarda no .env\n'
 fi
 
+# —— ...e também não o guarda no RASCUNHO de retomada ——
+#
+# A guarda acima é um `grep` por `envq SUPABASE_ACCESS_TOKEN`, e `.env` é OUTRO
+# ARQUIVO: ela é cega para esta categoria inteira. O `ask_one` chama
+# `save_partial` para toda resposta aceita, e `save_partial` escreve em
+# `.env.partial` — então o token de CONTA ficava no disco desde a pergunta até o
+# `rm -f` que só roda depois de o `.env` ser escrito, e qualquer aborto no meio o
+# deixava lá (a tentativa seguinte ainda o recarregava, com "✓ retomando").
+# Isso desmentia a promessa escrita em três lugares — README, o comentário do
+# campo, e o fragmento em `.changes/`.
+#
+# Este cenário mede COMPORTAMENTO, não texto: roda o `ask_one` de verdade e
+# procura o valor no disco. Ele tem controle positivo (uma chave que DEVE ser
+# guardada, respondida na mesma sessão) — sem ele, um `save_partial` quebrado de
+# qualquer outro jeito deixaria o arquivo vazio e o teste ficaria verde pelo
+# motivo errado.
+TMP_RASCUNHO="$(mktemp -d)"
+(
+  KIT_AQUI="$PWD"
+  cd "$TMP_RASCUNHO" || exit 1
+  cp "$KIT_AQUI/install.sh" "$KIT_AQUI/_common.sh" . || exit 1
+  INSTALL_SH_LIB=1 . ./install.sh >/dev/null 2>&1
+  set +e   # o install.sh liga `set -e`; aqui as sondas precisam poder sair != 0
+
+  # Controle positivo primeiro: se ESTA não for guardada, a ausência do token
+  # abaixo não prova nada.
+  printf 'sr_CHAVE_DE_SERVICO_DE_TESTE\n' \
+    | ask_one SUPABASE_SERVICE_ROLE_KEY 'SR' '' '' secret '' >/dev/null 2>&1
+  printf 'sbp_TOKEN_DE_CONTA_DE_TESTE\n' \
+    | ask_one SUPABASE_ACCESS_TOKEN 'Token' '' '' secret opcional >/dev/null 2>&1
+
+  if ! grep -q 'sr_CHAVE_DE_SERVICO_DE_TESTE' .env.partial 2>/dev/null; then
+    printf '  ✗ sonda cega: nem a chave que DEVE ser guardada apareceu no rascunho\n'
+    printf '     (cenário inconclusivo, não verde — sem controle positivo a ausência do token não mede nada)\n'
+    exit 1
+  fi
+
+  # O valor, em QUALQUER arquivo do diretório — não só no `.env.partial`, e não
+  # o nome da variável: um `.tmp.$$` deixado para trás vaza o mesmo segredo.
+  vazou="$(grep -rl 'sbp_TOKEN_DE_CONTA_DE_TESTE' . 2>/dev/null | tr '\n' ' ')"
+  if [ -n "$vazou" ]; then
+    printf '  ✗ o SUPABASE_ACCESS_TOKEN foi para o disco:%s\n' " $vazou"
+    printf '     (é token de CONTA — abre a Management API, que cria e apaga projetos.\n'
+    printf '      O README promete que ele "não fica salvo"; um aborto antes do fim o deixava lá)\n'
+    exit 1
+  fi
+
+  # E o efeito colateral do conserto não pode ser perder a retomada: o que o
+  # rascunho existe para guardar continua guardado.
+  if [ "$(valor_no_env .env.partial SUPABASE_SERVICE_ROLE_KEY)" != 'sr_CHAVE_DE_SERVICO_DE_TESTE' ]; then
+    printf '  ✗ pular o token levou junto o resto do rascunho — a retomada quebrou\n'; exit 1
+  fi
+  printf '  ✓ o token de conta não entra no rascunho, e a retomada das outras respostas segue de pé\n'
+) || fail=1
+rm -rf "$TMP_RASCUNHO"
+
+# E a tela DIZ que o token vai ser perguntado de novo. Sem isso, quem retoma vê
+# "N respostas guardadas" e em seguida a mesma pergunta — que lê como defeito.
+if ! grep -q 'nunca entra no rascunho' ./install.sh; then
+  printf '  ✗ a tela de retomada não avisa que o token será perguntado de novo\n'; fail=1
+else
+  printf '  ✓ a tela de retomada avisa que o token de conta é perguntado de novo\n'
+fi
+
 echo
 if [ "$fail" = 0 ]; then echo "todos os validadores passaram"; else echo "FALHOU"; fi
 exit "$fail"

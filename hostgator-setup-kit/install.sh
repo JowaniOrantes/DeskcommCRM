@@ -509,8 +509,32 @@ envq() { printf '%s="%s"\n' "$1" "$(printf '%s' "${2-}" | sed 's/[\\"$`]/\\&/g')
 # uma segunda tentativa é quem tem menos paciência para redigitar 11 campos.
 # Mesma permissão do .env (600): o conteúdo é o mesmo, inclusive os segredos.
 PARTIAL_FILE="${PARTIAL_FILE:-.env.partial}"
+
+# A exceção: segredo de CONTA não entra no rascunho, nem por um instante.
+#
+# O `SUPABASE_ACCESS_TOKEN` abre a Management API, que cria e apaga projetos —
+# por isso ele já não vai para o `.env` (não há `envq` para ele) e o README
+# promete, na tabela de pré-requisitos, que "ele não fica salvo: é usado uma vez
+# e some com o processo". O rascunho desmentia as duas coisas: `ask_one` chama
+# `save_partial` para TODA resposta aceita, então o token ficava em `.env.partial`
+# desde a pergunta até o `rm -f` que só acontece depois de o `.env` ser escrito —
+# e qualquer aborto no meio (Ctrl-C, DNS errado, `die` de validação) o deixava no
+# disco, para a tentativa seguinte recarregar.
+#
+# POR QUE PULAR A VARIÁVEL, e não um `trap` que apague o rascunho em qualquer
+# saída: o trap protegeria este segredo melhor e mataria a única razão de o
+# rascunho existir. Ele existe para a saída ANORMAL — é exatamente aí que o trap
+# dispararia, e quem travou na connection string voltaria a redigitar as 11
+# respostas anteriores. Pular tira do disco o que não pode ficar e deixa intacto
+# o que o rascunho protege.
+#
+# O efeito colateral é deliberado e está dito na tela (ver o aviso junto do
+# "✓ retomando"): ao retomar, o token é perguntado de novo. Para um segredo de
+# conta esse é o comportamento certo, e o campo é opcional — Enter pula.
+RASCUNHO_NAO_GUARDA=" SUPABASE_ACCESS_TOKEN "
 save_partial() {
   local var="$1" val="${!1-}" tmp="${PARTIAL_FILE}.tmp.$$"
+  case "$RASCUNHO_NAO_GUARDA" in *" $var "*) return 0 ;; esac
   umask 077
   { [ -f "$PARTIAL_FILE" ] && grep -vE "^${var}=" "$PARTIAL_FILE" || true; } > "$tmp"
   envq "$var" "$val" >> "$tmp"
@@ -829,6 +853,9 @@ if [ -f "$PARTIAL_FILE" ]; then
   load_env "$PARTIAL_FILE"
   c_grn "✓ retomando: $(grep -c '=' "$PARTIAL_FILE" 2>/dev/null || echo 0) resposta(s) guardadas da tentativa anterior"
   c_dim "  (para responder tudo de novo do zero: rm $PARTIAL_FILE)"
+  # Sem esta linha, ser perguntado de novo sobre o token — depois de uma tela
+  # dizendo que N respostas foram guardadas — lê como defeito do instalador.
+  c_dim "  (o token do Supabase é de conta e nunca entra no rascunho: ele é perguntado de novo. Enter pula)"
 fi
 
 # ── Proxy reverso: quem está com as portas 80 e 443? ────────────────────────
