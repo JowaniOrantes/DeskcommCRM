@@ -541,3 +541,49 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     Medido no #422 em 2026-09-03. Se o workflow não tiver `workflow_dispatch` — e o `e2e.yml` não
     tem —, o único caminho é um evento `pull_request` novo: close+reopen do PR. **Avise o
     contribuidor antes de fazer**, porque ele recebe um e-mail de "fechado" e isso lê como rejeição.
+19. **Precedência invertida: consultar a fonte SÓ quando o palpite não sabe.** Uma cascata escrita
+    como *"se a heurística conhece, use-a; senão, vá à fonte"* faz o palpite **vencer sempre que ele
+    acha que sabe** — e o dado bom nunca é ouvido. Medido em 2026-09-03, no PR #524, rodando a
+    função de verdade:
+
+    ```
+    openrouter/openai/gpt-3.5-turbo   catalogo=false  registro=true   => enxergaImagem=true
+    openrouter/google/gemma-2-9b-it   catalogo=false  registro=true   => enxergaImagem=true
+    openrouter/anthropic/claude-2.1   catalogo=false  registro=true   => enxergaImagem=true
+    openrouter/mistralai/mistral-7b   catalogo=false  registro=false  => enxergaImagem=false
+    ```
+
+    Num roteador (OpenRouter) o registro interno responde pelo **prefixo do fabricante**: vê
+    `openai/` e afirma que o modelo enxerga imagem, para qualquer modelo daquele fabricante. O
+    catálogo tem o dado que a **própria OpenRouter declarou** (`architecture.input_modalities`), e
+    para o `gpt-3.5-turbo` ele diz `false` — que é a verdade. Como o catálogo só era consultado
+    quando o registro não conhecia, e num roteador o registro sempre "conhece" se o prefixo bate, o
+    dado declarado **nunca chegava a ser lido**.
+
+    A quarta linha é o que fecha o argumento: com `registro=false`, a cascata cai no catálogo e
+    acerta. Não é o registro que está errado — é a **ordem**.
+
+    **A regra:** fonte declarada primeiro, heurística só no vazio. E quando encontrar uma cascata
+    num PR, pergunte de cada degrau: *ele pode responder ERRADO com confiança, impedindo o degrau
+    seguinte — que tem o dado bom — de ser consultado?* Cascata é onde esta classe mora: `??`, `||`,
+    `if (!conhecido) buscar(...)`, cache lido antes da fonte, prefixo/regex decidindo o que um campo
+    declarado já responde.
+20. **O conserto que troca ruído por SILÊNCIO — e por que essa direção é a pior.** O #524 nasceu
+    para matar um aviso **falso** no caminho do provedor direto, e de quebra matou um aviso
+    **verdadeiro** no caminho do roteador: antes dele a tela dizia *"gpt-3.5-turbo não enxerga
+    imagens; fotos e comprovantes serão ignorados"*, e estava certa; depois, o aviso some e o `PUT`
+    responde 200 limpo.
+
+    As duas direções do erro **não custam o mesmo**. Aviso demais o operador percebe e reclama —
+    o defeito se auto-denuncia. Silêncio ele **não percebe**: perde a informação sem saber que
+    perdeu, e num produto self-host ninguém está olhando por ele.
+
+    **Portanto, sempre que um PR REMOVE um aviso, um erro, um log ou uma validação, a pergunta é
+    obrigatória:** *em quais casos esse aviso estava CERTO, e eles continuam avisando?* Enumere os
+    casos verdadeiros **antes** de aceitar a remoção dos falsos, e exija um teste que prenda pelo
+    menos um verdadeiro — senão o próximo conserto os leva junto de novo, e em silêncio.
+
+    Note que este PR tinha checks verdes, teste próprio e fragmento. **Nada disso mede a direção do
+    erro.** Quem achou foi uma revisão adversarial rodando a função com casos que separavam os
+    caminhos — e quem confirmou foi o autor, remedindo contra o próprio PR em vez de deferir ao
+    relatório. É o passe 7 aplicado a si mesmo, e é o que se espera de quem contribui aqui.
