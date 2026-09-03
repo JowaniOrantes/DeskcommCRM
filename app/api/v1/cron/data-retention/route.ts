@@ -231,6 +231,7 @@ async function handle(req: NextRequest): Promise<Response> {
   let resultado: ResultadoDaRetencao;
   let varredura: ResultadoDaVarredura = {
     examinados: 0,
+    comResiduo: 0,
     completados: [],
     temResto: false,
     falhas: [],

@@ -177,11 +177,32 @@ export async function completarRedacaoDoContato(
 }
 
 /**
- * Teto de contatos examinados por rodada. Mesmo espírito do `MAX_LOTES` da
- * poda: uma instalação que anonimizou um tenant inteiro não pode segurar a
- * conexão do cron até o `curl` desistir — o resto drena amanhã.
+ * Quantos contatos anonimizados a rodada CHEGA A OLHAR. Alto de propósito: ele
+ * limita a leitura, não o trabalho.
+ *
+ * ⚠ O teto do trabalho e o teto da leitura precisam ser NÚMEROS DIFERENTES, e a
+ * primeira versão disto usava um só — o que produzia STARVATION silenciosa. Com
+ * `limit(200)` e sem ordenação, toda rodada examina os MESMOS 200 primeiros
+ * contatos: uma vez limpos, o cron roda para sempre sem nunca alcançar o
+ * contato 201. Um resíduo fora dessa janela ficaria pendente indefinidamente —
+ * num prazo legal, e com a trilha dizendo que a varredura correu bem todo dia.
+ * É a mesma classe que este PR inteiro combate: sucesso declarado sobre
+ * trabalho não feito.
+ */
+export const MAX_CONTATOS_EXAMINADOS = 5000;
+
+/**
+ * Quantos contatos a rodada CONSERTA. Este é o teto que protege o relógio do
+ * cron, no espírito do `MAX_LOTES` da poda — e ele não causa starvation porque
+ * contato consertado para de ter resíduo: a rodada seguinte alcança os próximos.
  */
 export const MAX_CONTATOS_POR_VARREDURA = 200;
+
+/**
+ * Contatos por ida ao banco na DETECÇÃO. `.in()` vira lista na query string, e
+ * 100 UUIDs já dão ~3,7 KB de URL — perto do que proxies costumam recusar.
+ */
+export const CONTATOS_POR_BLOCO = 100;
 
 export interface ContatoCompletado {
   contactId: string;
@@ -192,11 +213,30 @@ export interface ContatoCompletado {
 export interface ResultadoDaVarredura {
   /** Quantos contatos anonimizados foram EXAMINADOS. */
   examinados: number;
-  /** Só os que tinham resíduo e foram completados agora. */
+  /** Quantos deles tinham resíduo. */
+  comResiduo: number;
+  /** Só os que foram completados agora. */
   completados: ContatoCompletado[];
-  /** O teto foi atingido: sobrou contato para a rodada seguinte. */
+  /** Sobrou trabalho para a rodada seguinte (por teto de conserto ou de leitura). */
   temResto: boolean;
   falhas: string[];
+}
+
+/** Um contato tem resíduo se alguma lead ou atividade dele ainda não foi redigida. */
+function idsComResiduo(
+  leads: { contact_id: string | null; title: string | null }[],
+  atividades: { contact_id: string | null; payload: unknown }[],
+): Set<string> {
+  const comResiduo = new Set<string>();
+  for (const l of leads) {
+    if (l.contact_id && !jaRedigida(l.title)) comResiduo.add(l.contact_id);
+  }
+  for (const a of atividades) {
+    if (a.contact_id && (a.payload as { redacted?: unknown } | null)?.redacted !== true) {
+      comResiduo.add(a.contact_id);
+    }
+  }
+  return comResiduo;
 }
 
 /**
@@ -205,41 +245,84 @@ export interface ResultadoDaVarredura {
  *
  * Parte de `contacts.is_anonymized = true` — e não de "leads com resíduo" —
  * porque só o contato diz quem exerceu o direito. Buscar o resíduo direto
- * exigiria um join embutido do PostgREST que nenhum teste local exercita; a
- * lista de contatos anonimizados é curta (é um direito exercido, não uma
- * operação de rotina) e o filtro é simples o bastante para ser óbvio.
+ * exigiria um join embutido do PostgREST que nenhum teste local exercita.
+ *
+ * A DETECÇÃO é em bloco (duas consultas por `CONTATOS_POR_BLOCO` contatos), e
+ * não uma por contato: no estado normal — nada a consertar, que é o de toda
+ * instalação saudável — a rodada inteira custa dezenas de consultas em vez de
+ * duas por contato anonimizado, todo dia, para sempre.
+ *
+ * A detecção NÃO filtra organização, e a escrita filtra. É deliberado: aqui ela
+ * só decide QUAIS contatos visitar, e uma linha de outra org com o mesmo
+ * `contact_id` (que só existe se algo já vazou) causaria no máximo uma visita
+ * inútil. Quem escreve é `completarRedacaoDoContato`, que filtra a org da linha
+ * de `contacts` — a fonte confiável.
  */
 export async function varrerRedacoesIncompletas(
   db: ClienteDaCascata,
   teto: number = MAX_CONTATOS_POR_VARREDURA,
 ): Promise<ResultadoDaVarredura> {
-  const falhas: string[] = [];
+  const vazio = (falhas: string[]): ResultadoDaVarredura => ({
+    examinados: 0,
+    comResiduo: 0,
+    completados: [],
+    temResto: false,
+    falhas,
+  });
+
   const { data, error } = await db
     .from("contacts")
     .select("id, organization_id")
     .eq("is_anonymized", true)
-    .limit(teto);
-  if (error) {
-    return { examinados: 0, completados: [], temResto: false, falhas: [`contacts: ${error.message}`] };
-  }
+    .limit(MAX_CONTATOS_EXAMINADOS);
+  if (error) return vazio([`contacts: ${error.message}`]);
 
   const contatos = (data ?? []) as { id: string; organization_id: string }[];
+  const orgDe = new Map(contatos.map((c) => [c.id, c.organization_id]));
+  const falhas: string[] = [];
+  const pendentes: string[] = [];
+
+  for (let i = 0; i < contatos.length; i += CONTATOS_POR_BLOCO) {
+    const bloco = contatos.slice(i, i + CONTATOS_POR_BLOCO).map((c) => c.id);
+
+    const { data: leads, error: leadErr } = await db
+      .from("crm_leads")
+      .select("contact_id, title")
+      .in("contact_id", bloco);
+    if (leadErr) falhas.push(`crm_leads varredura: ${leadErr.message}`);
+
+    const { data: atvs, error: atvErr } = await db
+      .from("crm_lead_activities")
+      .select("contact_id, payload")
+      .in("contact_id", bloco);
+    if (atvErr) falhas.push(`crm_lead_activities varredura: ${atvErr.message}`);
+
+    const achados = idsComResiduo(
+      (leads ?? []) as { contact_id: string | null; title: string | null }[],
+      (atvs ?? []) as { contact_id: string | null; payload: unknown }[],
+    );
+    // A detecção não filtra org (ver o cabeçalho): um `contact_id` que não
+    // saiu da lista de contatos anonimizados não vira visita.
+    for (const id of achados) if (orgDe.has(id)) pendentes.push(id);
+  }
+
   const completados: ContatoCompletado[] = [];
-  for (const c of contatos) {
+  for (const id of pendentes.slice(0, teto)) {
     const resultado = await completarRedacaoDoContato(db, {
-      id: c.id,
-      organizationId: c.organization_id,
+      id,
+      organizationId: orgDe.get(id) as string,
     });
     falhas.push(...resultado.falhas);
     if (houveRedacao(resultado)) {
-      completados.push({ contactId: c.id, organizationId: c.organization_id, resultado });
+      completados.push({ contactId: id, organizationId: orgDe.get(id) as string, resultado });
     }
   }
 
   return {
     examinados: contatos.length,
+    comResiduo: pendentes.length,
     completados,
-    temResto: contatos.length >= teto,
+    temResto: pendentes.length > teto || contatos.length >= MAX_CONTATOS_EXAMINADOS,
     falhas,
   };
 }

@@ -31,6 +31,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  MAX_CONTATOS_EXAMINADOS,
   MAX_CONTATOS_POR_VARREDURA,
   SUFIXO_ANONIMIZADO,
   type ClienteDaCascata,
@@ -100,13 +101,23 @@ function banco(linhas: Linha[]) {
 
   const cliente = {
     from(tabela: string) {
-      const casar = (filtros: Array<[string, unknown]>, dentro: string[] | null): Linha[] =>
+      const casar = (
+        filtros: Array<[string, unknown]>,
+        dentro: [string, string[]] | null,
+      ): Linha[] =>
         linhas.filter((l) => {
-          if (l.id.split(":")[0] !== tabela) return false;
+          if ((l.id.split(":")[0] ?? "") !== tabela) return false;
           for (const [col, val] of filtros) {
             if ((l as unknown as Record<string, unknown>)[col] !== val) return false;
           }
-          if (dentro && !dentro.includes(l.id)) return false;
+          // O `.in()` da cascata vem em DUAS colunas — `id` no UPDATE das
+          // atividades, `contact_id` na detecção em bloco. Um dublê que
+          // ignorasse a coluna casaria as duas na errada e daria verde falso.
+          if (dentro) {
+            const [col, vals] = dentro;
+            const valor = (l as unknown as Record<string, string | undefined>)[col];
+            if (valor === undefined || !vals.includes(valor)) return false;
+          }
           return true;
         });
 
@@ -115,15 +126,15 @@ function banco(linhas: Linha[]) {
         patch: Record<string, unknown>,
       ) => {
         const filtros: Array<[string, unknown]> = [];
-        let dentro: string[] | null = null;
+        let dentro: [string, string[]] | null = null;
         let teto: number | null = null;
         const q: Record<string, unknown> = {
           eq: (col: string, val: unknown) => {
             filtros.push([col, val]);
             return q;
           },
-          in: (_col: string, vals: string[]) => {
-            dentro = vals;
+          in: (col: string, vals: string[]) => {
+            dentro = [col, vals];
             return q;
           },
           limit: (n: number) => {
@@ -181,10 +192,10 @@ describe("varredura: a retomada acontece sem ninguém clicar", () => {
 
     expect(r.examinados).toBe(1);
     expect(r.completados).toHaveLength(1);
-    expect(r.completados[0].contactId).toBe("contacts:a");
-    expect(r.completados[0].organizationId).toBe(ORG);
-    expect(r.completados[0].resultado.leadsRedigidas).toEqual(["crm_leads:1"]);
-    expect(r.completados[0].resultado.atividadesRedigidas).toBe(1);
+    expect(r.completados[0]!.contactId).toBe("contacts:a");
+    expect(r.completados[0]!.organizationId).toBe(ORG);
+    expect(r.completados[0]!.resultado.leadsRedigidas).toEqual(["crm_leads:1"]);
+    expect(r.completados[0]!.resultado.atividadesRedigidas).toBe(1);
     // O estado FINAL, não só a intenção.
     expect(alvo.linhas.find((l) => l.id === "crm_leads:1")!.title).toBe(
       `Orçamento de telhado${SUFIXO_ANONIMIZADO}`,
@@ -249,16 +260,48 @@ describe("varredura: a retomada acontece sem ninguém clicar", () => {
     expect(alvo.linhas.find((l) => l.id === "crm_leads:minha")!.title).toContain(SUFIXO_ANONIMIZADO);
   });
 
-  it("o teto por rodada é respeitado e o resto é ANUNCIADO", async () => {
-    const muitos = Array.from({ length: 5 }, (_, i) => contatoAnonimizado(String(i)));
-    alvo = banco(muitos);
+  it("⭐ o teto limita o CONSERTO, não a leitura — e o resto é alcançado na rodada seguinte", async () => {
+    // A versão anterior tinha um teto só, aplicado como `limit` na consulta de
+    // contatos: toda rodada examinava os MESMOS primeiros N. Uma vez limpos,
+    // o cron rodava para sempre sem NUNCA alcançar o contato N+1 — starvation
+    // silenciosa, num prazo legal, com a trilha dizendo que tudo correu bem.
+    const linhas: Linha[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      linhas.push(contatoAnonimizado(String(i)));
+      linhas.push({
+        id: `crm_leads:${i}`,
+        organization_id: ORG,
+        contact_id: `contacts:${i}`,
+        title: `Negócio ${i} com PII`,
+      });
+    }
+    alvo = banco(linhas);
 
-    const r = await varrerRedacoesIncompletas(alvo.cliente, 3);
+    const primeira = await varrerRedacoesIncompletas(alvo.cliente, 2);
 
-    expect(r.examinados).toBe(3);
+    // Examinou TODOS, consertou o teto, e disse que sobrou.
+    expect(primeira.examinados).toBe(5);
+    expect(primeira.comResiduo).toBe(5);
+    expect(primeira.completados).toHaveLength(2);
     // Silêncio aqui seria indistinguível de "acabou" — o mesmo erro que o laço
     // de lotes da poda evita com `temResto`.
-    expect(r.temResto).toBe(true);
+    expect(primeira.temResto).toBe(true);
+
+    // ⭐ A propriedade que a starvation quebrava: as rodadas seguintes AVANÇAM.
+    const vistos = new Set(primeira.completados.map((c) => c.contactId));
+    for (let rodada = 0; rodada < 3; rodada += 1) {
+      const r = await varrerRedacoesIncompletas(alvo.cliente, 2);
+      for (const c of r.completados) vistos.add(c.contactId);
+    }
+    expect(
+      vistos.size,
+      "o cron nunca alcançou os contatos além do teto — resíduo pendente para sempre",
+    ).toBe(5);
+    expect(alvo.linhas.filter((l) => l.title?.endsWith(SUFIXO_ANONIMIZADO))).toHaveLength(5);
+
+    const ultima = await varrerRedacoesIncompletas(alvo.cliente, 2);
+    expect(ultima.comResiduo, "sobrou resíduo depois de tudo consertado").toBe(0);
+    expect(ultima.temResto).toBe(false);
     expect(MAX_CONTATOS_POR_VARREDURA).toBeGreaterThan(0);
   });
 
@@ -270,6 +313,7 @@ describe("varredura: a retomada acontece sem ninguém clicar", () => {
         }),
       }),
     } as unknown as ClienteDaCascata;
+    expect(MAX_CONTATOS_EXAMINADOS).toBeGreaterThan(MAX_CONTATOS_POR_VARREDURA);
 
     const r = await varrerRedacoesIncompletas(cliente);
 
