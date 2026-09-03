@@ -66,6 +66,16 @@ function makeAdmin(cap: Captura, jaRegistrada: boolean) {
       eq: () => chain,
       in: () => chain,
       limit: () => chain,
+      // `ehEcoDeEnvioNosso` (lib/waha/ingest.ts, issue #519) consulta com
+      // `.is("external_id", null).in("status", …).gte("created_at", …)`. Sem
+      // estes elos o dublê estoura com "is is not a function" e o caso cai por
+      // um motivo que nada tem a ver com o que ele mede. O `then` do fim da
+      // cadeia devolve `{ data: null }`, ou seja: NENHUM envio nosso em voo —
+      // que é o cenário deste arquivo (a mensagem é digitação humana de
+      // verdade). Quem cobre o eco é `eco-do-envio-nao-silencia-o-bot.test.ts`.
+      is: () => chain,
+      gte: () => chain,
+      order: () => chain,
       maybeSingle: () => {
         if (name === "messages" && mode === "select") {
           // dedup por external_id: null = mensagem genuína do celular
