@@ -827,3 +827,39 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 
     É o irmão exato do modo 7 (`grep` vazio precisa de controle positivo), promovido de sonda para
     **método**: o controle positivo não é um capricho do `grep`, é o que separa medir de lembrar.
+
+    ### O gatilho, e ele é um COMANDO — não "lembre-se de perguntar"
+
+    A regra acima tem um defeito honesto: quem a cometeu só reabriu o caso porque um detalhe do
+    `tsconfig` chegou por acaso. **O achado dependeu de sorte, não de mecanismo** — e regra disparada
+    por lembrança é a que falha exatamente no dia cansado.
+
+    O mecanismo existe, é barato, e vale para toda sonda:
+
+    > **Toda sonda que declara verde consegue LISTAR o que olhou. Confira que o arquivo que você
+    > mudou está na lista.**
+
+    Medido em 2026-09-03, e é a prova completa do caso deste passe:
+
+    ```bash
+    tsc --noEmit -p tsconfig.typecheck.json --listFilesOnly | grep -c 'tests/unit/branding-saida.test.ts'   # → 1
+    tsc --noEmit -p tsconfig.json           --listFilesOnly | grep -c 'tests/unit/branding-saida.test.ts'   # → 0
+    ```
+
+    8.055 arquivos contra 6.979 — **1.076 de diferença**, e o arquivo de teste está num e não no
+    outro. O verde do pelado não era sobre aquele arquivo, e **o comando diz isso sem que ninguém
+    precise suspeitar de nada**.
+
+    A receita por ferramenta:
+
+    | sonda | como perguntar "você olhou o meu arquivo?" |
+    |---|---|
+    | `tsc` | `--listFilesOnly` e `grep` o seu arquivo |
+    | `vitest` | `--reporter=verbose` (a saída nomeia os arquivos) ou `vitest related <fonte> --run` |
+    | `eslint` | `--format=json` — o `filePath` de cada entrada é a lista |
+    | `grep` / sonda própria | o controle positivo do modo 7 |
+
+    A diferença entre este gatilho e a regra: a regra pede que você **desconfie**; o comando responde
+    mesmo quando você **não** desconfia. É a mesma preferência que o `CLAUDE.md` já enuncia noutro
+    contexto — *prefira o comando à afirmação, porque comando não envelhece*. Aqui ele também não
+    depende de humor.
