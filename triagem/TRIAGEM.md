@@ -59,6 +59,8 @@ Nesta ordem:
 2. Aplicar `triagem:recebido` + as labels `area/*` derivadas do diff.
 3. Postar a acolhida — molde em `references/resposta-ao-contribuidor.md`, seção *Acolhida*.
 
+**A liberação do CI é o primeiro comando da triagem, antes de ler o diff.** Medido em 2026-09-03: numa fila de 26 PRs, **12 workflows** de cinco contribuidores estavam parados em `action_required`, um deles havia mais de um dia — e três PRs tinham **zero** execuções no `head_sha` (ver modo de falha 17). Cada minuto entre abrir o PR e liberar é latência pura, que é o gargalo que este documento existe para matar. Libere primeiro; avalie depois.
+
 A acolhida **não contém juízo técnico**. É isso, e só isso, que a torna segura de ser automática:
 ela não pode estar errada sobre o mérito porque não fala do mérito. Ela diz três coisas — o `Vercel`
 vermelho é esperado em fork e não é culpa dele, o CI está sendo liberado, e quando vem o veredito.
@@ -115,6 +117,74 @@ Meça exit code **direto**. `cmd | tail` devolve o exit do `tail` — verde fals
 
 ---
 
+---
+
+## 3-bis. Meça o CUSTO da medição antes de pagá-lo
+
+O passe 3 manda rodar os gates na prévia do merge. Ele não diz quando isso é **redundante**, e
+essa omissão custa horas quando há fila.
+
+Dois números decidem, e os dois são baratos:
+
+```bash
+B=$(git merge-base origin/main pr-<n>)
+git rev-list --count $B..origin/main                                   # ATRASO
+comm -12 <(git diff --name-only $B origin/main | sort) \
+         <(git diff --name-only $B pr-<n>     | sort) | wc -l          # SOBREPOSIÇÃO
+```
+
+| atraso | sobreposição | o que a prévia pode ter que a branch não tinha | o que fazer |
+|---|---|---|---|
+| 0 | 0 | **nada** — a prévia É a branch | não rode gate nenhum; leia o CI da branch |
+| >0 | 0 | só acoplamento **semântico** (a `main` mudou um contrato que o PR usa) | rode `typecheck` — é ele que pega assinatura mudada — e leia |
+| >0 | >0 | convergência independente: texto compatível, semântica incompatível | rode **tudo** na prévia. É o caso que o passe 3 existe para pegar |
+
+Medido em 2026-09-03, com 21 PRs abertos: **16 tinham atraso 0 e sobreposição 0**. Rodar a bateria
+completa nos 16 teria custado horas de CPU para reproduzir, byte a byte, um verde que o CI já tinha
+publicado — enquanto os contribuidores esperavam. Latência é o gargalo deste repositório; gastar o
+relógio provando o já provado é o passe 3 trabalhando contra o motivo pelo qual ele existe.
+
+⚠️ **O atraso 0 tem prazo de validade: ele vence no seu próprio primeiro merge.** Assim que um PR
+entra, todos os outros ficam com atraso ≥1 — e a linha da tabela muda. Ver 3-ter.
+
+---
+
+## 3-ter. Quando há FILA, o risco muda de lugar
+
+Com um PR na mesa, o risco é o PR contra a `main`. Com vinte, o risco dominante é **um PR contra o
+outro** — e nenhum gate do mundo o mede, porque no instante em que o CI roda os dois ainda não se
+encontraram.
+
+Antes de mergear qualquer coisa, monte a matriz:
+
+```bash
+for a in $LISTA; do for b in $LISTA; do
+  [ "$a" -lt "$b" ] || continue
+  L=$(comm -12 <(git diff --name-only $(git merge-base origin/main pr-$a) pr-$a | sort) \
+               <(git diff --name-only $(git merge-base origin/main pr-$b) pr-$b | sort) \
+       | grep -v '^\.changes/')
+  [ -n "$L" ] && echo "#$a x #$b -> $L"
+done; done
+```
+
+`.changes/` sai da conta de propósito: fragmentos são arquivos novos com nome próprio, nunca colidem,
+e mantê-los no resultado esconde as colisões que importam atrás de ruído.
+
+O que a matriz devolve costuma ser **um punhado de pares e um arquivo-hub**. Medido na mesma data:
+dos 21 PRs, 15 eram totalmente independentes; as 7 colisões se concentravam em `lib/i18n/dicionario.ts`
+(4 PRs) e um par em `.github/workflows/release.yml`.
+
+A consequência é a ordem de trabalho, e ela é o oposto do intuitivo:
+
+1. **Independentes primeiro**, em qualquer ordem, sem re-medir nada entre eles.
+2. **Cluster por último**, em série, **re-medindo a prévia a cada merge** — porque o segundo do par
+   deixou de ter atraso 0 no instante em que o primeiro entrou.
+
+Mergear na ordem em que os PRs aparecem na tela é o que produz o conflito que ninguém entende de
+onde veio.
+
+---
+
 ## 4. Complemento — o que os gates não provam
 
 `references/complemento-do-ci.md`, linha por linha, com o gatilho de cada uma no diff.
@@ -159,6 +229,42 @@ Depois de escrever: **sabote e veja vermelho.** Sabote a linha cuja perda seria 
 convergência independente sobrescreve sem gerar conflito e que nenhum grep de símbolo detecta.
 Presença de símbolo não é comportamento. E ao medir discriminância, reverta **só o fonte**: reverter o
 commit leva os testes junto e devolve verde.
+
+
+### 6-bis. O gate que o PR deixou cego — a classe que passa por "tem teste"
+
+O passe 6 pergunta *falta teste?*. Falta uma pergunta irmã, e ela é a que escapa:
+
+> **O PR criou uma SEGUNDA porta para um dado que já tinha guarda na primeira?**
+
+Quando a resposta é sim, o gate existente **continua verde** — ele não foi quebrado, ele ficou com o
+escopo velho. E nada avisa, porque uma guarda de ausência não sabe distinguir "não achei nada" de
+"não olhei ali".
+
+Medido na triagem do PR #474 (2026-09-03). `tests/unit/ocupacao-do-google-nao-expoe-titulo.test.ts`
+guarda que o nome de um evento pessoal do Google não chegue à tela da Agenda, e o recorte dele era
+`app/app/agenda/**`. O PR acrescentou a rota `app/api/v1/agenda/agendamentos` como segunda fonte da
+mesma ocupação — a que substitui a semente do servidor no primeiro refetch. A **mesma** sabotagem
+(`title` acrescentado ao `select`) nos dois caminhos:
+
+```
+em app/app/agenda/page.tsx                  → exit 1   (a guarda pega)
+em app/api/v1/agenda/agendamentos/route.ts  → exit 0   (a guarda passa)
+```
+
+O autor tinha respeitado a decisão à risca no código — rótulo fixo, coluna fora do `select`, o
+argumento inteiro no comentário. O que faltava era o mecanismo por trás, e a falha é do projeto.
+
+**Como procurar, em três movimentos:**
+
+1. O PR toca um dado que já tem guarda? (`grep` o nome da tabela/coluna em `tests/`.)
+2. Abra a guarda e **leia o recorte dela** — quase sempre é uma constante de caminho no topo. Guarda
+   de escopo fixo é a regra nesta base, não a exceção.
+3. Sabote **no caminho novo** e no antigo. Dois exits diferentes para a mesma sabotagem é o achado.
+
+E ao consertar o recorte, meça as **três** direções: limpo → verde; sabotado no caminho novo →
+vermelho; sabotado no caminho antigo → **ainda** vermelho. Sem a terceira, você pode ter trocado
+cobertura nova por cobertura velha e chamado isso de conserto.
 
 ---
 
@@ -300,6 +406,28 @@ gh release list --limit 1                                # a release é a Latest
 
 Sem perguntas de sim/não a cada passo: faça tudo, pare no merge, reporte em lote.
 
+### Quando o mantenedor move esta fronteira
+
+A tabela acima é o **padrão**, não uma lei física: ela existe porque o mantenedor não delegou o
+merge, e some no dia em que ele delegar. Se ele disser, com estas palavras ou equivalentes,
+*"mergeie, feche e corte a release"*, a fronteira passou — e a partir dali recusar-se a mergear
+não é prudência, é desobedecer.
+
+O que **não** muda quando ela passa, porque não era ela que segurava:
+
+- **Nada entra sem gate verde na PRÉVIA do merge** (ou sem o argumento de 3-bis dizendo por que a
+  prévia não pode divergir da branch). A autoridade recebida amplia o que você pode fazer, não o
+  que você pode afirmar.
+- **Nada de UI entra sem prova pela tela.** DoD 12.
+- **Nenhum PR é fechado em silêncio.** Fechar é a única ação verdadeiramente irreversível para o
+  contribuidor — o código dele sobrevive num fork, mas a disposição de contribuir de novo, não.
+  Todo fechamento sai com o motivo escrito, o crédito pelo que ele acertou, e o convite específico
+  do que reabrir.
+- **O que é decisão de PRODUTO continua sendo do dono.** Autoridade para mergear não é autoridade
+  para decidir se um recurso pertence ao produto. Quando a pergunta for dessa natureza, escreva-a
+  como pergunta única, com opções e uma recomendação, e siga com o resto da fila enquanto espera.
+
+
 ---
 
 ## Modos de falha que você vigia em si mesmo
@@ -317,3 +445,54 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 9. `NÃO MEDIDO` ausente. É campo obrigatório.
 10. Exigir sem medir (passe 7).
 11. Tratar rede de segurança como durável só porque existe. Tag, backup e réplica também se medem.
+12. **Fila medida em paralelo satura a máquina, e a saturação mente em vermelho.** Medido em
+    2026-09-03: sete agentes de triagem rodando ao mesmo tempo levaram o `load average` de 0,9 para
+    **90,7**, e nesse regime o `next build` morreu duas vezes com `ELIFECYCLE 143` — `SIGTERM`, não
+    erro de compilação. O sintoma imita defeito do PR com perfeição: log truncado, sem stack, sem
+    linha culpada. Antes de atribuir um vermelho ao código, rode `uptime`. E escalone: leitura e
+    `gh` em paralelo à vontade, mas **um `build`/`test:db` por vez** — os dois pesados são serial,
+    não porque sejam lentos, e sim porque concorrer com eles corrompe o resultado de todo o resto.
+13. **Um worktree por agente vira entulho se ninguém varre.** A mesma medição achou **195**
+    worktrees registrados, **23** deles `prunable`. Worktree órfão não é só disco: ele aparece em
+    `git worktree list` e faz a próxima sessão achar que há trabalho vivo onde não há. Feche o seu
+    com `git worktree remove --force` no fim do seu passe, e rode `git worktree prune` ao encerrar
+    a triagem. Isto é passe 11 aplicado ao próprio espaço de trabalho: se a bagunça só cresce, o
+    procedimento não está se pagando.
+14. **Verde de um gate não é verde de outro: eles medem DIMENSÕES diferentes.** O `CLAUDE.md` já
+    avisa que *gate escolhido não é suíte* — mas ali o recorte é por **arquivo** (rodar
+    `vitest run tests/unit` em vez de `pnpm test:unit`). Este é por **dimensão**, e escapa até de
+    quem rodou a suíte inteira: **o vitest não checa tipo**. Uma árvore com `test:unit` verde pode
+    ter `typecheck` vermelho, e a leitura natural do verde — "a suíte está limpa" — é falsa. Medido
+    em 2026-09-03 num PR desta casa: o autor rodou `tsc`, depois acrescentou casos ao teste, nunca
+    re-rodou o `tsc`, viu `test:unit` verde e abriu o PR; o `verify` do CI reprovou por
+    `modeloDeAmbiente` recebendo `null` onde o tipo é `string | undefined`. **Tipo e comportamento
+    são eixos independentes** — a ordem certa é `typecheck` **depois** da última edição, nunca antes.
+15. **Árvore parada é pré-condição do resultado, não detalhe.** `scripts/test-db.sh` guarda isso
+    explicitamente (`arvore_mexeu` → *"a árvore mudou DURANTE a corrida: este resultado não vale,
+    tenha ele passado ou não"*). **O `test:unit` não tem essa guarda**, e a ausência produz uma
+    assinatura que se lê como defeito: **1 arquivo vermelho com 0 casos vermelhos** — os dois
+    números discordando. A causa medida foi trocar de branch com a suíte rodando: o arquivo saiu do
+    disco no meio e o vitest não conseguiu carregá-lo. Numa triagem com vários worktrees em
+    paralelo isto deixa de ser acidente e vira risco de rotina. Antes de atribuir um vermelho ao
+    código, confirme que **nada mexeu na árvore durante a corrida** — e, se mexeu, jogue o
+    resultado fora e rode de novo, tenha ele passado ou não.
+16. **O alvo se move enquanto você mede — e em lote ele se move sempre.** Toda medição vale para um
+    SHA, e num repositório vivo o `head` de um PR muda no meio da triagem. Medido em 2026-09-03: um
+    agente reportou o `verify` do #495 vermelho em `d94e30e1`, com a causa raiz identificada e
+    reproduzida. Quando o veredito ia sair, o `head` era `61d9c066` — alguém consertara às 19:49 —
+    e o `verify` estava `SUCCESS`. Deferir ao relatório teria produzido um pedido para consertar o
+    que já estava consertado, que é exatamente o erro que o passe 7 existe para impedir. **Antes de
+    agir sobre qualquer medição de terceiro — ou sua, de meia hora atrás —, reconfira o
+    `headRefOid`.**
+17. **`?branch=` é sonda cega quando o fork abriu o PR a partir da `main` dele.** Medido em
+    2026-09-03: os PRs #418 e #465 têm `headRefName = main`, então `actions/runs?branch=main`
+    devolve os runs da **`main` do upstream** — dezenas de execuções verdes sem relação nenhuma com
+    o PR. Um triador que leia essa saída conclui "o CI rodou". Não rodou: no `head_sha` real havia
+    **zero** execuções, e o contribuidor estava esperando havia dias sem que nada tivesse começado.
+    Use sempre `actions/runs?head_sha=$(gh pr view <n> --json headRefOid --jq .headRefOid)`.
+18. **Re-run não é evento novo.** Quando o vermelho é staleness — o CI testou contra uma `main`
+    velha —, `gh run rerun` **não resolve**: ele reusa o payload do evento original, e o checkout
+    faz `fetch` do **SHA fixo** daquele merge (`+61e359c…:refs/remotes/pull/<n>/merge`), não do ref.
+    Medido no #422 em 2026-09-03. Se o workflow não tiver `workflow_dispatch` — e o `e2e.yml` não
+    tem —, o único caminho é um evento `pull_request` novo: close+reopen do PR. **Avise o
+    contribuidor antes de fazer**, porque ele recebe um e-mail de "fechado" e isso lê como rejeição.
