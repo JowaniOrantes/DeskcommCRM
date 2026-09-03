@@ -540,6 +540,15 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     Numa fila, o intervalo entre "medi" e "mergeei" é onde o contribuidor está trabalhando — ele
     está ativo *porque* você respondeu. **Releia o `headRefOid` como último ato antes do merge**, e
     se ele mudou, remeça o que a mudança tocou.
+
+    ⚠️ **E declare QUAL evento você comparou.** Ao reportar o intervalo, duas pessoas honestas
+    divergiram: eu disse **89 segundos**, o autor disse **três minutos**. Os dois números estavam
+    certos — eu comparei a **data do commit** contra a hora do merge, ele comparou a **hora do
+    push**. Um commit fica no disco antes de ser empurrado, e a diferença é exatamente o intervalo.
+
+    A régua desta casa passa a ser a **committer date do `headRefOid`** contra a hora do merge — e
+    quem citar o número diz qual dos dois eventos mediu. É o modo *régua implícita* que o
+    `CLAUDE.md` já nomeia, reaparecendo dentro do modo que existe para evitá-lo.
 17. **`?branch=` é sonda cega quando o fork abriu o PR a partir da `main` dele.** Medido em
     2026-09-03: os PRs #418 e #465 têm `headRefName = main`, então `actions/runs?branch=main`
     devolve os runs da **`main` do upstream** — dezenas de execuções verdes sem relação nenhuma com
@@ -605,7 +614,19 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 
     Ou seja: não é a *origem* do dado que decide, é se aquela origem **tem algo a dizer sobre este
     caso**. Um default que ninguém preencheu não é dado — é ausência com cara de resposta, e é
-    exatamente por isso que a heurística existia. E quando encontrar uma cascata
+    exatamente por isso que a heurística existia.
+
+    ⚠️ **A regra tem uma PRÉ-CONDIÇÃO DE SCHEMA, e sem ela desmorona.** "Ter opinião" só é
+    decidível porque `supports_vision` é **`not null default false`**: é o schema que faz `null`
+    significar *"não há linha"* em vez de *"o provedor declarou false"*. Numa coluna **nullable**,
+    os dois colapsam no mesmo valor, "tem opinião" vira indistinguível de "está vazia", e a regra
+    devolve o defeito **com a doutrina do lado de quem errou**.
+
+    Então, antes de aplicar: **confira a nulabilidade da coluna**. Se ela for nullable, o que
+    distingue ausência de declaração não existe ainda — e o conserto é criar essa distinção (uma
+    coluna de "sabemos?", um sentinela, ou tornar a coluna `not null` com default) **antes** de
+    escrever a precedência. Ressalva trazida por quem mediu o caso, e ela é parte da regra, não
+    nota de rodapé. E quando encontrar uma cascata
     num PR, pergunte de cada degrau: *ele pode responder ERRADO com confiança, impedindo o degrau
     seguinte — que tem o dado bom — de ser consultado?* Cascata é onde esta classe mora: `??`, `||`,
     `if (!conhecido) buscar(...)`, cache lido antes da fonte, prefixo/regex decidindo o que um campo
