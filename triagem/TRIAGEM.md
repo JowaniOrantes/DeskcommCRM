@@ -541,6 +541,22 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     Medido no #422 em 2026-09-03. Se o workflow não tiver `workflow_dispatch` — e o `e2e.yml` não
     tem —, o único caminho é um evento `pull_request` novo: close+reopen do PR. **Avise o
     contribuidor antes de fazer**, porque ele recebe um e-mail de "fechado" e isso lê como rejeição.
+
+    ⚠️ **E o close+reopen NÃO basta sozinho: o run novo nasce TRAVADO.** Medido logo em seguida, no
+    mesmo #422 — reabri o PR, os quatro workflows foram criados, e os quatro nasceram em
+    `conclusion: action_required`, esperando aprovação manual outra vez, porque a política de fork
+    vale para **cada** evento novo. E o pior: `gh pr checks` continuava mostrando o `e2e=FAILURE`
+    **do run velho**, então a tela dizia "reprovou de novo" quando na verdade **nada tinha rodado**.
+    Eu quase reabri o diagnóstico e desmenti publicamente uma explicação que estava certa.
+
+    **Depois de todo close+reopen, refaça o passe 1** — libere os runs novos e confirme pelo
+    `head_sha`, nunca pelo `gh pr checks`:
+
+    ```bash
+    SHA=$(gh pr view <n> --json headRefOid --jq .headRefOid)
+    gh api "repos/{owner}/{repo}/actions/runs?head_sha=$SHA&per_page=30" \
+      --jq '[.workflow_runs[]|select(.conclusion=="action_required")]|.[].id'
+    ```
 19. **Precedência invertida: consultar a fonte SÓ quando o palpite não sabe.** Uma cascata escrita
     como *"se a heurística conhece, use-a; senão, vá à fonte"* faz o palpite **vencer sempre que ele
     acha que sabe** — e o dado bom nunca é ouvido. Medido em 2026-09-03, no PR #524, rodando a
