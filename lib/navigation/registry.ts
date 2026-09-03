@@ -212,6 +212,19 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     sidebar: true,
   },
   {
+    // Extraída do PR #418 (@clinicacentrodosorrisosc-code). Fica no CRM e no
+    // sidebar porque é tela de USO DIÁRIO — quem atende abre para ver o que
+    // vence hoje, do mesmo jeito que abre o Inbox. Sem `minRole`: `viewer` VÊ
+    // o que o time combinou (é informação de operação), e a criação é cobrada
+    // pela rota, com `requireRole("agent")`.
+    href: "/app/tasks",
+    label: "Tarefas",
+    description: "O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer.",
+    icon: ListChecks,
+    group: "crm",
+    sidebar: true,
+  },
+  {
     // ⚠️ Esta tela nasceu porque a FERRAMENTA já existia sem ela. O agente de IA
     // vinha com "procurar produto na loja" ligada por padrão, lendo uma tabela
     // que ninguém nunca preencheu — e o efeito não era silêncio: era o agente

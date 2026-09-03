@@ -6334,6 +6334,48 @@ export const DICIONARIO: Traducoes = {
   "Salvar produto": { es: "Guardar producto" },
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
+
+  // ─── Tarefas (extraídas do PR #418) ───
+  "Tarefas": { es: "Tareas" },
+  "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.": {
+    es: "Lo que quedó acordado, con plazo. Una tarea ligada a un negocio aparece en la línea de tiempo de él.",
+  },
+  "O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer.": {
+    es: "Lo que quedó acordado, con plazo — y lo que ya venció sin que nadie lo hiciera.",
+  },
+  "Em aberto": { es: "Abiertas" },
+  "Lista": { es: "Lista" },
+  "Calendário": { es: "Calendario" },
+  "Não foi possível carregar as tarefas.": { es: "No se pudieron cargar las tareas." },
+  "Nova tarefa": { es: "Nueva tarea" },
+  "Editar tarefa": { es: "Editar tarea" },
+  "Atrasadas": { es: "Atrasadas" },
+  "Esta semana": { es: "Esta semana" },
+  "Mais tarde": { es: "Más tarde" },
+  "Sem prazo": { es: "Sin plazo" },
+  "Encerradas": { es: "Cerradas" },
+  "Nenhuma tarefa por aqui": { es: "Ninguna tarea por aquí" },
+  "Enquanto isto estiver vazio, o que foi combinado vive só na memória de alguém.": {
+    es: "Mientras esto esté vacío, lo que se acordó vive solo en la memoria de alguien.",
+  },
+  "Marcar como concluída": { es: "Marcar como completada" },
+  "Reabrir a tarefa": { es: "Reabrir la tarea" },
+  "Editar a tarefa": { es: "Editar la tarea" },
+  "Apagar a tarefa": { es: "Eliminar la tarea" },
+  "O que precisa ser feito": { es: "Qué hay que hacer" },
+  "Ex.: ligar de volta para fechar a proposta": { es: "Ej.: llamar de vuelta para cerrar la propuesta" },
+  "O que você vai querer lembrar quando chegar a hora": {
+    es: "Lo que vas a querer recordar cuando llegue el momento",
+  },
+  "Prazo": { es: "Plazo" },
+  "Situação": { es: "Situación" },
+  "Em andamento": { es: "En curso" },
+  "Escreva um título para a tarefa.": { es: "Escribe un título para la tarea." },
+  "Não foi possível salvar a tarefa.": { es: "No se pudo guardar la tarea." },
+  "Baixa": { es: "Baja" },
+  "Média": { es: "Media" },
+  "Alta": { es: "Alta" },
+  "mais": { es: "más" },
 };
 
 /**
