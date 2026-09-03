@@ -691,3 +691,39 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     | faz verdadeira uma promessa já escrita e ainda não lançada | **não** — confira que o texto existente segue verdadeiro |
     | muda o que o operador vai ler, ou acrescenta efeito | **sim** |
     | corrige algo já lançado numa versão anterior | **sim** — aquele texto já foi lido |
+23. **"O gate passou" não é afirmação verificável — o COMANDO é.** Medido em 2026-09-03, e a
+    retratação veio de quem tinha feito a afirmação:
+
+    ```
+    pnpm typecheck   =  tsc --noEmit -p tsconfig.typecheck.json
+    o que foi rodado =  tsc --noEmit            ← sem -p, portanto contra tsconfig.json
+    ```
+
+    E os dois **fazem perguntas diferentes de propósito**: `tsconfig.json` exclui `**/*.test.ts`,
+    `**/*.test.tsx` e `tests/**`; o `tsconfig.typecheck.json` **reinclui** tudo isso — a exclusão
+    existe para o `next build` não typechecar teste, e o gate existe para typechecar. Rodar `tsc`
+    pelado responde a pergunta do **build**, não a do gate, e chamar isso de "typecheck passou"
+    afirma o que não foi medido.
+
+    O desfecho foi caro: o gate real reprovava **desde sempre** (`exit 2`, um único `TS2589`), com
+    controle no commit pai dando `exit 0`. Ninguém tinha olhado, porque "typecheck passou" parecia
+    resposta.
+
+    **Cite o comando, não o nome.** `pnpm typecheck exit=0` é verificável; *"o typecheck passou"* é
+    uma lembrança de quem digitou outra coisa. Leia o `package.json` antes de citar um gate — os
+    nomes mentem por abreviação, e este arquivo já registra a mesma classe em `test:unit`, que **não
+    é** `tests/unit/`.
+
+    ⚠️ **E apague o `.tsbuildinfo` antes de medir.** Os dois tsconfig têm `incremental: true`, e há
+    `tsconfig.tsbuildinfo` **e** `tsconfig.typecheck.tsbuildinfo` no disco. Com cache, `tsc` devolve
+    a resposta de uma árvore que talvez não exista mais: **incremental transforma medição em
+    lembrança**. Numa varredura desta sessão, 3 de 5 worktrees tinham buildinfo.
+
+    ### A parte que vale mais que a regra
+
+    A explicação descartada era *"dois checadores de tipo discordam"* — e quem a descartou nomeou
+    por que ela era suspeita: **ela fazia a FERRAMENTA parecer inconsistente em vez de fazer a
+    MEDIÇÃO parecer errada.** Toda hipótese que inocenta quem mede merece um exame a mais, não a
+    menos. É a mesma classe da **régua trocada** do modo 16 — lá eram dois **eventos** (commit contra
+    push), aqui são dois **comandos** (`tsc` contra `tsc -p <config>`) — e nas duas vezes a
+    divergência parecia defeito do mundo e era escolha de instrumento.
