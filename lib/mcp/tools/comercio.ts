@@ -167,8 +167,22 @@ export const crmSearchProducts: McpToolDefinition<typeof produtosInputShape> = {
     // plano der, e muda com o tempo e com o vacuum. Numa loja acima do teto, o
     // produto pedido podia não estar no lote que veio, e a busca respondia "não
     // há nada com esse nome" para um produto que a loja TEM. (issue #480)
+    // ⚠️ `count` é `number | null`, e o `null` NÃO significa zero: significa que
+    // o servidor não disse quantos há (cabeçalho `Content-Range` ausente ou não
+    // parseável — proxy, gateway, versão). A versão anterior fazia
+    // `total = count ?? total` com `total` iniciado em 0, e a parada
+    // `linhas.length >= total` virava `>= 0` — verdadeira já na primeira página.
+    // Resultado: varria 1 página de uma loja de 3000, não achava, e ainda dizia
+    // "não há nada com esse nome" com `varreduraParcial` FALSO, porque
+    // `0 > 1000` é falso. O defeito da issue #480 voltava inteiro e em silêncio.
+    //
+    // Agora quem prova o fim é uma PÁGINA VAZIA, que é fato independente do
+    // count: não há linha depois de `de`. O count, quando vem, só antecipa a
+    // parada. E `varreduraParcial` passa a ser "não cheguei ao fim", em vez de
+    // uma comparação com um total que pode nunca ter existido.
     const linhas: unknown[] = [];
-    let total = 0;
+    let total: number | null = null;
+    let alcancouOFim = false;
     for (let pagina = 0; pagina < PAGINAS_MAXIMAS; pagina++) {
       const de = pagina * TAMANHO_DA_PAGINA;
       const { data: lote, error, count } = await ctx.supabase
@@ -185,18 +199,26 @@ export const crmSearchProducts: McpToolDefinition<typeof produtosInputShape> = {
         .range(de, de + TAMANHO_DA_PAGINA - 1);
 
       if (error) throw new Error(`buscar_produtos_falhou: ${error.message}`);
-      total = count ?? total;
+      if (count !== null) total = count;
       const recebidas = lote ?? [];
       linhas.push(...recebidas);
-      // Página curta significa fim do conjunto — parar aqui evita uma ida ao
-      // banco por busca em toda loja pequena, que é a esmagadora maioria.
-      if (recebidas.length === 0 || linhas.length >= total) break;
+      // Página vazia = não há mais nada. Vale mesmo sem count.
+      if (recebidas.length === 0) {
+        alcancouOFim = true;
+        break;
+      }
+      // Com count, dá para parar sem gastar a ida que confirmaria o vazio —
+      // que é o caso da esmagadora maioria das lojas, pequenas e numa página só.
+      if (total !== null && linhas.length >= total) {
+        alcancouOFim = true;
+        break;
+      }
     }
 
     const data = linhas;
     // A varredura foi parcial? Isso é o que separa "não achei no que varri" de
     // "a loja não tem" — e só a segunda pode ser dita ao cliente.
-    const varreduraParcial = total > linhas.length;
+    const varreduraParcial = !alcancouOFim;
 
     type Linha = {
       id: string;
