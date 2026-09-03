@@ -164,31 +164,24 @@ export async function publicarNoGoogle(
   const temConvidados = (corpoDoEvento.attendees?.length ?? 0) > 0;
 
   /**
-   * ⚠️ `iCalUID` NÃO PODE IR JUNTO COM `id` NUM `events.insert`. É o defeito que
-   * fazia a ida ao Google falhar em 100% dos compromissos desta instalação.
+   * ⚠️ `iCalUID` NÃO VAI NO CORPO — e aqui não há mais o que remover.
    *
-   * MEDIDO contra a API real, criando e apagando eventos de teste na conta
-   * conectada — os quatro casos, nesta ordem:
+   * O `events.insert` recusa `id` e `iCalUID` juntos (400 "Invalid resource id
+   * value."), e era o que fazia 100% dos compromissos falharem na ida ao
+   * Google. O #518 consertou isso AQUI, tirando o campo do corpo do POST; a
+   * `main` já tinha consertado na FONTE (#474): `paraEventoDoGoogle` deixou de
+   * emitir `iCalUID`, e `CorpoDeEventoDoGoogle` deixou de declará-lo.
    *
-   *   `id` sozinho ............................. 200, evento criado
-   *   `iCalUID` sozinho (sem `id`) ............. 200, evento criado
-   *   `id` + `iCalUID` ......................... 400 "Invalid resource id value."
-   *   `id` + `iCalUID` sem hífens .............. 400 (não são os hífens)
+   * Convergência independente, dois consertos do mesmo defeito. Fica o da
+   * `main`, que é o mais forte: o campo não existe para ser esquecido em outro
+   * call site. O destructuring do #518 virou código morto na resolução do merge
+   * — `tsc` o reprovou (TS2339), porque a propriedade já não existe no tipo.
    *
-   * Cada campo é aceito sozinho; os dois no MESMO POST são recusados. A mensagem
-   * do Google culpa o "resource id", que é o que mandou a investigação anterior
-   * para o lado errado — o id derivado está correto e sempre esteve.
-   *
-   * O `id` é quem fica, e não é escolha de gosto: ele é derivado do id do
-   * agendamento, é o que torna a criação IDEMPOTENTE e é o que sustenta o
-   * "POST, e se 409 então PUT" descrito no cabeçalho deste arquivo. Sem ele,
-   * cada batida do cron criaria um evento novo do mesmo compromisso.
-   *
-   * O `iCalUID` continua indo no PUT, onde o Google o aceita — então a
-   * identidade iCal segue gravada no evento depois da primeira atualização, e
-   * `ehIcalUidNosso` continua reconhecendo o que é nosso.
+   * O `id` é quem fica, e não é escolha de gosto: derivado do id do
+   * agendamento, é o que torna a criação IDEMPOTENTE e o que sustenta o "POST,
+   * e se 409 então PUT" descrito no cabeçalho deste arquivo. Sem ele, cada
+   * batida do cron criaria um evento novo do mesmo compromisso.
    */
-  const { iCalUID: _soNoPut, ...corpoSemICalUID } = corpoDoEvento;
 
   /** Uma tentativa, já com a classificação do erro que ela produziu. */
   async function tentar(
@@ -202,8 +195,10 @@ export async function publicarNoGoogle(
         // POST manda o id NO CORPO, não na URL — é assim que `events.insert`
         // aceita id de quem cria.
         metodo === "POST" ? null : eventoId,
-        // POST vai SEM `iCalUID` (ver o bloco acima); PUT leva o corpo inteiro.
-        metodo === "POST" ? { ...corpoSemICalUID, id: eventoId } : corpoDoEvento,
+        // O corpo já não carrega `iCalUID` (ver o bloco acima). O POST só
+        // acrescenta o `id`, que ele aceita de quem cria; o PUT vai sem ele
+        // porque ali o id viaja na URL.
+        metodo === "POST" ? { ...corpoDoEvento, id: eventoId } : corpoDoEvento,
         temConvidados,
       );
       return { resposta };
