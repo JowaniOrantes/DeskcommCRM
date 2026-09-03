@@ -59,6 +59,7 @@ import { buildNativeMediaParts } from './media-parts';
 import { enqueueJob, rescheduleJob, type JobRow, type Queryable } from '../queue/queue';
 import { applyLeadStateUpdate, getLeadState, type LeadStage, type LeadStateRow } from './lead-state';
 import { applySaveLeadNote, buildNotesIndexBlock, getLeadNoteBody } from './lead-notes';
+import { buildCompromissosBlock } from './compromissos-do-contato';
 import { applyScheduleFollowup, type FollowupWindowKnobs } from './schedule-followup';
 import {
   avisarLeadDaEscalacao,
@@ -934,6 +935,16 @@ export function ritualBlocks(
    * consegue usar um id para alguma coisa?".
    */
   projeta = false,
+  /**
+   * Os compromissos já marcados deste contato, em texto (issue #512).
+   *
+   * OPCIONAL e último de propósito: `ritualBlocks` tem quatro chamadores
+   * (inbound, follow-up, resposta de caso, retomada da escalação) e o bloco é
+   * pago no SUFIXO, em TODA conversa. Ligar os quatro de uma vez daria tokens a
+   * turnos que talvez nunca falem de horário — cada chamador decide, e hoje só
+   * o inbound decidiu.
+   */
+  compromissosBlock = '',
 ): string[] {
   const checkpointBlock = previous
     ? JSON.stringify({
@@ -982,6 +993,12 @@ export function ritualBlocks(
     '## Memória do lead (índice de notas — corpo sob demanda via get_lead_note)',
     notesIndexBlock,
     '',
+    // Só entra quando há algo: um bloco dizendo "nenhum compromisso" custaria
+    // tokens em toda conversa para informar uma ausência que o modelo não
+    // precisa saber.
+    ...(compromissosBlock.trim() !== ''
+      ? ['## Compromissos já marcados deste contato', compromissosBlock, '']
+      : []),
     '## Contexto do lead (contato + últimas mensagens)',
     // Campo de cadastro VAZIO não é prova de que a informação não existe.
     //
@@ -1024,12 +1041,14 @@ export function buildOpeningMessage(
    * quando limparam só a descrição (`crm_list_webhook_sources`, medido).
    */
   entregues: readonly string[] = [],
+  /** Os compromissos já marcados deste contato, em texto (issue #512). */
+  compromissosBlock = '',
 ): string {
   const entregue = (nome: string): boolean => entregues.includes(nome);
   return [
     'Novo turno de atendimento: o lead enviou uma mensagem (a última inbound do histórico abaixo).',
     '',
-    ...ritualBlocks(previous, leadState, context, notesIndexBlock, projeta),
+    ...ritualBlocks(previous, leadState, context, notesIndexBlock, projeta, compromissosBlock),
     '',
     'Responda ao lead usando a tool send_message — NUNCA escreva a resposta como texto direto',
     '(texto fora de tool é descartado pelo runtime). Use get_lead_context se precisar reler o contexto.',
@@ -1064,6 +1083,15 @@ export interface AgentTurnInput {
     context: LeadContext;
     /** índice da memória do lead (F3-05), já dentro do orçamento; vai no sufixo. */
     notesIndexBlock: string;
+    /**
+     * Compromissos já marcados deste contato (issue #512).
+     *
+     * OPCIONAL pela mesma razão que `projeta`, e ela é externa ao desenho:
+     * `tests/invariants/**` é congelado por hook de governança, e torná-lo
+     * obrigatório forçaria a editar um invariante existente só para satisfazer
+     * o compilador.
+     */
+    compromissosBlock?: string;
     /**
      * Projetar o contexto (spec 16 §4)? Decidido pelo turno, ver `turnoProjeta`.
      *
@@ -1719,6 +1747,11 @@ async function executarTurnoDoAgente(
   // injetado no SUFIXO da abertura (não invalida o prefixo cacheável F2-17). Montado
   // DEPOIS do flush (F3-07) para que as notas gravadas neste turno já entrem no índice.
   const notesIndexBlock = await buildNotesIndexBlock(pool, tenantId, leadId, deps.knobs.notesIndexMaxTokens);
+  // ⚠️ `leadId` AQUI É O CONTATO (`leadIdDoJob = job.contact_id`, e o comentário
+  // de `get-lead-context.ts:193` diz o mesmo). Passar essa variável para um
+  // parâmetro chamado `contactId` é correto pelo VALOR; o nome é que mente, e é
+  // o que a issue #509 conserta. Não troque por um `lead_id` "mais coerente".
+  const compromissosBlock = await buildCompromissosBlock(pool, tenantId, leadId, new Date());
   // Observabilidade da memória (Fase 2A): SÓ ids/contagens no log — headline/corpo
   // são PII e nunca saem do prompt. Prova auditável de que a memória durável do
   // lead entrou no contexto DESTE turno.
@@ -2822,6 +2855,7 @@ async function executarTurnoDoAgente(
     notesIndexBlock,
     projeta: projetaContexto,
     entregues,
+    compromissosBlock,
   });
   // Sufixos por-lead (situacionais, voláteis — depois do prefixo cacheável F2-17): corpos de
   // skill casadas (F3-09) + hint do classificador (F3-11) + instrução de split (F4-xx, quando
@@ -3275,8 +3309,24 @@ export function createInboundTurnHandler(deps: InboundTurnDeps) {
     await runAgentTurn(deps, job, pool, ctx, {
       channelSessionId: payload.channel_session_id,
       conversationId: payload.conversation_id,
-      buildOpening: ({ previous, leadState, context, notesIndexBlock, projeta, entregues }) =>
-        buildOpeningMessage(previous, leadState, context, notesIndexBlock, projeta, entregues),
+      buildOpening: ({
+        previous,
+        leadState,
+        context,
+        notesIndexBlock,
+        projeta,
+        entregues,
+        compromissosBlock,
+      }) =>
+        buildOpeningMessage(
+          previous,
+          leadState,
+          context,
+          notesIndexBlock,
+          projeta,
+          entregues,
+          compromissosBlock,
+        ),
     });
   };
 }
