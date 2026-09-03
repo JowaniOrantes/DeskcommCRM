@@ -2,14 +2,20 @@
  * POST /api/v1/lgpd/anonymize
  *
  * Irreversible cascade nullify (Spec 05 §LGPD). Only `admin` role within the
- * tenant or platform_admin can execute. Idempotent: re-anonymizing returns
- * 200 with `action: "already_anonymized"`.
+ * tenant or platform_admin can execute.
  *
  * Cascade (best-effort sequential — no client-side transaction):
  *   1. contacts: nullify PII, set is_anonymized + anonymized_at, rewrite display_name
- *   2. crm_leads: append " (anonimizado)" to title (preserve PK + history)
- *   3. crm_lead_activities: redact payload to { redacted: true }
+ *      — roda UMA vez (repeti-la apagaria a data real do exercício do direito)
+ *   2. crm_leads + 3. crm_lead_activities: `lib/lgpd/cascata.ts`, idempotentes,
+ *      e a MESMA função que o cron `data-retention` usa para completar sozinho
+ *      o que ficou pela metade
  *   4. Storage media deletion deferred to EPIC-08 worker
+ *
+ * Três desfechos em `action`, e não dois: `anonymized` (primeira execução),
+ * `resumed` (já constava anonimizado E havia resíduo, redigido agora) e
+ * `already_anonymized` (nada faltava). O do meio existia sem nome, e caía em
+ * `already_anonymized` — que é a frase que descreve o DEFEITO (issue #310).
  */
 import { randomUUID } from "node:crypto";
 import { type NextRequest } from "next/server";
