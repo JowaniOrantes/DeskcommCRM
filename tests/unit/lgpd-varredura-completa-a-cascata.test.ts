@@ -341,9 +341,13 @@ describe("o laço de retorno: a varredura deixa rastro por contato", () => {
   it("⭐ rodada sem resíduo NÃO audita — cron que resmunga é o defeito que a poda existe para não ser", async () => {
     // A outra direção do mesmo invariante que `cron-audita-so-quando-ha-efeito`
     // vigia: 365 linhas/ano numa instalação que não tem nada a corrigir.
+    // A atividade já redigida entra de propósito: sem ela este caso não
+    // discrimina o passo 3. Medido — com o filtro de resíduo das atividades
+    // removido, ele passava, e a sabotagem reprovava 4 casos em vez de 5.
     bancoDoCron = banco([
       contatoAnonimizado(),
       { id: "crm_leads:1", organization_id: ORG, contact_id: "contacts:a", title: `Feita${SUFIXO_ANONIMIZADO}` },
+      { id: "crm_lead_activities:1", organization_id: ORG, contact_id: "contacts:a", payload: { redacted: true } },
     ]);
 
     const { GET } = await import("@/app/api/v1/cron/data-retention/route");
