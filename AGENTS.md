@@ -19,7 +19,7 @@ quebra no clone fresco é um bug de produto, não um detalhe de ambiente.
 
 ## Stack (CONFIRMADO em `package.json`)
 
-Next.js 16 (App Router) · React 19 · TypeScript 6 estrito · Tailwind 3 ·
+Next.js 16 (App Router) · React 19 · TypeScript 6 estrito · Tailwind 4 ·
 shadcn/ui · Supabase (Postgres + Auth + Realtime + Storage) · Upstash Redis ·
 Vercel AI Gateway (`@ai-sdk/anthropic|openai|google`) · WAHA Plus (engine NOWEB) ·
 Zod 4 · Vitest 4 · Playwright 1 · Sentry 10.
