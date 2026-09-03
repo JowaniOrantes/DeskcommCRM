@@ -4015,6 +4015,10 @@ export const DICIONARIO: Traducoes = {
     es: "No tienes ninguna organización activa. Configura tu organización o acepta una invitación.",
   },
   "Configurar minha organização": { es: "Configurar mi organización" },
+  "Campos personalizados": { es: "Campos personalizados" },
+  "Campos definidos no funil padrão da organização.": {
+    es: "Campos definidos en el embudo predeterminado de la organización.",
+  },
   "Configure sua organização": { es: "Configura tu organización" },
   "Sua conta foi confirmada, mas a organização inicial ainda não foi criada. Informe o nome da sua empresa para concluir o primeiro acesso e abrir o onboarding do CRM.": {
     es: "Tu cuenta fue confirmada, pero la organización inicial aún no fue creada. Indica el nombre de tu empresa para completar el primer acceso y abrir la configuración inicial del CRM.",
