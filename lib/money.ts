@@ -173,3 +173,66 @@ export function formatCents(cents: number, moeda: string): string {
   const casas = nf.resolvedOptions().maximumFractionDigits ?? 2;
   return nf.format((cents ?? 0) / 10 ** casas);
 }
+
+/**
+ * As moedas que o produto SERVE — e servir quer dizer três coisas juntas: o
+ * seletor da organização a oferece, o schema a aceita, e `formatCents` sabe
+ * escrevê-la na convenção de quem a usa.
+ *
+ * É a mesma disciplina de `LOCALES = IDIOMAS` em `lib/schemas/settings.ts`, e
+ * pelo mesmo motivo: com duas listas, uma moeda aceita na validação e ausente
+ * no seletor vira um valor que ninguém consegue mais escolher de volta, e uma
+ * oferecida na tela e recusada no schema faz a tela salvar e o servidor
+ * devolver `validation_failed` sem explicar.
+ *
+ * ⚠️ Esta lista NÃO é o CHECK do banco, e a diferença é deliberada.
+ * `organizations_currency_iso` valida a FORMA (`^[A-Z]{3}$`), não o conjunto:
+ * um clone pode ter linha com moeda que este produto ainda não serve, e um
+ * CHECK fechado quebraria o `update.sh` dele — é a mesma exceção de vocabulário
+ * ABERTO que a doutrina de modelagem descreve. O conjunto vive só aqui, no
+ * TypeScript.
+ *
+ * As três têm subunidade de 2 casas, então nenhuma esbarra na ressalva de
+ * unidades menores de `formatCents`. Acrescentar JPY ou CLP funciona — o
+ * formatador já os cobre —, mas exige olhar `precoParaCentavos`, que ainda
+ * multiplica por 100 na leitura do que a pessoa digita.
+ */
+export const MOEDAS_SERVIDAS = ["BRL", "MXN", "USD"] as const;
+export type MoedaServida = (typeof MOEDAS_SERVIDAS)[number];
+
+/** O que o `default` da coluna grava quando ninguém escolheu. */
+export const MOEDA_PADRAO: MoedaServida = "BRL";
+
+/**
+ * A moeda guardada, se o produto souber servi-la — senão, o padrão.
+ *
+ * Existe pela mesma razão que `normalizarIdioma`: o CHECK do banco valida a
+ * FORMA e não o conjunto, então a linha pode trazer uma moeda que este produto
+ * ainda não oferece (clone antigo, instalação que a gravou por outro caminho).
+ * Devolver isso cru ao seletor daria um `<Select>` com valor que não está entre
+ * as opções — o campo aparece vazio e, ao salvar, leva junto a moeda errada.
+ */
+export function moedaServidaOu(bruta: string | null | undefined): MoedaServida {
+  return (MOEDAS_SERVIDAS as readonly string[]).includes(bruta ?? "")
+    ? (bruta as MoedaServida)
+    : MOEDA_PADRAO;
+}
+
+/**
+ * O símbolo da moeda — "R$", "$" —, tirado do mesmo formatador que escreve o
+ * preço, para o rótulo do seletor não precisar de tradução.
+ *
+ * ⚠️ Existe para fechar um buraco de i18n que a primeira versão do seletor
+ * abriu: os nomes ("Real brasileiro", "Peso mexicano") saíam por
+ * `t(NOME_DA_MOEDA[moeda])`, e chave DINÂMICA o guarda
+ * `i18n-espanhol-cobre-a-tela` não enxerga — ele varre o AST atrás de literais.
+ * Passariam pelo CI e cairiam no português na tela em espanhol, calado, que é
+ * exatamente o modo de falha que aquele teste existe para impedir.
+ *
+ * Código ISO + símbolo não se traduz e não envelhece: é o que o comerciante
+ * reconhece, e sai da mesma fonte que formata o preço.
+ */
+export function simboloDaMoeda(moeda: string): string {
+  const partes = formatadorDa(moeda).formatToParts(0);
+  return partes.find((p) => p.type === "currency")?.value ?? moeda;
+}

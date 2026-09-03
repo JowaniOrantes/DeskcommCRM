@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { MOEDA_PADRAO } from "@/lib/money";
+
 /**
  * A moeda que a organização declarou — a fonte de `catalog_products.moeda`.
  *
@@ -25,8 +27,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * (`organization_id` resolvido de fonte confiável, CLAUDE.md multi-tenancy).
  * `produtoCreateSchema` nem declara o campo, então o Zod o descarta antes.
  */
-export const MOEDA_PADRAO = "BRL";
-
 export async function moedaDaOrganizacao(
   supabase: SupabaseClient,
   orgId: string,
