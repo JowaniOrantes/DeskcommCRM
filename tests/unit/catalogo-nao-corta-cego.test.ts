@@ -56,7 +56,7 @@ interface Chamada {
  * Um dublê que devolvesse tudo de uma vez aprovaria o código que ignora
  * paginação, que é metade do defeito.
  */
-function fakeDb(total: number, tetoDoServidor = 1000) {
+function fakeDb(total: number, tetoDoServidor = 1000, contaOculta = false) {
   const chamadas: Chamada[] = [];
   const linhas = Array.from({ length: total }, (_, i) => ({
     id: `p${i}`,
@@ -91,7 +91,7 @@ function fakeDb(total: number, tetoDoServidor = 1000) {
   (q as { then: unknown }).then = (ok: (v: unknown) => unknown) => {
     const fim = Math.min(ate + 1, de + tetoDoServidor, limite ?? Infinity, total);
     return Promise.resolve(
-      ok({ data: linhas.slice(de, fim), error: null, count: total }),
+      ok({ data: linhas.slice(de, fim), error: null, count: contaOculta ? null : total }),
     );
   };
 
@@ -181,5 +181,50 @@ describe("catálogo maior que o teto do servidor", () => {
     const paginas = db.chamadas.filter((c) => c.metodo === "range").length;
     expect(paginas, "varreu sem teto: uma busca puxaria o catálogo inteiro").toBeLessThanOrEqual(10);
     expect(paginas, "não paginou nada").toBeGreaterThan(0);
+  });
+});
+
+/**
+ * ⚠️ O RAMO EM QUE O `count` NÃO VEM — reprodução antes do conserto.
+ *
+ * `count` é `number | null` no client. Quando ele vem `null` (cabeçalho
+ * `Content-Range` ausente ou não parseável — proxy, versão, gateway), o laço
+ * fazia `total = count ?? total` com `total` iniciado em 0, e a condição de
+ * parada `linhas.length >= total` virava `>= 0`: verdadeira SEMPRE, já na
+ * primeira página.
+ *
+ * O desfecho é o defeito da issue #480 DE VOLTA, e pior: `varreduraParcial`
+ * fica `false` (0 > 1000 é falso), então a busca afirma ausência com confiança
+ * sobre uma amostra de uma página. O dublê original sempre fornece `count`, e
+ * por isso nada vigiava este ramo.
+ */
+describe("o count ausente não pode virar 'varri o catálogo inteiro'", () => {
+  it("loja de 3000 itens com count nulo: acha o produto que só existe no fim", async () => {
+    const db = fakeDb(3000, 1000, true);
+    const r = await buscar(db, "perfume importado raro");
+    expect(r.produtos.length, "parou na primeira página e não alcançou o produto").toBeGreaterThan(0);
+  });
+
+  it("varredura que ESTOURA o teto de páginas não afirma ausência, mesmo sem count", async () => {
+    // 12000 > PAGINAS_MAXIMAS × TAMANHO_DA_PAGINA (10 × 1000): a varredura é
+    // genuinamente parcial, e sem `count` ela precisa saber disso pelo fato de
+    // ter esgotado as páginas — não por uma conta com um total que não veio.
+    const db = fakeDb(12000, 1000, true);
+    const r = await buscar(db, "produto que nao existe em lugar nenhum");
+    expect(r.produtos).toHaveLength(0);
+    expect(
+      r.mensagem ?? "",
+      "afirmou 'a loja não tem' depois de varrer 10 mil de 12 mil",
+    ).not.toMatch(/não há nada com esse nome/i);
+  });
+
+  it("⚠️ CONTROLE: varredura que CHEGA ao fim sem count PODE afirmar ausência", async () => {
+    // Sem este caso, "nunca afirme ausência quando o count faltar" satisfaria o
+    // anterior — e a busca viraria eternamente evasiva numa loja pequena cujo
+    // servidor não manda `Content-Range`. A página vazia É prova de fim.
+    const db = fakeDb(2500, 1000, true);
+    const r = await buscar(db, "produto que nao existe em lugar nenhum");
+    expect(r.produtos).toHaveLength(0);
+    expect(r.mensagem ?? "").toMatch(/não há nada com esse nome/i);
   });
 });
