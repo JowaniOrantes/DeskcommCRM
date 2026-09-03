@@ -928,6 +928,26 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
   respondeu à pergunta continua recebendo normalmente** — não perguntar não é a mesma coisa
   que ouvir "não".
 
+### Alterado
+
+**O Tailwind passou da versão 3 para a 4.** Para quem roda numa VPS, não muda nada:
+nenhuma variável nova, nenhum passo manual, o `update.sh` segue igual. O que muda é a
+aparência de algumas telas — e para melhor, na maioria dos casos:
+
+- **Avisos e destaques que não apareciam passam a aparecer.** O jeito antigo de escrever
+  "esta cor com 10% de opacidade" era descartado em silêncio quando a cor vinha do tema —
+  então o fundo rosado do aviso de erro, a borda avermelhada do campo inválido e vários
+  realces de seleção simplesmente não pintavam. São 62 marcações assim, em 252 lugares,
+  que agora mostram o que sempre deveriam ter mostrado.
+- **O respiro entre o rótulo e o campo do formulário foi mantido.** A nova versão mudou de
+  que lado o espaço é aplicado, e isso colava o rótulo no campo em todo formulário do
+  sistema. Corrigido antes de sair.
+
+### Corrigido
+
+- A lista de opções de um `<select>` nativo perdeu 2px de recuo interno. Efeito visual
+  não confirmado — o menu é desenhado pelo sistema operacional, não pelo navegador.
+
 ## [1.5.0] — 2026-08-25
 
 O histórico de quem chega pelos seus formulários agora existe — inclusive de quem **não**

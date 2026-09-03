@@ -20,7 +20,7 @@ DeskcommCRM é um sistema operacional de vendas open source com agentes de IA na
 
 ## Stack canônica
 
-- **Frontend:** Next.js 16 App Router (Turbopack) + React 19 + TypeScript 6 estrito + Tailwind + shadcn/ui (style: `new-york`, neutral)
+- **Frontend:** Next.js 16 App Router (Turbopack) + React 19 + TypeScript 6 estrito + Tailwind 4 (config em CSS — ver abaixo) + shadcn/ui (style: `new-york`, neutral)
 - **Backend:** Next.js Route Handlers (mesmo repo); workers via `event_log` table + cron
 - **DB:** Supabase (Postgres). RLS em toda tabela tenant-aware. Extensions: `uuid-ossp`, `pgcrypto`, `vector`
 - **Auth:** Supabase Auth via `@supabase/ssr`. Cookie SameSite=Strict, HttpOnly, Secure
@@ -183,6 +183,7 @@ DeskcommCRM é um sistema operacional de vendas open source com agentes de IA na
 | `docs/business-rules/` | Regras de negócio fora do código |
 | `docs/research/reference-synthesis.md` | Arquitetura herdada do curso WAHA |
 | `tasks/todo.md` | Workflow de construção atual |
+| `app/globals.css` | **Tailwind 4 é CSS-first: não existe `tailwind.config.ts`.** Tokens em `:root` / `[data-theme]`, ponte token → utilitário no `@theme inline`, alcance do scanner nos `@source`. Vigiado por `tests/unit/tailwind-tokens.test.ts` |
 | `lib/api/wrappers.ts` | `ok()`, `fail()`, tipos `ApiSuccess<T>` / `ApiError` |
 | `lib/api/errors.ts` | Códigos de erro canônicos |
 | `lib/env.ts` | Validação Zod das env vars (lança no startup se faltar crítica) |
