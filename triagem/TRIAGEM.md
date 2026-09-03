@@ -742,3 +742,27 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     menos. É a mesma classe da **régua trocada** do modo 16 — lá eram dois **eventos** (commit contra
     push), aqui são dois **comandos** (`tsc` contra `tsc -p <config>`) — e nas duas vezes a
     divergência parecia defeito do mundo e era escolha de instrumento.
+24. **Custo não quebra nada — por isso ele passa.** Um roundtrip a mais por turno não derruba
+    teste, não acende alerta e não aparece em nenhum gate. Ele aparece na fatura, semanas depois, e
+    ninguém liga a conta ao PR que a criou. É a classe de defeito com o retorno mais lento desta
+    casa, e a única que **piora sozinha com o sucesso do produto**: quanto mais conversas, mais caro
+    o mesmo descuido.
+
+    O antídoto medido, trazido em 2026-09-03: **um dublê que EXPLODE se o recurso caro for
+    consultado.** No caminho do provedor direto, onde a consulta ao catálogo é desnecessária, o
+    dublê do banco lança em vez de responder — então a ida ao banco vira **vermelho**, e não conta
+    subindo em silêncio.
+
+    ```
+    provedor direto  → dublê do banco LANÇA  → se alguém consultar, o teste quebra
+    roteador         → dublê responde        → o caminho que PRECISA consultar segue medido
+    ```
+
+    Generalizando: quando um caminho **não deve** tocar um recurso caro — banco, LLM, rede, storage
+    —, não baste comentar isso. **Injete um dublê que falha ao ser tocado.** É o único jeito de a
+    ausência de uma chamada virar propriedade guardada, em vez de intenção escrita num comentário
+    que a próxima refatoração não lê.
+
+    Isto é o passe 6-bis olhando para o outro lado: lá a pergunta é *"o dado atravessa uma porta
+    sem guarda?"*; aqui é *"a chamada acontece numa porta onde ela não devia?"*. As duas se provam
+    do mesmo jeito — sabotando e exigindo vermelho.
