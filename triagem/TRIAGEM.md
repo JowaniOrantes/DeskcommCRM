@@ -183,6 +183,51 @@ A consequência é a ordem de trabalho, e ela é o oposto do intuitivo:
 Mergear na ordem em que os PRs aparecem na tela é o que produz o conflito que ninguém entende de
 onde veio.
 
+### ⚠️ A matriz por ARQUIVO é necessária e NÃO é suficiente
+
+Medido no mesmo dia, e é a correção que este passe pediu poucas horas depois de ser escrito: os PRs
+**#497 e #498 têm sobreposição de arquivo ZERO**, cada um com os cinco checks obrigatórios verdes
+contra a `main` — e **a prévia do merge dos dois é vermelha**.
+
+```
+#498  acrescenta o job  publish-image.yml::promover-stable
+#497  acrescenta GATILHO_ESPERADO, um mapa que exige igualdade de CONJUNTO
+      entre os jobs de .github/workflows e as chaves do mapa
+
+merge dos dois → Tests 1 failed | 13 passed (14)
+                 AssertionError: Um job apareceu ou sumiu em .github/workflows.
+                 +   "publish-image.yml::promover-stable"
+```
+
+A classe é esta, e vale para muito além deste par:
+
+> **Um teste que prende um INVENTÁRIO do repositório — jobs, telas, tabelas, rotas — colide com
+> qualquer PR que mude esse inventário, sem tocar em nenhum arquivo em comum.**
+
+O arquivo A declara o mundo; o arquivo B muda o mundo. Nenhum `git merge-tree` acusa, nenhum `comm`
+de nomes de arquivo enxerga, e — como a branch protection roda com `strict=false` — **quem mergear
+por segundo entra sem re-rodar o CI e deixa a `main` vermelha**, em qualquer das duas ordens.
+
+Esta base tem vários desses inventários, e todos têm a mesma propriedade:
+`tests/unit/navegacao-completude.test.ts` (telas), `tests/invariants/rls-isolation.test.ts` (a lista
+fixa `TABLES`), `tests/unit/e2e-cobertura-completa.test.ts` (specs), `GATILHO_ESPERADO` (jobs).
+
+**Como cobrir o buraco, sem custo:** depois de montar a matriz por arquivo, faça uma segunda
+varredura — para cada PR da fila, o diff **adiciona ou remove** uma entrada de inventário?
+
+```bash
+gh pr diff <n> | grep -E "^[+-]  [A-Za-z0-9_-]+:$"        # jobs de workflow (com controle positivo)
+gh pr diff <n> --name-only | grep -E "registry\.ts|rls-isolation|e2e-cobertura|GATILHO"
+```
+
+Se **algum** PR mexe no inventário e **outro** mexe na declaração dele, os dois estão acoplados
+mesmo com interseção de arquivos vazia — e a emenda pertence ao PR **do mapa**, porque o mapa é
+artefato dele.
+
+E note o desfecho estrutural: com `strict=false`, esta classe **não tem gate**. Ou a branch
+protection passa a exigir a branch atualizada, ou algum check roda na prévia do merge. Enquanto não
+rodar, quem cobre é este passe — à mão.
+
 ---
 
 ## 4. Complemento — o que os gates não provam
