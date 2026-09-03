@@ -846,9 +846,18 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     tsc --noEmit -p tsconfig.json           --listFilesOnly | grep -c 'tests/unit/branding-saida.test.ts'   # → 0
     ```
 
-    8.055 arquivos contra 6.979 — **1.076 de diferença**, e o arquivo de teste está num e não no
-    outro. O verde do pelado não era sobre aquele arquivo, e **o comando diz isso sem que ninguém
-    precise suspeitar de nada**.
+    **1** contra **0**, e é essa a forma que importa. Contar o total dos dois lados também
+    funciona — deu 8.055 contra 6.979 no dia — mas **número de contagem envelhece**: a árvore
+    cresce, os dois números mudam, e a diferença deixa de significar o que significava. O
+    `grep -c <o seu arquivo>` responde **1 ou 0** e vai continuar respondendo 1 ou 0 daqui a um ano.
+
+    O verde do pelado não era sobre aquele arquivo, e **o comando diz isso sem que ninguém precise
+    suspeitar de nada**.
+
+    ⚠️ **E prove sobre O ARQUIVO REAL, não sobre um sintético.** Um erro deliberado num arquivo
+    novo prova que o mecanismo existe; a listagem sobre o arquivo que você **declarou verificado**
+    prova que a sua afirmação estava vazia. São perguntas diferentes, e só a segunda fecha o caso
+    contra você.
 
     A receita por ferramenta:
 
