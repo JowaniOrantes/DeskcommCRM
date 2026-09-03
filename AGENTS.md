@@ -81,7 +81,7 @@ mudança toca schema, RLS ou UI, `gov:verify` verde **não** é prova — rode `
 
 **O que o CI cobre.** `.github/workflows/ci.yml`: `verify` = typecheck + lint + test:unit;
 `invariants` = `pnpm test:db` (isolamento RLS + invariantes de governança contra Postgres
-efêmero pg17). `.github/workflows/perf.yml`: `build-and-size` = `pnpm build`.
+efêmero pg15). `.github/workflows/perf.yml`: `build-and-size` = `pnpm build`.
 `.github/workflows/e2e.yml` roda **45 das 46 specs** Playwright contra um Supabase local de
 verdade com o `baseline.sql` aplicado — o mesmo banco que o self-hoster tem. **É check
 obrigatório desde 2026-08-08.** A **única** de fora é `vps-fresh-onboarding` (WAHA + Redis +
