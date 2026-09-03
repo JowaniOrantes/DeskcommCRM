@@ -1,7 +1,7 @@
 ---
 impacto: nada_mudou
 secao: corrigido
-titulo: Configuração de fila malformada deixa de aparecer como "o serviço caiu"
+titulo: Configuração de fila malformada deixa de ser confundida com serviço fora do ar
 ---
 
 O sistema usa um serviço de fila (Redis) para contar tentativas de login e
