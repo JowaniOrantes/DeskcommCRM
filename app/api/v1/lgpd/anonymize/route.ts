@@ -16,6 +16,11 @@ import { type NextRequest } from "next/server";
 
 import { audit } from "@/lib/audit";
 import { ApiError } from "@/lib/api/types";
+import {
+  completarRedacaoDoContato,
+  houveRedacao,
+  type ClienteDaCascata,
+} from "@/lib/lgpd/cascata";
 import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { lgpdAnonymizeSchema, validateRequest } from "@/lib/schemas";
@@ -119,38 +124,17 @@ export async function POST(req: NextRequest): Promise<Response> {
     return fail("internal_error", `contacts: ${c1Err.message}`, 500, { requestId });
   }
 
-  // Step 2 — leads owned by contact (best-effort; non-fatal).
-  const { data: leadRows } = await supabase
-    .from("crm_leads")
-    .select("id, title")
-    .eq("contact_id", existing.id);
-  const redactedLeadIds: string[] = [];
-  const SUFIXO = " (anonimizado)";
-  for (const row of (leadRows ?? []) as { id: string; title: string | null }[]) {
-    // Idempotente: sem isto, a retomada que existe para CURAR estragaria. O
-    // título é cortado em 20 caracteres antes do sufixo, então reescrever um
-    // título já redigido produz "Orçamento telhado (an (anonimizado)" e, na
-    // terceira rodada, come o resto.
-    if ((row.title ?? "").endsWith(SUFIXO)) continue;
-    const newTitle = `${(row.title ?? "").slice(0, 20)}${SUFIXO}`;
-    const { error: leadErr } = await supabase
-      .from("crm_leads")
-      .update({ title: newTitle })
-      .eq("id", row.id);
-    if (leadErr) {
-      console.error("[lgpd.anonymize] crm_leads update failed", leadErr.message);
-    } else {
-      redactedLeadIds.push(row.id);
-    }
-  }
-
-  // Step 3 — activities (RLS-scoped UPDATE).
-  const { error: actErr } = await supabase
-    .from("crm_lead_activities")
-    .update({ payload: { redacted: true } })
-    .eq("contact_id", existing.id);
-  if (actErr) {
-    console.error("[lgpd.anonymize] crm_lead_activities update failed", actErr.message);
+  // ── Passos 2 e 3 — a MESMA função que o cron de retenção usa ──────────
+  //
+  // Estavam escritos aqui dentro, e a regra do corte do título passou a ter
+  // duas bocas quando o cron ganhou a varredura. Uma correção que entrasse numa
+  // e não na outra produziria títulos redigidos de dois jeitos no mesmo banco.
+  const redacao = await completarRedacaoDoContato(supabase as unknown as ClienteDaCascata, {
+    id: existing.id,
+    organizationId: existing.organization_id,
+  });
+  for (const falha of redacao.falhas) {
+    console.error("[lgpd.anonymize]", falha);
   }
 
   // Emit + audit.
@@ -183,19 +167,35 @@ export async function POST(req: NextRequest): Promise<Response> {
     metadata: {
       contact_id: existing.id,
       justification: input.justification,
-      redacted_tables: ["contacts", "crm_leads", "crm_lead_activities"],
-      redacted_lead_ids: redactedLeadIds,
+      // O que foi REALMENTE tocado. Era o literal ["contacts","crm_leads",
+      // "crm_lead_activities"] — e numa retomada `contacts` não é tocada, e os
+      // passos 2 e 3 são best-effort. A linha `lgpd.anonymize_catchup` afirmava
+      // ter redigido as três mesmo tendo redigido nenhuma: sucesso declarado
+      // sobre trabalho não feito, a mesma classe que esta cascata já pagou uma
+      // vez, quando deixava o arquivo no bucket e auditava que o redigira.
+      redacted_tables: [...(retomada ? [] : ["contacts"]), ...redacao.tabelas],
+      redacted_lead_ids: redacao.leadsRedigidas,
+      redacted_activities: redacao.atividadesRedigidas,
+      ...(redacao.falhas.length > 0 ? { failures: redacao.falhas } : {}),
       storage_media_deletion: "deferred_epic_08",
     },
   });
 
-  // `action` nos DOIS caminhos: o caminho feliz omitia o campo, e quem consome
-  // não distinguia os desfechos sem inspecionar o corpo inteiro.
+  // `action` nos TRÊS desfechos, e o do meio é novo.
+  //
+  // Antes, uma retomada que redigiu leads e atividades voltava
+  // `already_anonymized` — e o diálogo mostrava "Contato já estava
+  // anonimizado.", exatamente a frase que descreve o DEFEITO que esta rota
+  // conserta. Quem chama não tinha como saber que houve trabalho.
+  const desfecho = !retomada ? "anonymized" : houveRedacao(redacao) ? "resumed" : "already_anonymized";
+
   return ok(
     {
       contact_id: existing.id,
       anonymized_at: retomada ? existing.anonymized_at : nowIso,
-      action: retomada ? "already_anonymized" : "anonymized",
+      action: desfecho,
+      redacted_lead_ids: redacao.leadsRedigidas,
+      redacted_activities: redacao.atividadesRedigidas,
     },
     { requestId },
   );

@@ -14,6 +14,14 @@ e não fazia mais nada. O contato ficava para sempre com nome de
 cliente visível dentro dos negócios e do histórico — que é exatamente o dado que
 a anonimização existe para remover, e que a lei dá prazo para remover.
 
-Agora o botão retoma o que faltou. Rodar de novo num contato já inteiro não
-estraga nada, e o registro de auditoria distingue a retomada da execução
-original — a data em que o titular exerceu o direito não é sobrescrita.
+Pior: nesse estado a tela **não mostra botão nenhum** — assim que o contato
+consta como anonimizado, o botão dá lugar a um aviso. Não havia como pedir a
+retomada nem sabendo que ela era necessária.
+
+Agora a verificação diária do sistema encontra sozinha as anonimizações que
+ficaram pela metade e termina o serviço, sem ninguém precisar procurar contato
+por contato. Como a lei dá prazo, esse conserto não podia depender de alguém
+lembrar de clicar. Rodar de novo num contato já inteiro não escreve nada, e o
+registro de auditoria mostra o que foi realmente feito, em qual contato e em que
+dia — separado da execução original, para a data em que o titular exerceu o
+direito não ser sobrescrita.

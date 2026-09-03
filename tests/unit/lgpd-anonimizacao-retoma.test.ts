@@ -32,6 +32,18 @@
  * CONTATO não anonimizado — o oposto do defeito, e pior, porque `contacts` é
  * onde mora o PII forte (nome, e-mail, telefone, CPF). O que muda é que agora
  * existe retomada, então o best-effort deixou de ser "uma chance só".
+ *
+ * ─── E por que a rota, sozinha, não fechava a issue ─────────────────────────
+ *
+ * A correção era INALCANÇÁVEL. `app/app/contacts/[id]/_client.tsx:197-208`
+ * troca o botão "Anonimizar contato" por um parágrafo quando `is_anonymized` é
+ * verdadeiro, e `setAnonOpen(true)` é o ÚNICO caminho para o diálogo em todo o
+ * repositório: no estado exato que esta retomada conserta, **não existe botão**.
+ *
+ * Quem passou a alcançá-la é o cron diário de retenção (`varrerRedacoesIncompletas`),
+ * porque a LGPD dá PRAZO — redact em D+15 — e um direito do titular não pode
+ * depender de alguém lembrar de clicar. Os casos de varredura estão em
+ * `tests/unit/lgpd-varredura-completa-a-cascata.test.ts`.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
@@ -62,27 +74,56 @@ let escrito: Escritas;
  * não distinguiria "reescreveu a lead já redigida" de "pulou", que é metade do
  * conserto.
  */
-function db(contato: Record<string, unknown>, leads: Array<{ id: string; title: string | null }>) {
+function db(
+  contato: Record<string, unknown>,
+  leads: Array<{ id: string; title: string | null }>,
+  atividades: Array<{ id: string; payload: unknown }> = [{ id: "atv-1", payload: { texto: "PII" } }],
+) {
   const cliente = {
     from: (tabela: string) => ({
       select: () => {
-        const q = {
-          eq: () => q,
+        // O UPDATE só sai depois de o SELECT dizer o que existe, então o dublê
+        // devolve as linhas de VERDADE por tabela. Um dublê que devolvesse a
+        // mesma lista para todas não distinguiria "pulou a atividade já
+        // redigida" de "reescreveu", que é metade do conserto.
+        const filtros: Array<[string, string | boolean]> = [];
+        const q: Record<string, unknown> = {
+          eq: (col: string, val: string | boolean) => {
+            filtros.push([col, val]);
+            return q;
+          },
+          in: () => q,
+          limit: () => q,
           maybeSingle: async () => ({ data: contato, error: null }),
-          then: (r: (v: { data: unknown; error: null }) => unknown) =>
-            Promise.resolve({ data: leads, error: null }).then(r),
+          then: (r: (v: { data: unknown; error: null }) => unknown) => {
+            const linhas =
+              tabela === "crm_leads" ? leads : tabela === "crm_lead_activities" ? atividades : [];
+            return Promise.resolve({ data: linhas, error: null }).then(r);
+          },
         };
         return q;
       },
       update: (patch: Record<string, unknown>) => {
-        const q = {
-          eq: (_col: string, val: string) => {
-            if (tabela === "contacts") escrito.contacts.push(patch);
-            else if (tabela === "crm_leads") escrito.leads.push({ id: val, patch });
-            else if (tabela === "crm_lead_activities") escrito.atividades.push(patch);
-            return { ...q, then: (r: (v: unknown) => unknown) => Promise.resolve({ error: null }).then(r) };
+        // O registro acontece no `then`, não no `eq`: a cascata encadeia
+        // `.eq(org).eq(id)`, e registrar por `eq` contaria a MESMA escrita duas
+        // vezes — um dublê que mente para mais é tão ruim quanto um que mente
+        // para menos.
+        let alvo = "";
+        const q: Record<string, unknown> = {
+          eq: (col: string, val: string) => {
+            if (col === "id" || col === "contact_id") alvo = val;
+            return q;
           },
-          then: (r: (v: unknown) => unknown) => Promise.resolve({ error: null }).then(r),
+          in: (_col: string, vals: string[]) => {
+            alvo = vals.join(",");
+            return q;
+          },
+          then: (r: (v: unknown) => unknown) => {
+            if (tabela === "contacts") escrito.contacts.push(patch);
+            else if (tabela === "crm_leads") escrito.leads.push({ id: alvo, patch });
+            else if (tabela === "crm_lead_activities") escrito.atividades.push({ ...patch, alvo });
+            return Promise.resolve({ error: null }).then(r);
+          },
         };
         return q;
       },
@@ -140,10 +181,52 @@ describe("cascata de anonimização — retomada", () => {
       escrito.atividades.length,
       "as atividades do contato continuam não redigidas",
     ).toBeGreaterThan(0);
+    expect(escrito.atividades[0]).toMatchObject({ payload: { redacted: true } });
     // O passo 1 NÃO se repete: reescrever `anonymized_at` apagaria a data real
     // do exercício do direito, que é o que responde ao prazo legal.
     expect(escrito.contacts, "reescreveu contacts numa retomada").toEqual([]);
+    // NÃO é `already_anonymized`: a redação pendente acabou de acontecer, e
+    // dizer "já estava anonimizado" é exatamente a frase que descreve o DEFEITO
+    // — era o que o diálogo mostrava (AnonymizeDialog.tsx:46) no único momento
+    // em que houve trabalho.
+    expect(r.corpo.data.action).toBe("resumed");
+  });
+
+  it("retomada SEM resíduo continua dizendo que nada faltava", async () => {
+    db(
+      contato({ is_anonymized: true }),
+      [{ id: "lead-ja-feita", title: "Orçamento (anonimizado)" }],
+      [{ id: "atv-ja-feita", payload: { redacted: true } }],
+    );
+
+    const r = await anonimizar();
+
+    // A distinção só vale se ela discrimina: se todo caminho devolvesse
+    // "resumed", o desfecho novo seria decoração.
     expect(r.corpo.data.action).toBe("already_anonymized");
+    expect(escrito.leads).toEqual([]);
+    expect(escrito.atividades, "reescreveu atividade já redigida").toEqual([]);
+  });
+
+  it("⭐ a auditoria lista as tabelas que foram REALMENTE tocadas", async () => {
+    // Era o literal ["contacts","crm_leads","crm_lead_activities"]. Numa
+    // retomada `contacts` não é tocada; e se nada faltasse, a linha afirmaria
+    // ter redigido as três tendo redigido nenhuma.
+    db(
+      contato({ is_anonymized: true }),
+      [{ id: "lead-ja-feita", title: "Orçamento (anonimizado)" }],
+      [{ id: "atv-ja-feita", payload: { redacted: true } }],
+    );
+
+    await anonimizar();
+
+    const linha = vi.mocked(audit).mock.calls.map((c) => c[0] as { action: string; metadata: Record<string, unknown> })
+      .find((c) => c.action === "lgpd.anonymize_catchup");
+    expect(linha, "a retomada não auditou").toBeDefined();
+    expect(
+      linha!.metadata.redacted_tables,
+      "afirmou ter redigido tabelas que não tocou — sucesso declarado sobre trabalho não feito",
+    ).toEqual([]);
   });
 
   it("⭐ rodar duas vezes não come o título: quem já tem o sufixo é pulado", async () => {
