@@ -117,8 +117,34 @@ export function formatCentsUSD(cents: number): string {
  * mostraria `￥250` onde são `￥25.000` — cem vezes menos, no número que o agente
  * cota ao cliente. As unidades menores saem do próprio `Intl`, não de uma lista.
  *
- * `formatCentsBRL` e `formatCentsUSD` continuam: elas atendem o valor do
- * negócio no kanban e o gasto de IA, que são outra frente e mudam noutro PR.
+ * ─── ⚠️ ESTA É A FONTE. As cópias que existem hoje têm os dois defeitos ─────
+ *
+ * Não é função nova por falta de uma: o repo já tinha CINCO formatadores locais
+ * de dinheiro, copiados entre si, e todos carregam exatamente os dois defeitos
+ * acima — `Intl.NumberFormat("pt-BR", …)` em duro **recebendo `currency` por
+ * parâmetro**, mais o `/100` fixo:
+ *
+ *   components/kanban/KanbanCard.tsx:34      formatBRL(cents, currency)
+ *   components/kanban/LeadDossier.tsx:28     formatBRL(cents, currency)
+ *   components/kanban/StageColumn.tsx:31     formatBRL(cents)          (só BRL)
+ *   components/inbox/CRMSidePanel.tsx:193    formatMoney(cents, currency)
+ *   lib/lgpd/pdf-renderer.tsx:107            fmtMoney(cents, currency) (pior:
+ *                                            `${currency} ${v.toFixed(2)}`, sem
+ *                                            locale e sempre 2 casas)
+ *
+ * Aceitar `currency` e fixar `pt-BR` é o defeito medido: o lead em MXN sai
+ * `MX$ 249,90`, com vírgula decimal brasileira, para quem opera no México.
+ *
+ * **Elas convergem aqui, mas não neste PR** — são kanban, inbox e o PDF de
+ * LGPD, três frentes que a doutrina não deixa misturar com o catálogo. A
+ * conversão não é mecânica: as três do kanban usam `maximumFractionDigits: 0`
+ * de propósito (o card não mostra centavos), e isso precisa virar parâmetro
+ * antes de trocá-las. Enquanto não convergem, a duplicação fica DECLARADA aqui
+ * — que é o que separa o anti-pattern 2 ("duplicação sem source of truth
+ * declarado") de uma dívida com dono e endereço.
+ *
+ * `formatCentsBRL` e `formatCentsUSD` ficam pelo mesmo motivo: atendem o valor
+ * do negócio no kanban e o gasto de IA, que são essas outras frentes.
  */
 const formatadores = new Map<string, Intl.NumberFormat>();
 

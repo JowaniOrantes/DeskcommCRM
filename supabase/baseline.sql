@@ -17381,4 +17381,4 @@ begin
 end $$;
 
 comment on column public.organizations.currency is
-  'Moeda do negócio desta organização, ISO-4217. É a fonte na ESCRITA: o servidor a copia para catalog_products.moeda no cadastro do produto e nunca aceita a moeda vinda do corpo da requisição. A linha guarda a moeda com que nasceu.';
+  'Moeda do negócio desta organização, ISO-4217. CONTRATO: é a fonte na ESCRITA — o produto herda esta moeda no cadastro, e a moeda que venha no corpo da requisição não decide (corpo não decide unidade, como não decide escopo). A linha do produto guarda a moeda com que nasceu: pedido pago em BRL não vira MXN depois.';
