@@ -79,3 +79,71 @@ export function formatCentsBRL(cents: number): string {
 export function formatCentsUSD(cents: number): string {
   return ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "USD" });
 }
+
+/**
+ * Centavos → o preço escrito na convenção da MOEDA. `formatCents(24990, "MXN")`
+ * devolve `$249.90`.
+ *
+ * ─── Por que a moeda escolhe o formato, e não o idioma da interface ────────
+ *
+ * O reflexo era reusar `tagDeIdioma()` — o produto já resolve `pt-BR`/`es` para
+ * quem está lendo, e passar isso ao `Intl` parecia de graça. Medido antes de
+ * escrever, e é o contrário:
+ *
+ *     Intl.NumberFormat("es",    {currency:"MXN"}) -> "249,90 MXN"
+ *     Intl.NumberFormat("es-MX", {currency:"MXN"}) -> "$249.90"
+ *
+ * `es` puro resolve para a ESPANHA: vírgula decimal e o código ISO depois do
+ * número. Quem vende no México lê `$249.90`. São duas perguntas diferentes com
+ * a mesma cara: o idioma da tela é preferência de quem LÊ e muda de pessoa para
+ * pessoa; a moeda é fato do NEGÓCIO e é a mesma para todo mundo que abre aquele
+ * catálogo. Quem manda no separador decimal é a segunda.
+ *
+ * ─── Por que não há tabela de moeda → locale ───────────────────────────────
+ *
+ * Toda tabela escrita à mão nasce incompleta, e a coluna aceita qualquer
+ * `^[A-Z]{3}$`. O código ISO-4217 já carrega a região nas duas primeiras letras
+ * (BRL→BR, MXN→MX, JPY→JP), e `Intl.Locale#maximize()` diz o idioma provável
+ * dessa região. **O subtag de script sai de propósito**: `maximize()` devolve
+ * `es-Latn-MX`, e o CLDR indexa o símbolo de moeda por `es-MX` — com o script
+ * no meio, o MXN volta a sair como `"249,90 MXN"`. Medido nos dois sentidos.
+ *
+ * Moeda sem país (EUR→`en-EU`, XOF→`en-XO`) e código desconhecido caem em
+ * `en-US`, que escreve o código ISO e não mente sobre a unidade.
+ *
+ * ─── `_cents` nem sempre é centésimo ───────────────────────────────────────
+ *
+ * ⚠️ JPY e CLP não têm subunidade; KWD tem três casas. Dividir por 100 em duro
+ * mostraria `￥250` onde são `￥25.000` — cem vezes menos, no número que o agente
+ * cota ao cliente. As unidades menores saem do próprio `Intl`, não de uma lista.
+ *
+ * `formatCentsBRL` e `formatCentsUSD` continuam: elas atendem o valor do
+ * negócio no kanban e o gasto de IA, que são outra frente e mudam noutro PR.
+ */
+const formatadores = new Map<string, Intl.NumberFormat>();
+
+function formatadorDa(moeda: string): Intl.NumberFormat {
+  const cacheado = formatadores.get(moeda);
+  if (cacheado) return cacheado;
+
+  let locale = "en-US";
+  try {
+    const provavel = new Intl.Locale(`und-${moeda.slice(0, 2)}`).maximize();
+    const tag = `${provavel.language}-${provavel.region}`;
+    if (Intl.NumberFormat.supportedLocalesOf(tag).length > 0) locale = tag;
+  } catch {
+    // Região que o ICU não conhece: fica o padrão.
+  }
+
+  const novo = new Intl.NumberFormat(locale, { style: "currency", currency: moeda });
+  formatadores.set(moeda, novo);
+  return novo;
+}
+
+export function formatCents(cents: number, moeda: string): string {
+  const nf = formatadorDa(moeda);
+  // O tipo do `Intl` deixa o campo opcional; 2 é o que a esmagadora maioria das
+  // moedas usa e é o que o código fazia em duro antes desta função existir.
+  const casas = nf.resolvedOptions().maximumFractionDigits ?? 2;
+  return nf.format((cents ?? 0) / 10 ** casas);
+}
