@@ -529,6 +529,17 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     que já estava consertado, que é exatamente o erro que o passe 7 existe para impedir. **Antes de
     agir sobre qualquer medição de terceiro — ou sua, de meia hora atrás —, reconfira o
     `headRefOid`.**
+
+    ⚠️ **E reconferir no INÍCIO da medição não basta — tem de ser IMEDIATAMENTE ANTES do merge.**
+    Medido no mesmo dia, no mesmo PR, na direção contrária: mergeei o #495 às **21:29:38 UTC**; o
+    autor empurrou às **21:31:07** a guarda que faltava — a varredura de fonte que prende os dois
+    call sites do conserto. **89 segundos.** O conserto de comportamento entrou na `main`; a rede
+    que o protege, não. E ninguém teria notado, porque tudo ficou verde: era justamente uma guarda
+    contra um defeito que a suíte não pegava.
+
+    Numa fila, o intervalo entre "medi" e "mergeei" é onde o contribuidor está trabalhando — ele
+    está ativo *porque* você respondeu. **Releia o `headRefOid` como último ato antes do merge**, e
+    se ele mudou, remeça o que a mudança tocou.
 17. **`?branch=` é sonda cega quando o fork abriu o PR a partir da `main` dele.** Medido em
     2026-09-03: os PRs #418 e #465 têm `headRefName = main`, então `actions/runs?branch=main`
     devolve os runs da **`main` do upstream** — dezenas de execuções verdes sem relação nenhuma com
@@ -579,7 +590,22 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     A quarta linha é o que fecha o argumento: com `registro=false`, a cascata cai no catálogo e
     acerta. Não é o registro que está errado — é a **ordem**.
 
-    **A regra:** fonte declarada primeiro, heurística só no vazio. E quando encontrar uma cascata
+    **A regra — e a primeira versão dela, escrita aqui, estava ERRADA.** Eu tinha escrito *"fonte
+    declarada primeiro, heurística só no vazio"*, e quem mediu o caso derrubou a formulação no mesmo
+    dia: **no provedor direto a coluna do catálogo é um default que ninguém preencheu** — medido
+    `false` para todos os modelos numa instalação real. "Fonte primeiro" ali faria o sistema mentir
+    `false` para tudo, que é o mesmo defeito virado do avesso.
+
+    A regra certa é **MEDIDA VENCE PALPITE**, e o critério é ter opinião:
+
+    | caminho | quem manda | por quê |
+    |---|---|---|
+    | provedor direto | o **registro** | a coluna do catálogo é default não preenchido — não tem opinião |
+    | roteador | o **catálogo** quando ele tem opinião | `supports_vision` é `not null default false`, então `null` só acontece quando **não há linha** |
+
+    Ou seja: não é a *origem* do dado que decide, é se aquela origem **tem algo a dizer sobre este
+    caso**. Um default que ninguém preencheu não é dado — é ausência com cara de resposta, e é
+    exatamente por isso que a heurística existia. E quando encontrar uma cascata
     num PR, pergunte de cada degrau: *ele pode responder ERRADO com confiança, impedindo o degrau
     seguinte — que tem o dado bom — de ser consultado?* Cascata é onde esta classe mora: `??`, `||`,
     `if (!conhecido) buscar(...)`, cache lido antes da fonte, prefixo/regex decidindo o que um campo
