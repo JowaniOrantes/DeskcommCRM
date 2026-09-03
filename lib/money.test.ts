@@ -47,7 +47,7 @@ describe("formatCentsBRL", () => {
 });
 
 /** Os espaços que o `Intl` emite são NBSP (U+00A0) ou narrow NBSP (U+202F). */
-const semNbsp = (s: string) => s.replace(/[  ]/g, " ");
+const semNbsp = (s: string) => s.replace(/[\u00A0\u202F]/g, " ");
 
 describe("formatCents", () => {
   /**
