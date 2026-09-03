@@ -1,7 +1,7 @@
--- 0209 · Quem paga a mídia não via a mídia.
+-- 0214 · Quem paga a mídia não via a mídia.
 --
 -- ─── O buraco que isto fecha ────────────────────────────────────────────────
--- A 0208 fechou o caminho de VOLTA: a venda fechada no CRM vira conversão na
+-- A 0213 fechou o caminho de VOLTA: a venda fechada no CRM vira conversão na
 -- plataforma. O caminho de IDA continuou fora do produto — para saber quanto
 -- custou o lead que ele acabou de atender, o dono do tráfego abria o
 -- Gerenciador de Anúncios numa aba separada e comparava a olho com o funil daqui.
@@ -15,13 +15,13 @@
 -- duplicar estrutura é o anti-pattern 2 desta casa. São quatro razões, e a
 -- primeira sozinha já decide:
 --
---  1. O índice único da 0208 é `(organization_id, platform)` — UMA linha por
+--  1. O índice único da 0213 é `(organization_id, platform)` — UMA linha por
 --     plataforma por organização. Os dois tokens têm ESCOPOS DIFERENTES na Meta
---     (a 0208 quer permissão de escrita no dataset de conversões; esta quer
+--     (a 0213 quer permissão de escrita no dataset de conversões; esta quer
 --     `ads_read`) e não são o mesmo segredo. Não cabem na mesma linha sem uma
 --     coluna nova, e a coluna nova traz as três razões seguintes junto.
 --
---  2. `enabled` é UM interruptor. Ele existe na 0208 para PAUSAR o envio de
+--  2. `enabled` é UM interruptor. Ele existe na 0213 para PAUSAR o envio de
 --     conversões preservando a credencial. Se as duas features dividissem a
 --     linha, pausar o envio apagaria o dashboard, e ligar o dashboard religaria
 --     o envio — dois ciclos de vida atrás de um botão só.
@@ -36,12 +36,12 @@
 --     o reporte de vendas de quem nunca abriu esta tela.
 --
 -- O que É reaproveitado, e integralmente: a CIFRA (`fn_encrypt_oauth`, a mesma
--- de `calendar_connections`, `channel_sessions` e da 0208 — sem terceiro caminho
+-- de `calendar_connections`, `channel_sessions` e da 0213 — sem terceiro caminho
 -- de cifra no repo) e a POSTURA (RLS ligada, zero policies, grants revogados).
 -- O que não se duplica é o segredo e o interruptor; o mecanismo é um só.
 --
 -- ─── Por que NÃO existe `enabled` aqui ──────────────────────────────────────
--- Copiá-lo seria cargo cult. Em 0208 ele pausa um worker que roda sozinho e
+-- Copiá-lo seria cargo cult. Em 0213 ele pausa um worker que roda sozinho e
 -- gasta cota de plataforma sem ninguém pedir. Aqui não há nada rodando: a
 -- leitura só acontece quando alguém abre a tela e clica em "Atualizar". Um
 -- switch "desligado" nesta tabela significaria apenas "a tela não funciona
@@ -52,12 +52,12 @@
 -- caminho de volta é colar o token de novo, que é o mesmo trabalho de religar.
 --
 -- ─── Por que RLS LIGADA com ZERO policies ───────────────────────────────────
--- Mesmo desenho de `platform_google_oauth` (0201) e da 0208, pelo mesmo motivo:
+-- Mesmo desenho de `platform_google_oauth` (0201) e da 0213, pelo mesmo motivo:
 -- a anon key VAI PARA O BROWSER, e tabela com RLS ligada sem policy nenhuma e
 -- com grants de anon/authenticated revogados não é servida pelo PostgREST de
 -- jeito nenhum — só o `service_role`, que vive no servidor.
 --
--- Um token `ads_read` é MENOS perigoso que o da 0208 (lê, não escreve), e ainda
+-- Um token `ads_read` é MENOS perigoso que o da 0213 (lê, não escreve), e ainda
 -- assim expõe o orçamento, o criativo e a performance de quem anuncia — dado
 -- comercial que um concorrente pagaria para ver. Não há motivo para afrouxar.
 --
@@ -71,7 +71,7 @@
 create table if not exists public.ad_insights_connections (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,
-  -- Mesmo vocabulário agnóstico da 0208 (`PlataformaDeAnuncio`): a plataforma
+  -- Mesmo vocabulário agnóstico da 0213 (`PlataformaDeAnuncio`): a plataforma
   -- que hospeda o anúncio, não o nome do endpoint que a lê.
   platform text not null,
   access_token_encrypted bytea not null,
@@ -87,7 +87,7 @@ create table if not exists public.ad_insights_connections (
     check (platform in ('meta_ads', 'google_ads'))
 );
 
--- Uma conexão de leitura por plataforma por organização. Mesma lição da 0208 e
+-- Uma conexão de leitura por plataforma por organização. Mesma lição da 0213 e
 -- da #236: sem isto, dois saves distraídos deixariam duas linhas e o handler
 -- leria a errada em silêncio.
 create unique index if not exists ad_insights_connections_org_platform_uk

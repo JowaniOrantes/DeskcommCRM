@@ -1,4 +1,4 @@
--- 0208 · A venda fechava no CRM e o anúncio nunca ficava sabendo.
+-- 0213 · A venda fechava no CRM e o anúncio nunca ficava sabendo.
 --
 -- ─── O buraco que isto fecha ────────────────────────────────────────────────
 -- Desde a 0164 o sistema CAPTURA de qual anúncio o contato veio: o `ctwa_clid`

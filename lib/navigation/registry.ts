@@ -574,7 +574,7 @@ export const NAV_DESTINATIONS: NavDestination[] = [
   {
     // Vizinha de Conversões, e SEPARADA dela de propósito. As duas conectam "a
     // Meta" e a tentação de fundi-las é real — mas são credenciais de escopos
-    // diferentes, em tabelas diferentes (0209), com consequências opostas
+    // diferentes, em tabelas diferentes (0214), com consequências opostas
     // quando vencem: o token de leitura vencido deixa uma tela vazia, o de
     // conversões vencido faz a empresa parar de reportar vendas sem sintoma.
     // Uma tela só, com dois campos de token parecidos, é como se cola o token

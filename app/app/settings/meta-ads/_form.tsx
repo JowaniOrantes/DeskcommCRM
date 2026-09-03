@@ -48,7 +48,7 @@ export function FormularioDeMetaAds({
   const [token, setToken] = useState("");
   const [conta, setConta] = useState(contaPadrao ?? "");
 
-  // Na primeira conexão o token é obrigatório — a coluna é NOT NULL (0209) e a
+  // Na primeira conexão o token é obrigatório — a coluna é NOT NULL (0214) e a
   // Server Action recusa. Barrar aqui explica antes de o clique acontecer, em
   // vez de devolver um erro de validação depois.
   const podeSalvar = conectada || token.trim().length >= 20;
@@ -152,7 +152,7 @@ export function FormularioDeMetaAds({
           <p className="text-xs text-muted-foreground">
             {/*
               Desconectar APAGA a linha — não existe "pausar" nesta feature, e o
-              porquê está no cabeçalho da 0209: como nada roda sozinho, um estado
+              porquê está no cabeçalho da 0214: como nada roda sozinho, um estado
               "conectado mas desligado" teria a mesma consequência visível de não
               estar conectado.
             */}

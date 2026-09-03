@@ -3,8 +3,8 @@
  *
  * Irmã de `credenciais.ts`, que faz o mesmo para o eixo de conversões. As duas
  * existem separadas porque as tabelas são separadas, e as tabelas são separadas
- * pelas quatro razões no cabeçalho da migration 0209 — a primeira delas sendo
- * que o índice único da 0208 é `(organization_id, platform)` e os dois tokens
+ * pelas quatro razões no cabeçalho da migration 0214 — a primeira delas sendo
+ * que o índice único da 0213 é `(organization_id, platform)` e os dois tokens
  * têm escopos diferentes na plataforma.
  *
  * ⚠️ SEMPRE COM `organization_id` NO FILTRO. Mesma lição da #236 que
@@ -15,7 +15,7 @@
  * filtro repete a organização — banco e código dizendo a mesma coisa.
  *
  * ⚠️ EXIGE O ADMIN CLIENT. `ad_insights_connections` tem RLS ligada e ZERO
- * policies, com grants revogados de anon/authenticated (0209). Pelo client de
+ * policies, com grants revogados de anon/authenticated (0214). Pelo client de
  * sessão isto não devolve nada — nem erro, só vazio.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";

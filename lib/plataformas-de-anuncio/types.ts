@@ -125,7 +125,7 @@ export interface TransporteDeConversao {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// O EIXO DE LEITURA (0209) — métricas da conta de anúncios, para a tela
+// O EIXO DE LEITURA (0214) — métricas da conta de anúncios, para a tela
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // Vizinho do eixo de conversões acima, e deliberadamente SEM contato com ele.
@@ -133,7 +133,7 @@ export interface TransporteDeConversao {
 // conversão falsa envenena o otimizador em silêncio). Aqui ele só LÊ, e o pior
 // desfecho é uma tabela vazia com um aviso — por isso os dois não compartilham
 // credencial, interruptor nem caminho de falha. A separação está justificada por
-// extenso no cabeçalho da migration 0209.
+// extenso no cabeçalho da migration 0214.
 
 /** As credenciais de leitura, já decifradas. */
 export interface CredencialDeLeitura {

@@ -162,7 +162,7 @@ const PROVA_PROPRIA: readonly Excecao[] = [
       "manager da org A NÃO lê linhas da org B (0 rows)\") prova isolamento " +
       "com `countAs` real, além do self-read do agent.",
   },
-  // ─── As três do eixo de anúncios (migrations 0208/0209) ───
+  // ─── As três do eixo de anúncios (migrations 0213/0214) ───
   //
   // ⚠️ PROVA DE OUTRO TIPO, e a diferença está escrita de propósito: as demais
   // entradas desta lista citam um teste que SIMULA JWT e CONTA linhas cross-org.

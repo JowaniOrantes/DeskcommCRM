@@ -79,7 +79,7 @@ export const ApiErrorCodes = {
   // 429
   rate_limited: "rate_limited",
 
-  // ─── ANÚNCIOS, eixo de LEITURA (0209) ───
+  // ─── ANÚNCIOS, eixo de LEITURA (0214) ───
   //
   // Declarados aqui pelo mesmo motivo que os da Agenda: `fail()` aceita
   // `(string & {})`, então um código inventado no call site vira contrato de

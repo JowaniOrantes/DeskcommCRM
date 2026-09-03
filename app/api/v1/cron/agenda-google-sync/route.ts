@@ -59,7 +59,8 @@ import { audit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decryptWebhookSecret } from "@/lib/webhooks/secrets";
 import { classificarErroDoGoogle } from "@/lib/agenda/google/erros";
-import { doEventoDoGoogle, ehEventoNosso } from "@/lib/agenda/google/evento";
+import { doEventoDoGoogle } from "@/lib/agenda/google/evento";
+import { ehEventoNosso } from "@/lib/agenda/google/escrita";
 import { listarEventos } from "@/lib/agenda/google/eventos-remotos";
 import { env } from "@/lib/env";
 
@@ -211,13 +212,20 @@ export async function sincronizarAgendasDoGoogle(
       // ⚠️ O FILTRO ANTI-ECO. Ver o cabeçalho: gravar o que nós mesmos criamos
       // faz o mesmo compromisso ocupar dois horários.
       //
-      // Pergunta ao `bruto`, e não ao `lido`, de propósito: os três sinais que
-      // `ehEventoNosso` usa incluem as `extendedProperties`, que a tradução para
-      // `EventoExternoLido` não carrega (ela guarda o que vira COLUNA). O evento
-      // cru já está aqui, na variável do laço — perguntar a ele custa nada e não
-      // obriga a alargar a linha guardada por causa de uma decisão de leitura.
-
-      if (ehEventoNosso(bruto)) {
+      // Pelo ID, não mais pelo iCalUID — ver `ehEventoNosso` em `./escrita`.
+      //
+      // ⚠️ O PR #518 trazia uma SEGUNDA `ehEventoNosso`, em `evento.ts`, com
+      // três sinais (iCalUID + prefixo do id + `extendedProperties`), escrita
+      // contra o mesmo defeito que o #474 já tinha consertado na `main` com um
+      // sinal só. Convergência independente, não conflito de intenção: a versão
+      // da `main` é a que vale aqui, e a duplicata foi removida na resolução do
+      // merge — duas funções com o mesmo nome e assinaturas diferentes é como o
+      // filtro volta a responder `false` para evento nosso sem ninguém ver.
+      //
+      // Os dois sinais a mais do #518 NÃO foram perdidos por decisão de
+      // desenho: eles cobrem o evento que alguém editou no Google. Se voltarem,
+      // voltam para `escrita.ts`, ao lado do único `ehEventoNosso`.
+      if (ehEventoNosso(lido.evento.external_event_id)) {
         resumo.nossosIgnorados += 1;
         continue;
       }

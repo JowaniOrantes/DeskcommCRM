@@ -12469,6 +12469,26 @@ grant select on public.ai_provider_credentials_safe to authenticated;
 notify pgrst, 'reload schema';
 
 
+-- ---- credenciais de IA voltam a ser LIDAS por quem não é admin (migration 0207) ----
+-- A 0150 (bloco acima) deixou `..._write` como ÚNICA policy da tabela. `FOR ALL`
+-- cobre o SELECT, então a leitura passou a exigir admin — e a view
+-- `ai_provider_credentials_safe` é `security_invoker=true`, então um `manager`
+-- passava na autorização da aplicação e era filtrado para ZERO LINHAS na base.
+-- A tela respondia 200 com `[]`, e a pessoa concluía que não havia credencial.
+--
+-- O par que o cabeçalho da 0150 promete: escrita de admin, leitura por tenancy.
+-- O segredo segue protegido pelo GRANT POR COLUNA logo acima — é ele, e não a
+-- RLS, que esconde `api_key_encrypted/iv/tag`. (issue #292)
+--
+-- Este bloco vem DEPOIS do da 0150 de propósito: lá em cima há um
+-- `drop policy if exists ..._select`, e inverter a ordem apagaria este conserto.
+drop policy if exists tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials;
+create policy tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials
+  for select using (organization_id in (select public.fn_user_org_ids()));
+
+notify pgrst, 'reload schema';
+
+
 
 -- ---- o quadro de clientes montado no onboarding (migration 0156) ----
 -- O gatilho `trg_seed_default_pipeline_for_org` semeia um funil de e-commerce em
@@ -17334,7 +17354,7 @@ create unique index if not exists ai_kbv_version_por_agente_legado
   on public.ai_knowledge_versions (agent_id, version_number)
   where knowledge_source_id is null;
 
--- ---- conversões de anúncio: conexão + livro-razão (migration 0208) ----
+-- ---- conversões de anúncio: conexão + livro-razão (migration 0213) ----
 -- Idempotente e auto-curativo, como o kit exige: `update.sh` re-aplica este
 -- arquivo inteiro num banco existente e sem `ON_ERROR_STOP`.
 
@@ -17407,7 +17427,7 @@ create trigger trg_ad_conversion_dispatches_updated_at
   before update on public.ad_conversion_dispatches
   for each row execute function public.fn_set_updated_at();
 
--- ---- o e-mail do convidado no compromisso (migration 0207) ----
+-- ---- o e-mail do convidado no compromisso (migration 0212) ----
 --
 -- Aditiva e idempotente. Nula = evento sem `attendees`, que é o comportamento de
 -- 100% das linhas existentes: nada a curar antes, nada a migrar depois. Sem
@@ -17423,18 +17443,18 @@ alter table public.calendar_appointments
 comment on column public.calendar_appointments.guest_email is
   'E-mail de um convidado externo, digitado por quem marca. Quando presente vira `attendees` no evento do Google e o convite sai por e-mail (`sendUpdates=all` na chamada). Nulo = evento sem convidado, que é o comportamento anterior.';
 
--- ---- credencial de LEITURA da conta de anúncios (migration 0209) ----
+-- ---- credencial de LEITURA da conta de anúncios (migration 0214) ----
 --
 -- Idempotente e auto-curativo, como o kit exige: o `update.sh` re-aplica este
 -- arquivo inteiro num banco existente e SEM `ON_ERROR_STOP`.
 --
 -- Tabela separada de `ad_platform_connections` de propósito — o cabeçalho da
--- migration 0209 tem as quatro razões; a decisiva é que o índice único da 0208 é
+-- migration 0214 tem as quatro razões; a decisiva é que o índice único da 0213 é
 -- `(organization_id, platform)` e os dois tokens têm escopos DIFERENTES na Meta
 -- (escrita no dataset de conversões vs. `ads_read`). Não são o mesmo segredo.
 --
 -- RLS ligada com ZERO policies e grants revogados de anon/authenticated, o mesmo
--- desenho de `platform_google_oauth` (0201) e da 0208, pelo mesmo motivo: a anon
+-- desenho de `platform_google_oauth` (0201) e da 0213, pelo mesmo motivo: a anon
 -- key VAI PARA O BROWSER, e tabela com RLS ligada, sem policy nenhuma e sem
 -- grant não é servida pelo PostgREST de jeito nenhum — só o `service_role`, que
 -- vive no servidor. É mais restritivo que uma policy de tenant, não menos:

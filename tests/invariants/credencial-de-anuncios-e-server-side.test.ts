@@ -49,7 +49,7 @@ import { join } from "node:path";
 
 import { motivoDoErro, sql } from "./psql-transporte";
 
-/** As três tabelas do eixo de anúncios, criadas pelas migrations 0208 e 0209. */
+/** As três tabelas do eixo de anúncios, criadas pelas migrations 0213 e 0214. */
 const TABELAS = [
   "ad_platform_connections",
   "ad_conversion_dispatches",

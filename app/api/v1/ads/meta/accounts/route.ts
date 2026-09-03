@@ -35,7 +35,7 @@ export async function GET(): Promise<Response> {
   const { org } = authz;
 
   // Admin client: `ad_insights_connections` tem RLS ligada e ZERO policies
-  // (0209). Pelo client de sessão isto devolveria vazio, sem erro.
+  // (0214). Pelo client de sessão isto devolveria vazio, sem erro.
   const admin = createAdminClient();
   const credencial = await lerCredencialDeLeitura(admin, org.orgId, "meta_ads");
   if (!credencial.ok) return respostaSemConexao(credencial.motivo, { requestId });

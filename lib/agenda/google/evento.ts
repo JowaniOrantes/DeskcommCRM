@@ -174,7 +174,23 @@ export interface CorpoDeEventoDoGoogle {
   end: { dateTime: string; timeZone: string };
   status: "confirmed" | "tentative" | "cancelled";
   transparency: "opaque";
-  iCalUID: string;
+  /**
+   * ⚠️ NÃO EXISTE MAIS, e a ausência é o conserto.
+   *
+   * O `events.insert` recebia `id` E `iCalUID` juntos, e a referência do Google
+   * diz que "only one of them should be supplied at event creation time".
+   * Medido em produção em 2026-09-01, a cada 5 minutos, por horas:
+   *
+   *   HTTP 400 — {"reason":"invalid","message":"Invalid resource id value."}
+   *
+   * O `id` foi medido e é válido (43 caracteres, todos em [a-v0-9]); o que
+   * violava contrato era a COPRESENÇA. `iCalUID` é do `events.import`, não do
+   * insert.
+   *
+   * Sai dos DOIS verbos, não só do POST: depois disto o evento no Google nasce
+   * com o uid que ELE gera, e um PUT tentando trocá-lo seria candidato ao mesmo
+   * 400 por outro caminho.
+   */
   reminders: { useDefault: true };
   attendees?: ParticipanteDoGoogle[];
   extendedProperties: { private: Record<string, string> };
@@ -198,66 +214,22 @@ const STATUS_PARA_GOOGLE: Record<StatusDoAgendamento, "confirmed" | "tentative" 
   no_show: "confirmed",
 };
 
-/** A identidade estável do evento, do nosso lado. */
-export function icalUidDoAgendamento(idDoAgendamento: string): string {
-  return `${idDoAgendamento}@${SUFIXO_ICAL_UID}`;
-}
-
-/** Este evento do Google foi criado por nós? É a primeira camada anti-eco. */
-export function ehIcalUidNosso(icalUid: string | null | undefined): boolean {
-  if (!icalUid) return false;
-  return icalUid.toLowerCase().endsWith(`@${SUFIXO_ICAL_UID}`);
-}
-
 /**
- * O prefixo dos ids de evento que NÓS criamos no Google.
+ * ⚠️ `icalUidDoAgendamento` e `ehIcalUidNosso` FORAM REMOVIDAS aqui.
  *
- * Mesma derivação que `escrita.ts` faz para montar o id (`idDeEventoDoGoogle`):
- * o Google aceita só `[a-v0-9]`, então a identidade do produto entra sem o
- * ponto. Ela mora aqui porque quem RECONHECE o evento é este arquivo; a
- * duplicação da linha em `escrita.ts` é conhecida e ambas saem do MESMO
- * `SUFIXO_ICAL_UID`, então não têm como divergir de valor — unificar as duas
- * fica para quando `escrita.ts` for tocado por outro motivo.
+ * O uid ia no corpo do evento junto do `id`, e a referência do `events.insert`
+ * proíbe os dois na criação. Medido em produção em 2026-09-01: HTTP 400,
+ * `Invalid resource id value`, a cada 5 minutos, por horas — e NENHUM
+ * compromisso jamais chegou ao Google, em instalação nenhuma.
+ *
+ * O reconhecimento anti-eco migrou para `ehEventoNosso` (`./escrita`), que olha
+ * o PREFIXO DO ID — nosso por construção, preservado pelo Google, e já
+ * disponível no mesmo ponto onde o filtro consultava o uid.
+ *
+ * Migrar não custou dado nenhum: não havia legado para reconhecer. E guardar as
+ * duas "para um `events.import` futuro" seria manter função pura sem consumidor
+ * — o cheiro que o cabeçalho de `escrita.ts` já nomeia como recurso pela metade.
  */
-export const PREFIXO_DE_EVENTO = SUFIXO_ICAL_UID.toLowerCase().replace(/[^a-v0-9]/g, "");
-
-/**
- * Este evento é ECO da nossa própria escrita? — a pergunta completa.
- *
- * ⚠️ O SUFIXO DO `iCalUID` DEIXOU DE BASTAR, e isto foi MEDIDO em produção.
- *
- * O `events.insert` do Google recusa `id` e `iCalUID` no mesmo corpo (400
- * "Invalid resource id value."), então o POST passou a ir sem o nosso iCalUID —
- * e o Google gera o dele, no formato `<id>@google.com`. O filtro que olhava só
- * o sufixo `@deskcomm.app` passou a responder `false` para eventos que são
- * nossos: uma rodada do cron de leitura devolveu `nossosIgnorados: 0` e
- * `gravados: 3`, gravando os três compromissos do CRM como se fossem
- * compromissos de terceiros — o mesmo horário ocupado duas vezes.
- *
- * São TRÊS sinais, e a ordem é a da confiança:
- *
- * 1. `iCalUID` com o nosso sufixo — o que já existia, e continua valendo para
- *    todo evento que já passou por um PUT nosso (o PUT ainda manda o iCalUID).
- * 2. `id` com o nosso prefixo — o id é DERIVADO do id do agendamento e é escrito
- *    por nós no POST, então ele identifica exatamente o que o iCalUID deixou de
- *    identificar. É o sinal que cobre o evento recém-criado.
- * 3. `extendedProperties.private.deskcomm_appointment` — a marca que
- *    `paraEventoDoGoogle` grava em TODO evento nosso, POST e PUT. É a mais
- *    específica das três: carrega o id do agendamento, não só um formato.
- *
- * Três e não uma porque cada uma cobre um buraco da outra: quem editar o evento
- * no Google pode mexer no título e no horário, mas não no id nem nas
- * propriedades privadas do nosso app.
- */
-export function ehEventoNosso(evento: EventoDoGoogle): boolean {
-  if (ehIcalUidNosso(evento.iCalUID)) return true;
-
-  const id = typeof evento.id === "string" ? evento.id.trim().toLowerCase() : "";
-  if (id && id.startsWith(PREFIXO_DE_EVENTO)) return true;
-
-  const marca = evento.extendedProperties?.private?.[`${PREFIXO_PROPRIEDADE}_appointment`];
-  return typeof marca === "string" && marca.trim().length > 0;
-}
 
 /**
  * O que escrever no campo `location`, que é o que a pessoa lê no calendário.
@@ -338,7 +310,6 @@ export function paraEventoDoGoogle(a: AgendamentoParaGoogle): CorpoDeEventoDoGoo
     // Compromisso nosso SEMPRE ocupa. Um agendamento que não ocupasse seria um
     // horário oferecido duas vezes.
     transparency: "opaque",
-    iCalUID: a.google_ical_uid?.trim() || icalUidDoAgendamento(a.id),
     reminders: { useDefault: true },
     extendedProperties: {
       private: {

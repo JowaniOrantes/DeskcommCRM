@@ -284,7 +284,7 @@ export const AUDIT_ACTIONS = [
   // event_log (nenhum handler consumiria o tipo — ver register-handlers.ts).
   "platform_branding.updated",
   "platform_google_oauth.updated",
-  // A conexão da ORGANIZAÇÃO com a conta de anúncios (migration 0208).
+  // A conexão da ORGANIZAÇÃO com a conta de anúncios (migration 0213).
   // Auditável porque o token gravado aqui escreve conversões na conta de
   // mídia do cliente: "quem apontou minhas vendas para este destino?" só tem
   // resposta nesta trilha. COM `organization_id`, diferente das duas linhas
@@ -293,7 +293,7 @@ export const AUDIT_ACTIONS = [
   // O `metadata` carrega o dataset (identificador, não segredo) e um booleano
   // dizendo se o token foi trocado. O token, nem em metadata.
   "ad_platform_connection.updated",
-  // A conexão de LEITURA da organização com a conta de anúncios (0209).
+  // A conexão de LEITURA da organização com a conta de anúncios (0214).
   // Ação SEPARADA da de cima, e não um `metadata.purpose` na mesma: a pergunta
   // que cada trilha responde é diferente. "Quem apontou minhas vendas para este
   // destino?" é sobre dinheiro saindo; "quem deu a alguém acesso de leitura ao

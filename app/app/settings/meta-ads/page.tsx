@@ -7,7 +7,7 @@
  * As duas conectam "a Meta", e juntá-las é tentador. São credenciais
  * diferentes, com escopos diferentes na plataforma (uma escreve conversões, a
  * outra lê `ads_read`), guardadas em tabelas diferentes pelas razões no
- * cabeçalho da migration 0209 — e com consequências diferentes quando falham:
+ * cabeçalho da migration 0214 — e com consequências diferentes quando falham:
  * um token de leitura vencido deixa uma tela vazia; o de conversões vencido faz
  * a empresa parar de reportar vendas sem ninguém perceber.
  *
@@ -18,7 +18,7 @@
  * ─── Por que ADMIN CLIENT para ler ──────────────────────────────────────────
  *
  * `ad_insights_connections` tem RLS ligada com ZERO policies e grants revogados
- * de anon/authenticated (0209). Pelo client de sessão esta página mostraria
+ * de anon/authenticated (0214). Pelo client de sessão esta página mostraria
  * "não conectado" para todo mundo — o gate de papel abaixo é o que autoriza, e a
  * leitura privilegiada acontece no servidor.
  *

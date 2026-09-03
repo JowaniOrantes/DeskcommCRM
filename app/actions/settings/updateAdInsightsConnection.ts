@@ -14,8 +14,8 @@ import { encryptWebhookSecret } from "@/lib/webhooks/secrets";
  * Conectar a conta de anúncios para LER as métricas — pela tela.
  *
  * Irmã de `updateAdPlatformConnection.ts`, que faz o mesmo para o eixo de
- * conversões, e separada dela pelas razões no cabeçalho da migration 0209 (a
- * decisiva: o índice único da 0208 é `(organization_id, platform)` e os dois
+ * conversões, e separada dela pelas razões no cabeçalho da migration 0214 (a
+ * decisiva: o índice único da 0213 é `(organization_id, platform)` e os dois
  * tokens têm escopos diferentes na plataforma).
  *
  * ─── O que isto fecha (invariante 6 da doutrina de restrição de canal) ──────
@@ -69,7 +69,7 @@ const entradaSchema = z.object({
   /**
    * OPCIONAL: permite trocar a conta padrão sem redigitar o token, que a tela
    * nunca mostra de volta. Vazio = "mantenha o que está gravado", NUNCA
-   * "apague" — mesma regra da 0208, pelo mesmo motivo (um salvamento distraído
+   * "apague" — mesma regra da 0213, pelo mesmo motivo (um salvamento distraído
    * não pode derrubar o que já funcionava).
    *
    * Na PRIMEIRA conexão ele é obrigatório, e quem garante isso é o handler
@@ -119,7 +119,7 @@ export async function updateAdInsightsConnection(
   }
 
   // Primeira conexão SEM token é `validation_failed`, não `erro_ao_gravar`: a
-  // coluna é NOT NULL (0209) e o banco recusaria de qualquer jeito, mas com uma
+  // coluna é NOT NULL (0214) e o banco recusaria de qualquer jeito, mas com uma
   // mensagem de constraint que não diz a quem lê a tela o que fazer. O erro
   // certo é "o token é obrigatório da primeira vez".
   if (!existente && !parsed.data.access_token) {
@@ -151,7 +151,7 @@ export async function updateAdInsightsConnection(
   // `upsert` e não `update`: a linha não existe em quem nunca conectou, e um
   // `update` casaria zero linhas devolvendo SUCESSO — a tela diria "salvo" e
   // nada seria gravado. Mesmo modo de falha que a #144 mediu em `organizations`.
-  // O `onConflict` é o índice único `(organization_id, platform)` da 0209.
+  // O `onConflict` é o índice único `(organization_id, platform)` da 0214.
   const { error } = await admin
     .from("ad_insights_connections")
     .upsert(valores, { onConflict: "organization_id,platform" });
