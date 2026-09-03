@@ -512,6 +512,16 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     re-rodou o `tsc`, viu `test:unit` verde e abriu o PR; o `verify` do CI reprovou por
     `modeloDeAmbiente` recebendo `null` onde o tipo é `string | undefined`. **Tipo e comportamento
     são eixos independentes** — a ordem certa é `typecheck` **depois** da última edição, nunca antes.
+
+    ⚠️ **E o mesmo comando pode ter duas dimensões DENTRO dele, em sequência.** O `next build`
+    imprime **`✓ Compiled successfully`** e só **depois** roda **`Running TypeScript`**. O check
+    verde do primeiro passo aparece na tela **antes** de o segundo ter começado — e foi ali que um
+    `TS2589` reprovou, num build que já parecia aprovado. Quem para de ler no primeiro ✓ dá o build
+    por bom.
+
+    Isso é diferente de rodar o comando errado (modo 23): aqui o comando é o certo, a ferramenta
+    está correta, e o erro é **parar de ler cedo**. **A régua de um comando é o exit code, nunca uma
+    linha verde no meio da saída.**
 15. **Árvore parada é pré-condição do resultado, não detalhe.** `scripts/test-db.sh` guarda isso
     explicitamente (`arvore_mexeu` → *"a árvore mudou DURANTE a corrida: este resultado não vale,
     tenha ele passado ou não"*). **O `test:unit` não tem essa guarda**, e a ausência produz uma
