@@ -957,6 +957,39 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 
     Num lote **já mergeado**, a assimetria é clara: achado fraco que passa vira alguém investigando
     o que não existe. **Use 1.** E declare o limiar ao lado da taxa, sempre.
+
+    ### O gate que impede isso de voltar — e é de três linhas
+
+    O problema não é escolher o limiar errado; é o limiar **viver em dois lugares**. Enquanto o
+    critério estiver em **prosa** no prompt e em **aritmética** no agregador, os dois divergem **sem
+    sintoma**: nenhum teste reprova, nenhum vermelho aparece, e o único jeito de descobrir é alguém
+    comparar taxas de dois harnesses por acaso — que foi exatamente o que aconteceu.
+
+    **A regra: o prompt e o agregador leem o limiar do MESMO lugar.**
+
+    ```js
+    /** FONTE ÚNICA — o prompt e o agregador leem daqui. */
+    const REFUTACOES_QUE_MATAM = 1
+
+    // no prompt da lente:
+    `${REFUTACOES_QUE_MATAM === 1
+        ? 'Basta a SUA refutação para o achado cair — nenhuma outra lente precisa
+           concordar com você, então pese o voto sabendo disso.'
+        : `São precisas ${REFUTACOES_QUE_MATAM} refutações para o achado cair.`}`
+
+    // no agregador:
+    sobrevive: refutaram < REFUTACOES_QUE_MATAM
+
+    // e no log final, para a taxa nunca sair sem o corte ao lado:
+    log(`${n} sobreviveram (limiar: ${REFUTACOES_QUE_MATAM} refutação basta para matar)`)
+    ```
+
+    Note o efeito colateral bom: com a constante em **1**, o prompt passa a **avisar o revisor** de
+    que o voto dele decide sozinho — informação que muda como ele pesa a decisão, e que a versão
+    anterior escondia dele.
+
+    Isto vale para qualquer harness com voto: revisão adversarial, painel de juízes, qualquer
+    agregação por corte. **Critério que vive em dois lugares é critério que vai divergir.**
 30. **Sonda boa guardada, sonda ruim na hora de decidir.** O instrumento improvisado aparece
     justamente no momento da decisão — e é ali que ele custa mais caro.
 
