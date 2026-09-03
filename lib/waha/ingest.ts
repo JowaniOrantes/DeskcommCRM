@@ -14,6 +14,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { audit } from "@/lib/audit";
 import { sincronizarSaudeDaConexao } from "@/lib/channels/health";
 import { aplicarEfeitosPosEntrada } from "@/lib/channels/pos-entrada";
+import { pausarIaPorAtendimentoManual } from "@/lib/escalacao/atendimento-manual";
 import { acelerarPipelineDeEventos } from "@/lib/dev/kick-local-pipeline";
 import { canonicalPhoneBR } from "@/lib/channels/phone-variants";
 import { estamparAtribuicaoDoContato } from "@/lib/leads/atribuicao-de-anuncio";
@@ -851,10 +852,17 @@ async function handleOutboundFromUserPhone(
 
   await markConversation(admin, session.organization_id, conversationId, "outbound", previewFromMessage(p), now);
 
-  // Ver `silenciarBotPorRetomadaHumana` — um humano acabou de responder direto pelo
-  // WhatsApp dele, fora do composer/IA; dá a ele uma janela curta de controle da
-  // conversa sem precisar "assumir" formalmente no CRM.
-  await silenciarBotPorRetomadaHumana(admin, session.organization_id, conversationId);
+  // Uma PESSOA respondeu este cliente pelo celular, fora do composer/IA — a IA
+  // para NESTA conversa para não responder junto, por uma janela que expira
+  // sozinha (ver `PRAZO_DO_SILENCIO_MS`). NÃO mexe em `contacts.ai_authorized_at`
+  // — a origem do lead é outro estado. Só as mensagens genuínas do celular
+  // chegam aqui: o eco do nosso próprio envio (IA ou composer) já saiu no
+  // `jaRegistrada` acima.
+  await pausarIaPorAtendimentoManual(admin, {
+    organizationId: session.organization_id,
+    conversationId,
+    canal: "waha",
+  });
 
   await audit({
     action: "message.sent",
