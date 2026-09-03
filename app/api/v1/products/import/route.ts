@@ -22,6 +22,7 @@ import { type NextRequest } from "next/server";
 import { audit } from "@/lib/audit";
 import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
+import { moedaDaOrganizacao } from "@/lib/catalogo/moeda-da-org";
 import { lerPlanilha, type ErroDaLinha } from "@/lib/catalogo/planilha";
 import { CSV_MAX_BYTES, CSV_MAX_DATA_ROWS } from "@/lib/contacts/csv";
 import { COLUNAS_DO_PRODUTO } from "@/lib/schemas/produtos";
@@ -132,9 +133,15 @@ export async function POST(req: NextRequest): Promise<Response> {
   const erros: ErroDaLinha[] = [...lido.erros];
   let gravados = 0;
 
+  // Mesma fonte que o cadastro manual: a planilha não traz coluna de moeda, e
+  // deixar o `default` da coluna decidir daria catálogo em BRL para quem
+  // declarou MXN. As duas portas de escrita respondem igual.
+  const moeda = await moedaDaOrganizacao(supabase, orgId);
+
   const paraGravar = lido.produtos.map((p) => ({
     linha: p.linha,
     organization_id: orgId,
+    moeda,
     codigo: p.codigo,
     nome: p.nome,
     preco_cents: p.preco_cents,
