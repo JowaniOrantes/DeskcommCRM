@@ -12469,6 +12469,26 @@ grant select on public.ai_provider_credentials_safe to authenticated;
 notify pgrst, 'reload schema';
 
 
+-- ---- credenciais de IA voltam a ser LIDAS por quem não é admin (migration 0207) ----
+-- A 0150 (bloco acima) deixou `..._write` como ÚNICA policy da tabela. `FOR ALL`
+-- cobre o SELECT, então a leitura passou a exigir admin — e a view
+-- `ai_provider_credentials_safe` é `security_invoker=true`, então um `manager`
+-- passava na autorização da aplicação e era filtrado para ZERO LINHAS na base.
+-- A tela respondia 200 com `[]`, e a pessoa concluía que não havia credencial.
+--
+-- O par que o cabeçalho da 0150 promete: escrita de admin, leitura por tenancy.
+-- O segredo segue protegido pelo GRANT POR COLUNA logo acima — é ele, e não a
+-- RLS, que esconde `api_key_encrypted/iv/tag`. (issue #292)
+--
+-- Este bloco vem DEPOIS do da 0150 de propósito: lá em cima há um
+-- `drop policy if exists ..._select`, e inverter a ordem apagaria este conserto.
+drop policy if exists tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials;
+create policy tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials
+  for select using (organization_id in (select public.fn_user_org_ids()));
+
+notify pgrst, 'reload schema';
+
+
 
 -- ---- o quadro de clientes montado no onboarding (migration 0156) ----
 -- O gatilho `trg_seed_default_pipeline_for_org` semeia um funil de e-commerce em
