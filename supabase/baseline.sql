@@ -17333,3 +17333,52 @@ create unique index if not exists ai_kbv_version_por_fonte
 create unique index if not exists ai_kbv_version_por_agente_legado
   on public.ai_knowledge_versions (agent_id, version_number)
   where knowledge_source_id is null;
+
+-- ---- a moeda da organização deixa de ser presumida (migration 0206) ----
+--
+-- O produto inteiro presumia real, e a presunção não morava em lugar nenhum
+-- que alguém pudesse mudar: `catalog_products.moeda` nasce 'BRL' e nenhuma
+-- tela oferece outra coisa (o formulário de produto não tem o campo, a
+-- planilha não tem a coluna). Uma loja no México cadastrava em pesos, o banco
+-- guardava 'BRL', e o agente cotava o número com o símbolo errado.
+--
+-- Coluna e não `settings` jsonb: é a mesma classe de `locale` e `timezone`,
+-- que já são colunas desta tabela. Nome `currency` e não `moeda` porque é o
+-- que a doutrina manda (`_cents` + `currency`) e o que `crm_leads` e `orders`
+-- já usam — `catalog_products.moeda` é o desvio, e renomear coluna já
+-- distribuída quebraria o update.sh de quem instalou.
+--
+-- O CHECK é de FORMA (ISO-4217), não de vocabulário fechado: por isso fica
+-- fora do invariante vocabulario-banco-x-typescript, como o irmão
+-- `catalog_products_moeda_iso`.
+
+alter table public.organizations
+  add column if not exists currency text not null default 'BRL';
+
+-- Auto-curativo e ANTES da constraint: num clone onde a coluna já exista nula
+-- ou com lixo, criar o CHECK primeiro quebraria o update.sh no meio.
+update public.organizations
+   set currency = 'BRL'
+ where currency is null
+    or currency !~ '^[A-Z]{3}$';
+
+alter table public.organizations
+  alter column currency set default 'BRL';
+
+alter table public.organizations
+  alter column currency set not null;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'organizations_currency_iso'
+       and conrelid = 'public.organizations'::regclass
+  ) then
+    alter table public.organizations
+      add constraint organizations_currency_iso check (currency ~ '^[A-Z]{3}$');
+  end if;
+end $$;
+
+comment on column public.organizations.currency is
+  'Moeda do negócio desta organização, ISO-4217. É a fonte na ESCRITA: o servidor a copia para catalog_products.moeda no cadastro do produto e nunca aceita a moeda vinda do corpo da requisição. A linha guarda a moeda com que nasceu.';
