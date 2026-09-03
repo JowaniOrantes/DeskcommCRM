@@ -95,6 +95,24 @@ function precoLegivel(cents: number, moeda: string): string {
  * não tem o que foi pedido muda a resposta inteira; saber qual dos dois é
  * apenas a próxima pergunta.
  */
+/**
+ * Tamanho da página da varredura do catálogo.
+ *
+ * 1000 é o `max_rows` declarado em `supabase/config.toml:12` — pedir mais numa
+ * página não traz mais nada, o servidor corta de qualquer jeito.
+ */
+const TAMANHO_DA_PAGINA = 1000;
+
+/**
+ * Teto DECLARADO da varredura: 10 páginas = 10 000 produtos.
+ *
+ * O teto existe porque a pontuação roda em memória e um catálogo sem limite
+ * puxaria a loja inteira a cada pergunta de preço. O que muda em relação ao
+ * `.limit(2000)` anterior não é só o número: é que estourar este teto agora
+ * PRODUZ UM SINAL (`varreduraParcial`) em vez de virar silêncio.
+ */
+const PAGINAS_MAXIMAS = 10;
+
 export function avisosDaBusca(input: { empate: boolean; ignorados: readonly string[] }): string {
   const avisos: string[] = [];
   if (input.ignorados.length > 0) {
@@ -137,16 +155,48 @@ export const crmSearchProducts: McpToolDefinition<typeof produtosInputShape> = {
     // difusa, número exato) não é exprimível num `ilike` — e é ela que impede o
     // 128GB de aparecer para quem pediu 256GB. O corte por org acontece no
     // banco, que é o que importa para o isolamento.
-    const { data, error } = await ctx.supabase
-      .from("catalog_products")
-      .select(
-        "id, codigo, nome, descricao, marca, categoria, preco_cents, moeda, controla_estoque, quantidade, ativo",
-      )
-      .eq("organization_id", ctx.organizationId)
-      .eq("ativo", true)
-      .limit(2000);
+    //
+    // ⚠️ O TETO PEDIDO NÃO ERA O TETO APLICADO. `supabase/config.toml:12`
+    // declara `max_rows = 1000`: o PostgREST corta a resposta nesse número, e o
+    // `.limit(2000)` que estava aqui nunca trouxe 2000 — trouxe no máximo 1000.
+    // Por isso a truncagem NÃO pode ser deduzida de `linhas.length === limite`:
+    // o corte é do servidor e o cliente não sabe qual é. Quem sabe é o `count`,
+    // que a consulta passa a pedir — varredura parcial vira DADO, não palpite.
+    //
+    // E sem `ORDER BY` o Postgres devolve linhas ARBITRÁRIAS: a ordem é a que o
+    // plano der, e muda com o tempo e com o vacuum. Numa loja acima do teto, o
+    // produto pedido podia não estar no lote que veio, e a busca respondia "não
+    // há nada com esse nome" para um produto que a loja TEM. (issue #480)
+    const linhas: unknown[] = [];
+    let total = 0;
+    for (let pagina = 0; pagina < PAGINAS_MAXIMAS; pagina++) {
+      const de = pagina * TAMANHO_DA_PAGINA;
+      const { data: lote, error, count } = await ctx.supabase
+        .from("catalog_products")
+        .select(
+          "id, codigo, nome, descricao, marca, categoria, preco_cents, moeda, controla_estoque, quantidade, ativo",
+          { count: "exact" },
+        )
+        .eq("organization_id", ctx.organizationId)
+        .eq("ativo", true)
+        // Ordem estável e única: o corte, quando houver, é reproduzível — e a
+        // paginação por `range` só é correta sobre uma ordem determinística.
+        .order("codigo", { ascending: true })
+        .range(de, de + TAMANHO_DA_PAGINA - 1);
 
-    if (error) throw new Error(`buscar_produtos_falhou: ${error.message}`);
+      if (error) throw new Error(`buscar_produtos_falhou: ${error.message}`);
+      total = count ?? total;
+      const recebidas = lote ?? [];
+      linhas.push(...recebidas);
+      // Página curta significa fim do conjunto — parar aqui evita uma ida ao
+      // banco por busca em toda loja pequena, que é a esmagadora maioria.
+      if (recebidas.length === 0 || linhas.length >= total) break;
+    }
+
+    const data = linhas;
+    // A varredura foi parcial? Isso é o que separa "não achei no que varri" de
+    // "a loja não tem" — e só a segunda pode ser dita ao cliente.
+    const varreduraParcial = total > linhas.length;
 
     type Linha = {
       id: string;
@@ -173,12 +223,23 @@ export const crmSearchProducts: McpToolDefinition<typeof produtosInputShape> = {
     const topo = disponiveis.slice(0, input.limite);
 
     if (topo.length === 0) {
+      if (achados.length > 0) {
+        return {
+          produtos: [],
+          mensagem:
+            "esse produto existe no catálogo, mas está sem estoque. Não prometa: ofereça avisar quando chegar.",
+        };
+      }
+      // Afirmar ausência exige ter varrido o catálogo inteiro. Sobre uma
+      // amostra, a frase honesta é outra — e ela leva o agente a uma conduta
+      // diferente com o cliente, que é o ponto.
       return {
         produtos: [],
-        mensagem:
-          achados.length > 0
-            ? "esse produto existe no catálogo, mas está sem estoque. Não prometa: ofereça avisar quando chegar."
-            : "não há nada com esse nome no catálogo da loja. Não invente preço — diga que vai confirmar com a equipe.",
+        mensagem: varreduraParcial
+          ? `não encontrei entre os ${linhas.length} produtos que consegui consultar, e o catálogo ` +
+            `desta loja tem ${total}. NÃO diga que a loja não tem — diga que vai confirmar com a ` +
+            "equipe. Se a pessoa souber o código ou o nome exato, peça: com ele a busca acha."
+          : "não há nada com esse nome no catálogo da loja. Não invente preço — diga que vai confirmar com a equipe.",
       };
     }
 
