@@ -390,6 +390,22 @@ export const CHECKPOINT_INSTRUCTION =
   '{"commitments": string[], "objections": string[], "next_action": string|null, "rolling_summary": string} ' +
   '— compromissos assumidos, objeções do lead, próxima ação e o resumo acumulado ' +
   'da conversa até aqui (inclua o que o resumo anterior já dizia). ' +
+  // ⚠️ O REFERENCIAL DE `next_action`, e ele não é zelo de redação.
+  //
+  // Este JSON é escrito no FECHO do turno: a pergunta já saiu, a resposta ainda
+  // não chegou. Sem dizer QUANDO, "próxima ação" é ambígua entre "o que acabei
+  // de fazer" e "o que farei depois" — e o modelo gravava a primeira. No turno
+  // seguinte o texto volta como o PRIMEIRO bloco do prompt, acima do histórico,
+  // e manda repetir a pergunta que o histórico logo abaixo já responde. Medido
+  // numa conversa real: o agente pediu o e-mail QUATRO vezes, com o cliente
+  // respondendo três. (issue #510)
+  //
+  // A negação explícita está aqui porque dizer o que É não basta quando o erro
+  // tem um atrator forte: a pergunta recém-feita é o texto mais fresco no
+  // contexto do modelo.
+  'Em `next_action`, escreva a ação que vem DEPOIS da resposta que você está ' +
+  'esperando — nunca a pergunta que você acabou de fazer. Se o turno terminou ' +
+  'perguntando, a próxima ação é o que fazer COM a resposta quando ela chegar. ' +
   DECLARACAO_INSTRUCTION +
   ' Sem texto fora do JSON.';
 
@@ -937,7 +953,15 @@ export function ritualBlocks(
       })
     : 'sem registro — o lead está em "new"';
   return [
-    '## Checkpoint anterior (compromissos, objeções, próxima ação)',
+    // O cabeçalho declara QUANDO isto foi escrito e QUEM MANDA no desacordo.
+    //
+    // Este é o PRIMEIRO bloco do prompt, acima do histórico — posição que um
+    // modelo lê como "a instrução mais recente". Ele é o oposto disso: foi
+    // escrito no fecho do turno ANTERIOR, antes da mensagem que o cliente
+    // acabou de mandar. Sem dizer isso, um checkpoint desatualizado vence o
+    // histórico que o contradiz. (issue #510)
+    '## Checkpoint anterior — escrito ANTES da última mensagem do cliente',
+    '(Se o histórico abaixo já responde o que este bloco pede, o histórico manda.)',
     checkpointBlock,
     '',
     '## Resumo acumulado da conversa',
@@ -959,6 +983,21 @@ export function ritualBlocks(
     notesIndexBlock,
     '',
     '## Contexto do lead (contato + últimas mensagens)',
+    // Campo de cadastro VAZIO não é prova de que a informação não existe.
+    //
+    // `contact.email: null` chegava como fato, e o modelo o lia com autoridade
+    // de cadastro — vencendo o histórico onde o cliente ACABOU de digitar o
+    // e-mail. E como não há caminho de escrita, o campo nunca deixa de ser
+    // null: o pedido se repetia para sempre. A ressalva é CONDICIONAL de
+    // propósito — pô-la sempre ensinaria o modelo a duvidar de dado bom, que é
+    // o defeito espelhado. (issue #510)
+    ...(context.contact?.email == null
+      ? [
+          '(O e-mail não está confirmado no cadastro. Isso NÃO quer dizer que o ' +
+            'cliente não tenha dado: ele pode já ter sido dito no histórico abaixo. ' +
+            'Confira lá antes de pedir de novo.)',
+        ]
+      : []),
     // A projeção (spec 16 §4) fecha a terceira porta: sem ela, `lead_id`,
     // `conversation_id` e `media_storage_path` chegam crus ao prompt — e UUID
     // cru na tela do cliente foi MEDIDO. Ela só arma quando o turno não tem
