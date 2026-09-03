@@ -1008,3 +1008,30 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 
     A regra: **a sonda que decide é a que mais precisa de controle positivo** — e se você já tem uma
     sonda boa para aquela pergunta, use-a, mesmo que pareça exagero para "só conferir uma coisa".
+
+    ### O caso mais barato da mesma família: o RÓTULO lido como ESTADO
+
+    Uma sonda que **agrupa** estados por conveniência de exibição transforma imprecisão de rótulo em
+    imprecisão de relato. Medido no mesmo dia: um monitor imprimia **"rodando"** para `QUEUED`,
+    `PENDING` e `IN_PROGRESS` juntos, e o relato saiu como *"já saiu da fila para execução"* quando
+    o dado bruto dizia `QUEUED` — ainda na fila.
+
+    Aqui não mudou nada prático (os dois significam "espere"), e é por isso que o caso é bom para
+    aprender: **o erro passa despercebido justamente quando não custa nada**, e o hábito que ele
+    forma é o que custa depois.
+
+    O mesmo vício apareceu num relato meu, de outra forma: eu vinha reportando `4/5` sem dizer
+    **qual** faltava nem **em que estado** — um agregado que esconde a diferença entre "reprovou",
+    "está rodando" e "nem começou", que são três decisões diferentes.
+
+    **A regra: ao reportar estado de gate, imprima um por linha com o valor bruto.** E se agregar,
+    diga o que ficou de fora:
+
+    ```bash
+    # ruim: esconde qual e em que estado
+    ... | jq '[.[] | select(.state=="SUCCESS")] | length'
+
+    # bom: a contagem VEM com o resto nomeado
+    ... | jq '{verdes: [...|select(.state=="SUCCESS")]|length,
+               faltando: [...|select(.state!="SUCCESS")|"\(.name)=\(.state)"]}'
+    ```
