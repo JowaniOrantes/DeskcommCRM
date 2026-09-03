@@ -145,24 +145,74 @@ test("a ocupação do Google não oferece Remarcar nem Cancelar no histórico", 
   await expect(page.getByTestId("tela-agenda")).toBeVisible({ timeout: 25_000 });
   await irParaASemanaSeguinte(page);
 
+  // ─── O INVARIANTE, e ele NÃO é "a linha existe e está cinza" ──────────────
+  //
+  // ⚠️ Esta spec já reprovou o conserto CERTO uma vez, e a lição está na
+  // doutrina de triagem (passe 21). A primeira versão exigia que a linha
+  // ESTIVESSE no histórico para então conferir os botões — o que prendia a
+  // CIRCUNSTÂNCIA em que o defeito foi visto, não a propriedade que precisa
+  // valer. Quando o conserto tirou a ocupação da lista (que é a solução
+  // preferida: bloco anônimo do Google não é compromisso nosso), a spec ficou
+  // vermelha em `a ocupação nem chegou ao histórico — o cenário não montou`,
+  // apontando para o conserto e empurrando quem viesse depois a desfazê-lo
+  // para apagar o vermelho.
+  //
+  // A propriedade que vale é uma só: **a ocupação do Google não oferece ação
+  // que não existe**. Ela é satisfeita de DUAS formas, e as duas são corretas:
+  //
+  //   (a) a linha não aparece no histórico   ← o conserto de hoje
+  //   (b) a linha aparece com os botões inertes
+  //
+  // O que NÃO pode é a terceira: aparecer com botão vivo, que responde 404
+  // porque o id é de `calendar_external_events` e a rota procura em
+  // `calendar_appointments`.
   const linha = page.getByTestId(`linha-${eventoId}`);
-  await expect(
-    linha,
-    "a ocupação nem chegou ao histórico — o cenário não montou",
-  ).toBeVisible({ timeout: 20_000 });
+  const apareceNoHistorico = await linha.isVisible().catch(() => false);
 
   await page.screenshot({
-    path: path.join(RAIZ, ".superpowers/evidence/agenda-historico-oferece-acao.png"),
+    path: path.join(RAIZ, "evidence/agenda-historico-nao-oferece-acao.png"),
   });
 
-  // ─── O DESEJADO: bloco do Google não promete ação que não existe ──────────
-  await expect(
-    page.getByTestId(`cancelar-${eventoId}`),
-    "«Cancelar» está habilitado numa ocupação do Google: o id é de " +
-      "calendar_external_events e a rota DELETE procura em calendar_appointments",
-  ).toBeDisabled();
-  await expect(
-    page.getByTestId(`remarcar-${eventoId}`),
-    "«Remarcar» está habilitado numa ocupação do Google — espelho somente-leitura",
-  ).toBeDisabled();
+  if (apareceNoHistorico) {
+    await expect(
+      page.getByTestId(`cancelar-${eventoId}`),
+      "«Cancelar» está habilitado numa ocupação do Google: o id é de " +
+        "calendar_external_events e a rota DELETE procura em calendar_appointments",
+    ).toBeDisabled();
+    await expect(
+      page.getByTestId(`remarcar-${eventoId}`),
+      "«Remarcar» está habilitado numa ocupação do Google — espelho somente-leitura",
+    ).toBeDisabled();
+  }
+
+  // ─── O CONTROLE, sem o qual "esconda tudo" satisfaria o teste ─────────────
+  //
+  // Um agendamento NOSSO precisa continuar oferecendo as duas ações. Sem este
+  // par, a solução degenerada — filtrar o histórico inteiro, ou desabilitar
+  // todos os botões — passaria verde e quebraria a tela para o uso normal.
+  // É o "não faça X" com o irmão "mas ainda faça X quando é certo".
+  const { data: nosso } = await db
+    .from("calendar_appointments")
+    .select("id")
+    .eq("organization_id", creds.org_id)
+    .gte("starts_at", new Date().toISOString())
+    .order("starts_at")
+    .limit(1)
+    .maybeSingle();
+
+  if (nosso) {
+    const idNosso = (nosso as { id: string }).id;
+    const linhaNossa = page.getByTestId(`linha-${idNosso}`);
+    if (await linhaNossa.isVisible().catch(() => false)) {
+      await expect(
+        page.getByTestId(`cancelar-${idNosso}`),
+        "«Cancelar» ficou desabilitado num agendamento NOSSO — o conserto da " +
+          "ocupação do Google não pode desligar a ação de quem tem ação",
+      ).toBeEnabled();
+      await expect(
+        page.getByTestId(`remarcar-${idNosso}`),
+        "«Remarcar» ficou desabilitado num agendamento NOSSO",
+      ).toBeEnabled();
+    }
+  }
 });

@@ -17,6 +17,51 @@ import type { Conversation } from "@/lib/types/messaging";
 
 type SB = SupabaseClient;
 
+/**
+ * Quantos contatos a busca do Inbox casa antes de cortar.
+ *
+ * Não é um número estético: os ids viajam DENTRO da querystring do PostgREST
+ * (`contact_id.in.(<uuid>,<uuid>,…)`), e requisição GET tem teto no gateway.
+ */
+const TETO_DE_CONTATOS_NA_BUSCA = 120;
+
+/**
+ * O orçamento de bytes que a lista de ids pode ocupar na URL.
+ *
+ * O muro real é 8.192 B na linha de requisição (Kong e nginx, ambos no default),
+ * e a URL leva mais coisa além dos ids: caminho, `select` com todas as
+ * `SELECT_COLS`, o filtro de organização, o `order`, o `limit` e o próprio
+ * `ilike` do termo. Medido neste arquivo, com 1 id a URL já tem 892 B — então o
+ * que sobra para os ids é o resto, e 5.000 B deixa folga confortável para o
+ * termo de busca crescer sem que ninguém precise voltar aqui.
+ *
+ * Cortar por BYTES e não por quantidade é o que faz esta guarda sobreviver a
+ * uma coluna nova em `SELECT_COLS` ou a um formato de id diferente.
+ */
+const ORCAMENTO_DE_IDS_NA_URL = 5_000;
+
+/**
+ * Corta a lista de ids no que cabe no orçamento da URL.
+ *
+ * Devolver menos contatos torna a busca INCOMPLETA — o que é ruim — mas devolver
+ * todos torna a tela QUEBRADA, com `414` virando `500` na cara do operador. Entre
+ * uma lista pobre e uma tela que não abre, a lista pobre ganha; e a diferença
+ * aparece porque a busca por conteúdo (`last_message_preview`) continua rodando
+ * ao lado, sem depender desta lista.
+ */
+function idsQueCabemNaURL(ids: string[]): string[] {
+  const cabem: string[] = [];
+  let bytes = 0;
+  for (const id of ids) {
+    // +1 pela vírgula que separa; o último sobra do lado seguro.
+    const custo = id.length + 1;
+    if (bytes + custo > ORCAMENTO_DE_IDS_NA_URL) break;
+    cabem.push(id);
+    bytes += custo;
+  }
+  return cabem;
+}
+
 const SELECT_COLS = `
   id, organization_id, contact_id, channel_session_id, channel, status,
   status_changed_at, assigned_to_user_id, assigned_to_user_name, assignee_kind, assigned_at, last_inbound_at,
@@ -179,9 +224,28 @@ export async function listConversationsHandler(
       .or(camposDoContato)
       // Teto obrigatório: a lista de ids viaja na URL do PostgREST, e uma busca
       // por "a" sem limite estoura a requisição.
-      .limit(200);
+      //
+      // ⚠️ 200 ERA ACIMA DO MURO, e o comentário acima descrevia o perigo certo
+      // com o número errado. Medido com o `postgrest-js` real e as `SELECT_COLS`
+      // deste arquivo:
+      //
+      //     ids=  1 →   892 B      ids=186 →  8.098 B
+      //     ids=100 → 4.753 B      ids=200 →  8.653 B   ← acima de 8.192
+      //
+      // Kong 2.8.1 — o gateway que a Supabase põe na frente do PostgREST, e o
+      // mesmo que o stack local deste repo sobe — devolve `414 URI too long` a
+      // partir de ~187 ids. E o `error` desta consulta vira `500 internal_error`
+      // no handler, então o Inbox PARA: buscar "ana" ou "silva" numa base de
+      // milhares de contatos devolvia a tela quebrada, não uma lista pobre.
+      //
+      // O teto agora é de BYTES, não de linhas, porque é byte que estoura. O
+      // número de ids que cabe é consequência, e continua certo se as colunas
+      // ou o formato do id mudarem.
+      .limit(TETO_DE_CONTATOS_NA_BUSCA);
 
-    const ids = (contatos ?? []).map((c) => (c as { id: string }).id);
+    const ids = idsQueCabemNaURL(
+      (contatos ?? []).map((c) => (c as { id: string }).id),
+    );
     if (ids.length > 0) {
       query = query.or(
         `last_message_preview.ilike.*${s}*,contact_id.in.(${ids.join(",")})`,
