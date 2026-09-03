@@ -684,6 +684,11 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
 
     Ao revisar um teste novo, pergunte: *este caso descreve a CIRCUNSTÂNCIA em que o bug foi visto,
     ou a PROPRIEDADE que precisa valer?* E: *qual conserto degenerado passaria por ele?*
+
+    E note a inversão desconfortável: **o perigo desta classe cresce com a confiança que a equipe
+    tem na suíte.** Onde ninguém confia no verde, um caso errado é ignorado; onde o verde é levado a
+    sério — que é o estado que se persegue — ele **dirige** a decisão, e dirige para o lado errado.
+    Quanto melhor a disciplina de testes, mais caro fica cada teste que prende a circunstância.
 22. **Fragmento ainda não lançado é PROMESSA, não histórico.** Um PR que faz uma promessa já escrita
     virar verdade **não precisa de fragmento próprio** — enquanto a versão não foi cortada, o texto
     que o operador vai ler é o que está em `.changes/`, e ele ainda não foi lido por ninguém.
