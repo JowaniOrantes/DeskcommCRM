@@ -14,7 +14,7 @@
  * e o filtro repete a organização — banco e código dizendo a mesma coisa.
  *
  * ⚠️ EXIGE O ADMIN CLIENT. `ad_platform_connections` tem RLS ligada e ZERO
- * policies, com grants revogados de anon/authenticated (migration 0204). Pelo
+ * policies, com grants revogados de anon/authenticated (migration 0213). Pelo
  * client de sessão isto não devolve nada — nem erro, só vazio.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";

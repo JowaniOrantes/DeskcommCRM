@@ -54,7 +54,7 @@ interface LinhaParaIda {
   location_kind: string;
   location_details: string | null;
   google_event_id: string | null;
-  /** O convidado externo (migration 0203). Nulo = evento sem `attendees`. */
+  /** O convidado externo (migration 0212). Nulo = evento sem `attendees`. */
   guest_email: string | null;
 }
 

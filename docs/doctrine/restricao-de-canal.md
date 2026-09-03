@@ -119,7 +119,7 @@ Regras duras:
 
 ## A segunda fronteira: plataformas de anúncio
 
-Registrado em 2026-08-30, ao nascer o envio de conversões offline (migration 0204).
+Registrado em 2026-08-30, ao nascer o envio de conversões offline (migration 0213).
 
 O invariante 1 diz "nenhum código fora de `lib/channels/` nomeia um provider". A frase
 tratava `lib/channels/` como *a* fronteira porque, até aqui, só existia um tipo de
