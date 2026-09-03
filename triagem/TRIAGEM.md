@@ -872,3 +872,55 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     mesmo quando você **não** desconfia. É a mesma preferência que o `CLAUDE.md` já enuncia noutro
     contexto — *prefira o comando à afirmação, porque comando não envelhece*. Aqui ele também não
     depende de humor.
+27. **Convergência independente vale MAIS quando difere por uma constante explicada.** Duas medições
+    do mesmo fenômeno que batem **exatamente** são evidência mais fraca do que duas que diferem por
+    um offset constante e explicável — porque o número idêntico também sai de alguém ter **copiado o
+    método** sem pensar.
+
+    Medido em 2026-09-03, no bloqueador do #507. Duas pessoas mediram o tamanho da URL, cada uma com
+    o seu fixture:
+
+    ```
+              medição A    medição B
+    ids=100     4.753 B      4.760 B
+    ids=200     8.653 B      8.660 B     ← acima de 8.192 nas duas
+    ```
+
+    **Sete bytes de diferença nas duas linhas.** O que fecha o argumento não é o "acima de 8.192"
+    coincidente — é o offset ser **constante**: uma divergência de *mecanismo* escalaria com o
+    número de ids; esta não escala. Logo é parte **fixa** diferente (o termo de busca, o uuid da
+    organização), e as duas medições descrevem o mesmo fenômeno por caminhos independentes.
+
+    A leitura prática, ao receber uma medição de terceiro que confirma a sua:
+
+    | o que você vê | o que significa |
+    |---|---|
+    | número **idêntico** | pode ser confirmação — ou o mesmo script rodado duas vezes. Pergunte qual fixture a outra pessoa usou |
+    | offset **constante**, explicável pela parte fixa | **a evidência mais forte**: dois caminhos, um fenômeno |
+    | divergência que **escala** com o parâmetro | mecanismos diferentes. Uma das duas está medindo outra coisa — volte ao passe de régua |
+
+    É o complemento do modo *medições discordantes*: nem toda diferença é erro, e nem toda igualdade
+    é confirmação.
+28. **Ao auditar a sua própria auditoria, meça a lente — e ponha controle positivo na sonda que a
+    mede.** Uma taxa de sobrevivência alta (18 de 20 num lote) pode significar achados bons **ou**
+    lente frouxa, e as duas leituras são indistinguíveis sem medir.
+
+    O teste barato: **conte quantos achados vieram com REPRODUÇÃO (comando rodado + saída) contra
+    quantos vieram só de leitura de código.** Se a maioria for leitura, a lente passou perto demais.
+
+    ⚠️ **E a sonda que classifica precisa de controle positivo, igual a qualquer outra.** Medido no
+    mesmo dia: a classificação automática marcou um achado como "zero sinais de execução", e ao ler
+    o texto ele era **um dos mais bem medidos do lote** — rodou as duas versões da função com o
+    mesmo dublê, aplicou a expressão exata da rota e mostrou antes/depois. O regex procurava
+    `exit=` e `Tests N`; o autor escreveu `[catalogo 503]` e `=> linha final:`. **A cega era a
+    sonda, não o achado** — o modo 7 aparecendo dentro do instrumento que audita.
+
+    E reporte a **margem**, não só o placar. Numa votação de 3 lentes com corte em 2 refutações,
+    conte quantos sobreviventes tiveram **uma** refutação: são os que passaram raspando, e o número
+    deles diz mais sobre o rigor do que o total. No lote medido: 60 votos, 12 refutaram, 2 achados
+    caíram (4 votos) — sobrando 8 refutações espalhadas entre 18 sobreviventes.
+
+    Por fim, o denominador importa: **auditar código que ninguém revisou não produz a mesma taxa que
+    auditar código já revisado**. Um lote de 13 PRs de autores variados e um lote de 3 PRs que o
+    próprio autor já revisou adversarialmente não são comparáveis, e a diferença entre 90% e 17% de
+    sobrevivência pode ser inteiramente isso.
