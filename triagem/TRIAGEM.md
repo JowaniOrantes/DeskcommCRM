@@ -924,3 +924,54 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     auditar código já revisado**. Um lote de 13 PRs de autores variados e um lote de 3 PRs que o
     próprio autor já revisou adversarialmente não são comparáveis, e a diferença entre 90% e 17% de
     sobrevivência pode ser inteiramente isso.
+29. **Número derivado de um CORTE não significa nada sem o corte declarado.** Duas taxas do mesmo
+    tipo de medição, produzidas por **limiares de decisão diferentes**, não são comparáveis — e a
+    comparação parece legítima porque as duas são "porcentagem de sobreviventes".
+
+    Medido em 2026-09-03, e foi a **terceira** aparição da régua implícita no mesmo dia, por um
+    caminho novo:
+
+    | # | o que divergia | a régua escondida |
+    |---|---|---|
+    | 1 | 89 segundos × 3 minutos | **evento**: committer date × hora do push |
+    | 2 | typecheck verde × CI vermelho | **comando**: `tsc` × `tsc -p <config>` |
+    | 3 | 90% × 25% de sobrevivência | **limiar**: 1 refutação mata × 2 refutações matam |
+
+    Nenhuma das três foi má-fé, e é isso que as torna perigosas: em todas, dois números do mesmo
+    *tipo* de medição, produzidos por critérios diferentes, comparados como se fossem a mesma
+    grandeza.
+
+    No caso 3, o lote de 20 achados dava **18 sobreviventes** sob "2 refutações matam" e **~10** sob
+    "1 refutação mata" — 90% contra 50%, do mesmo dado. A diferença que parecia ser de **rigor** era
+    de **corte**.
+
+    ⚠️ **E o texto do prompt discordava do código**: ele dizia *"na dúvida, refute"* enquanto o
+    código implementava `refutaram < 2`, que é o oposto. Prosa e mecanismo divergindo dentro do
+    próprio instrumento — o mesmo defeito que este documento persegue no código do produto.
+
+    **Ao escolher o limiar, pergunte o custo de cada erro, não qual é o "correto":**
+
+    - **1 refutação mata** — conservador. Mata achado bom, e o custo é um defeito que segue vivo.
+    - **2 refutações matam** — permissivo. Deixa passar achado fraco, e o custo é **tempo de
+      gente**, que é o recurso escasso.
+
+    Num lote **já mergeado**, a assimetria é clara: achado fraco que passa vira alguém investigando
+    o que não existe. **Use 1.** E declare o limiar ao lado da taxa, sempre.
+30. **Sonda boa guardada, sonda ruim na hora de decidir.** O instrumento improvisado aparece
+    justamente no momento da decisão — e é ali que ele custa mais caro.
+
+    Dois casos medidos no mesmo dia, ambos por quem tinha a sonda certa disponível:
+
+    - Uma classificação de 20 achados por `grep` de `exit=` e `Tests N` marcou como "sem execução"
+      **o achado mais bem medido do lote**, que escrevia `[catalogo 503]` e `=> linha final:`.
+      Custo: tempo perdido e uma conclusão errada sobre a própria auditoria.
+    - Um `jq` improvisado para a decisão final de liberar um PR **agregava apenas os checks
+      presentes** — e "ausente" virou "verde" por omissão. O PR quase foi liberado com um dos cinco
+      obrigatórios **sem ter começado**. A ferramenta boa existia e estava guardada num monitor que
+      tratava ausência de propósito.
+
+    O segundo é pior, e a diferença diz onde olhar: **classificar errado gasta tempo; decidir errado
+    entrega**. A pressa de concluir é exatamente o momento em que o atalho entra.
+
+    A regra: **a sonda que decide é a que mais precisa de controle positivo** — e se você já tem uma
+    sonda boa para aquela pergunta, use-a, mesmo que pareça exagero para "só conferir uma coisa".
