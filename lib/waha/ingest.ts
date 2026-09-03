@@ -28,65 +28,15 @@ import { logger } from "@/lib/logger";
 export type Admin = ReturnType<typeof createAdminClient>;
 
 /**
- * Janela de silêncio automático do bot quando um humano responde direto pelo
- * WhatsApp (fromMe=true, fora do composer/IA do CRM) — ver `handleOutboundFromUserPhone`.
- *
- * Antes disto, `ignore_self` (`lib/ai/dispatcher/triggers.ts`) só ignorava a PRÓPRIA
- * mensagem do humano (não disparava turno pra ela), mas não silenciava nada — a
- * PRÓXIMA mensagem do lead fazia o agente rodar normalmente, cego ao que o humano
- * acabou de tratar manualmente. Medido em produção (tenant YADEA): um humano
- * negociou preço/pagamento de peça direto no WhatsApp, e a IA, sem saber disso, se
- * meteu de volta na conversa afirmando que "os dados do PIX estão sendo
- * confirmados" — algo que ela não tem nenhuma ferramenta para saber.
- *
- * 3h é deliberadamente curto (não é um handoff formal, que usa `bot_silenced_until`
- * = 'infinity' até alguém reativar): dá ao humano que já está no WhatsApp uma
- * janela de controle sem precisar "assumir" a conversa no CRM, e o bot volta
- * sozinho depois — reduz o risco de um teste do próprio dono ("oi", só verificando
- * o número) travar o atendimento automático por muito tempo sem ninguém perceber.
+ * A pausa da IA quando uma pessoa responde pelo celular vive em
+ * `lib/escalacao/atendimento-manual.ts` (`pausarIaPorAtendimentoManual`), e não
+ * mais aqui. Era `silenciarBotPorRetomadaHumana`, exclusiva deste arquivo e do
+ * WhatsApp; o gesto é o mesmo em qualquer canal (o Zernio tem o mesmo caminho de
+ * saída-por-fora-do-CRM), e duas encarnações da mesma regra divergiriam na
+ * primeira vez que alguém mexesse numa só. O helper unificado mantém o que esta
+ * função garantia — prazo que expira sozinho, renovado a cada fala humana, e
+ * silêncio maior NUNCA encurtado — e acrescenta o rastro de handoff.
  */
-export const HUMAN_TAKEOVER_SILENCE_MS = 3 * 60 * 60 * 1000;
-
-/**
- * Silencia o bot na conversa por `HUMAN_TAKEOVER_SILENCE_MS`, best-effort — NUNCA
- * encurta um silêncio maior já em vigor (ex.: handoff formal com 'infinity'; um
- * `Date` inválido, como "infinity" vindo do Postgres, compara sempre `false` contra
- * qualquer timestamp finito, então o `if` abaixo naturalmente não regride). Falha
- * aqui não pode derrubar a ingestão da mensagem — só loga.
- */
-export async function silenciarBotPorRetomadaHumana(
-  admin: Admin,
-  organizationId: string,
-  conversationId: string,
-): Promise<void> {
-  const proposto = new Date(Date.now() + HUMAN_TAKEOVER_SILENCE_MS);
-  const { data: conv, error: erroLeitura } = await admin
-    .from("conversations")
-    .select("bot_silenced_until")
-    .eq("id", conversationId)
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-  if (erroLeitura) {
-    console.error("[waha.ingest] silenciar bot (retomada humana): leitura falhou", erroLeitura.message);
-    return;
-  }
-  if (conv?.bot_silenced_until) {
-    const atualMs = new Date(conv.bot_silenced_until).getTime();
-    // `Number.isNaN` cobre 'infinity' (handoff formal, ver `lib/ai/handoff/orchestrator.ts`)
-    // e qualquer outro valor não-parseável — tratado como silêncio permanente, nunca
-    // encurtado. NaN não "vence" comparação nenhuma (`NaN >= x` é sempre false), por
-    // isso o caso precisa de checagem explícita em vez de reusar `>=` abaixo.
-    if (Number.isNaN(atualMs) || atualMs >= proposto.getTime()) return;
-  }
-  const { error: erroUpdate } = await admin
-    .from("conversations")
-    .update({ bot_silenced_until: proposto.toISOString() })
-    .eq("id", conversationId)
-    .eq("organization_id", organizationId);
-  if (erroUpdate) {
-    console.error("[waha.ingest] silenciar bot (retomada humana): update falhou", erroUpdate.message);
-  }
-}
 
 interface Session {
   id: string;

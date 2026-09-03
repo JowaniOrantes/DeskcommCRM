@@ -62,13 +62,18 @@ describe("fiação — lead urgente represado pelo cap de warm-up gera alerta cr
 });
 
 describe("fiação — resposta manual pelo WhatsApp silencia o bot temporariamente", () => {
-  it("handleOutboundFromUserPhone chama silenciarBotPorRetomadaHumana depois de registrar a mensagem", () => {
+  // O helper mudou de casa e de nome (era `silenciarBotPorRetomadaHumana`, local
+  // deste arquivo; virou `pausarIaPorAtendimentoManual`, compartilhado com os
+  // outros canais). O que esta guarda protege é o mesmo de sempre: o caminho da
+  // mensagem vinda do celular do operador CALA o bot, e não só grava histórico.
+  it("handleOutboundFromUserPhone chama pausarIaPorAtendimentoManual depois de registrar a mensagem", () => {
     const i = FONTE_INGEST.indexOf("async function handleOutboundFromUserPhone(");
     expect(i).toBeGreaterThan(-1);
     const j = FONTE_INGEST.indexOf("async function handleAck(", i);
     expect(j).toBeGreaterThan(i);
     const corpo = FONTE_INGEST.slice(i, j);
     expect(corpo).toContain('sent_via: "external_device"');
-    expect(corpo).toContain("silenciarBotPorRetomadaHumana(admin, session.organization_id, conversationId)");
+    expect(corpo).toContain("pausarIaPorAtendimentoManual(admin, {");
+    expect(corpo).toMatch(/pausarIaPorAtendimentoManual\(admin, \{[\s\S]{0,200}organizationId: session\.organization_id/);
   });
 });

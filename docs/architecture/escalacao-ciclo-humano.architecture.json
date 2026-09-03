@@ -384,7 +384,7 @@
       "col": 4,
       "type": "service",
       "label": "lib/escalacao/atendimento-manual.ts",
-      "sublabel": "pausarIaPorAtendimentoManual — pessoa respondeu por fora do CRM"
+      "sublabel": "pausarIaPorAtendimentoManual — pessoa respondeu por fora do CRM (pausa COM PRAZO)"
     }
   ],
   "edges": [
@@ -776,13 +776,13 @@
       "id": "e65",
       "from": "atendimentoManual",
       "to": "conversas",
-      "label": "bot_silenced_until='infinity' + last_handoff_reason — NÃO toca ai_authorized_at (a origem do lead é outro estado)"
+      "label": "bot_silenced_until = agora + PRAZO_DO_SILENCIO_MS (60 min), renovado a cada fala humana e NUNCA encurtando um silêncio maior, + last_handoff_reason — NÃO toca ai_authorized_at (a origem do lead é outro estado)"
     },
     {
       "id": "e66",
       "from": "retomada",
       "to": "atendimentoManual",
-      "label": "'Devolver ao automático' desfaz esta pausa (solta a TRAVA 2, a mesma)"
+      "label": "'Devolver ao automático' desfaz esta pausa ANTES da hora (solta a TRAVA 2, a mesma) — sem clique nenhum, o prazo vence e a IA volta sozinha"
     }
   ],
   "cards": [

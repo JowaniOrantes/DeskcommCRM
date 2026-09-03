@@ -4,16 +4,18 @@
  * Numa conversa que o gate autorizou (o lead veio de uma origem elegível), o
  * dono pega o celular e responde o cliente direto no WhatsApp. Essa mensagem
  * entra pelo webhook do provider (`fromMe=true`, sem passar pelo composer do
- * CRM). A IA tem de PARAR nessa conversa — silêncio DURÁVEL
- * (`bot_silenced_until='infinity'` + rastro de handoff) — SEM apagar
- * `contacts.ai_authorized_at`: a origem do lead é estado separado da pausa.
- * A volta é explícita, pela tela ("devolver ao automático").
+ * CRM). A IA tem de PARAR nessa conversa — silêncio COM PRAZO
+ * (`bot_silenced_until = agora + PRAZO_DO_SILENCIO_MS` + rastro de handoff) —
+ * SEM apagar `contacts.ai_authorized_at`: a origem do lead é estado separado da
+ * pausa. O prazo vence sozinho, e a volta antecipada é pela tela ("devolver ao
+ * automático").
  *
  * O que este spec prova, e por qual observável:
  *   - o webhook `fromMe=true` genuíno pausa a IA        → `conversations.bot_silenced_until`
+ *   - o silêncio tem PRAZO, não é 'infinity'            → o instante gravado é finito e futuro
+ *   - cada nova fala humana RENOVA o prazo              → `bot_silenced_until` e `last_handoff_at` avançam
  *   - a tela DIZ que uma pessoa assumiu                  → badge de atendimento humano
  *   - a autorização do lead SOBREVIVE à pausa            → `contacts.ai_authorized_at`
- *   - a pausa é idempotente (2ª mensagem não re-carimba) → `last_handoff_at` estável
  *   - "devolver ao automático" solta a trava            → `bot_silenced_until` volta a null
  *     …e a autorização CONTINUA lá                        → `contacts.ai_authorized_at`
  *
@@ -28,6 +30,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
+
+import { PRAZO_DO_SILENCIO_MS } from "@/lib/escalacao/atendimento-manual";
 
 const APP_URL = `http://localhost:${process.env.E2E_PORT ?? "3001"}`;
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
@@ -176,9 +180,9 @@ test.describe("J20.18 — resposta manual pelo celular pausa a IA (sem apagar a 
           () =>
             helper<{ bot_silenced_until: string | null }>("conversation-silence", conversationId)
               .bot_silenced_until,
-          { timeout: 20_000, message: "a resposta manual tem de silenciar a IA de forma durável" },
+          { timeout: 20_000, message: "a resposta manual tem de silenciar a IA nesta conversa" },
         )
-        .toMatch(/infinity/i);
+        .not.toBeNull();
 
       const depoisDaPausa = helper<{
         bot_silenced_until: string | null;
@@ -187,6 +191,16 @@ test.describe("J20.18 — resposta manual pelo celular pausa a IA (sem apagar a 
       }>("conversation-silence", conversationId);
       expect(String(depoisDaPausa.last_handoff_reason)).toMatch(/manual/i);
       expect(depoisDaPausa.last_handoff_at).not.toBeNull();
+
+      // O SILÊNCIO TEM PRAZO — não é 'infinity'. Decisão do dono do produto:
+      // ninguém clicou em "assumir", então nada aqui pode calar a IA para
+      // sempre. O instante gravado é finito, está no futuro, e não passa do
+      // prazo (com folga para o tempo de trânsito do webhook).
+      expect(String(depoisDaPausa.bot_silenced_until)).not.toMatch(/infinity/i);
+      const venceEm = new Date(String(depoisDaPausa.bot_silenced_until)).getTime();
+      expect(Number.isFinite(venceEm), "bot_silenced_until tem de ser um instante real").toBe(true);
+      expect(venceEm).toBeGreaterThan(Date.now());
+      expect(venceEm).toBeLessThanOrEqual(Date.now() + PRAZO_DO_SILENCIO_MS + 60_000);
 
       // A AUTORIZAÇÃO DO LEAD SOBREVIVE — pausar a conversa ≠ apagar a origem.
       const autorizacao = helper<{ ai_authorized_at: string | null; ai_authorized_reason: string | null }>(
@@ -199,9 +213,15 @@ test.describe("J20.18 — resposta manual pelo celular pausa a IA (sem apagar a 
       ).not.toBeNull();
 
       // ---------------------------------------------------------------------
-      // (4) Idempotência: uma 2ª mensagem do celular não re-carimba o handoff.
+      // (4) RENOVAÇÃO: a 2ª mensagem do celular empurra o prazo para frente.
+      //
+      // É o que "com prazo" significa na prática. Sem renovar, o relógio
+      // contaria da PRIMEIRA fala e a IA voltaria a falar no meio de um
+      // atendimento humano em curso — exatamente quando há uma pessoa na
+      // conversa, que é o pior instante possível.
       // ---------------------------------------------------------------------
       const handoffAntes = depoisDaPausa.last_handoff_at;
+      const venciaAntes = venceEm;
       expect(
         await postWaha({
           event: "message.any",
@@ -216,11 +236,26 @@ test.describe("J20.18 — resposta manual pelo celular pausa a IA (sem apagar a 
           },
         }),
       ).toBe(200);
-      await page.waitForTimeout(1_500);
+      await expect
+        .poll(
+          () =>
+            helper<{ last_handoff_at: string | null }>("conversation-silence", conversationId)
+              .last_handoff_at,
+          {
+            timeout: 20_000,
+            message: "cada fala humana renova o prazo — o rastro tem de avançar",
+          },
+        )
+        .not.toBe(handoffAntes);
+
+      const depoisDaRenovacao = helper<{
+        bot_silenced_until: string | null;
+        last_handoff_at: string | null;
+      }>("conversation-silence", conversationId);
       expect(
-        helper<{ last_handoff_at: string | null }>("conversation-silence", conversationId).last_handoff_at,
-        "conversa já silenciada no futuro não re-carimba o handoff",
-      ).toBe(handoffAntes);
+        new Date(String(depoisDaRenovacao.bot_silenced_until)).getTime(),
+        "o vencimento conta a partir da ÚLTIMA fala humana, não da primeira",
+      ).toBeGreaterThan(venciaAntes);
 
       // ---------------------------------------------------------------------
       // (5) A tela DIZ que uma pessoa assumiu, e oferece a volta.

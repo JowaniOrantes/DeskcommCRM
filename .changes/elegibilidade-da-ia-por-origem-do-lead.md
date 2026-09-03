@@ -19,8 +19,15 @@ de IA para uma conversa não autorizada.
 
 Além disso, e independentemente desse modo: quando você responde um cliente à
 mão pelo próprio WhatsApp (celular, ou outra plataforma na mesma conta), a IA
-para naquela conversa para não responder junto — silêncio durável, que você
-desfaz devolvendo a conversa ao automático. Isso não apaga a origem do lead.
+para naquela conversa para não responder junto. **Essa pausa dura uma hora e se
+renova a cada mensagem sua** — enquanto você estiver atendendo, ela continua
+calada; quando você para, a hora corre e a IA volta a atender aquela conversa
+sozinha. Você não precisa lembrar de religar nada.
+
+Se quiser a IA de volta antes da hora, é o botão "devolver ao automático" na
+conversa. E se quiser que ela fique parada por tempo indeterminado, é o mesmo de
+sempre: assumir a conversa pela tela — aí ela só volta quando você devolver.
+Nenhuma dessas coisas apaga a origem do lead.
 
 Quem não ligar o modo "só atende quem eu autorizei" mantém o comportamento de
 antes para todo o resto.

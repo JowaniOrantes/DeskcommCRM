@@ -1,8 +1,11 @@
 /**
  * R8 — quando uma PESSOA responde o cliente pelo celular (mensagem `fromMe` que
- * NÃO é eco de um envio do CRM), a IA é pausada NESSA conversa. Silêncio
- * durável (`bot_silenced_until='infinity'` + rastro de handoff), sem tocar em
- * `contacts.ai_authorized_at` — a origem do lead é estado separado.
+ * NÃO é eco de um envio do CRM), a IA é pausada NESSA conversa. Silêncio COM
+ * PRAZO (`bot_silenced_until = agora + PRAZO_DO_SILENCIO_MS` + rastro de
+ * handoff), sem tocar em `contacts.ai_authorized_at` — a origem do lead é
+ * estado separado. O prazo em si, e a renovação a cada fala humana, são
+ * medidos em `lib/escalacao/atendimento-manual.test.ts`; aqui o que se prova é
+ * que o caminho REAL da ingestão chega até ele.
  *
  * Prova pelo `dispatchWahaEvent` real (admin client mockado).
  */
@@ -31,6 +34,7 @@ vi.mock("@/lib/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: 
 vi.mock("@/lib/channels/health", () => ({ sincronizarSaudeDaConexao: vi.fn(async () => {}) }));
 
 import { dispatchWahaEvent } from "@/lib/waha/ingest";
+import { PRAZO_DO_SILENCIO_MS } from "@/lib/escalacao/atendimento-manual";
 
 const ORG = "org-1";
 const SESSION = { id: "sess-1", organization_id: ORG, is_warmup_complete: true, warmup_started_at: null };
@@ -105,12 +109,18 @@ const envelopeFromMe = {
 beforeEach(() => vi.clearAllMocks());
 
 describe("R8 · resposta manual pelo celular pausa a IA", () => {
-  it("mensagem fromMe GENUÍNA → grava bot_silenced_until='infinity' + rastro, sem tocar autorização", async () => {
+  it("mensagem fromMe GENUÍNA → grava bot_silenced_until com PRAZO + rastro, sem tocar autorização", async () => {
     const cap: Captura = { conversationUpdates: [], rpcs: [] };
+    const antes = Date.now();
     await dispatchWahaEvent(makeAdmin(cap, false), SESSION, envelopeFromMe, "req-1");
 
-    const pausa = cap.conversationUpdates.find((u) => u.bot_silenced_until === "infinity");
+    const pausa = cap.conversationUpdates.find((u) => u.last_handoff_reason !== undefined);
     expect(pausa).toBeDefined();
+    // NÃO é 'infinity': o silêncio vence sozinho (decisão do dono do produto).
+    expect(pausa!.bot_silenced_until).not.toBe("infinity");
+    const ate = new Date(String(pausa!.bot_silenced_until)).getTime();
+    expect(ate).toBeGreaterThanOrEqual(antes + PRAZO_DO_SILENCIO_MS);
+    expect(ate).toBeLessThanOrEqual(Date.now() + PRAZO_DO_SILENCIO_MS);
     expect(pausa).toHaveProperty("last_handoff_at");
     expect(String(pausa!.last_handoff_reason)).toMatch(/manual/i);
     // NÃO toca a elegibilidade do lead.
@@ -122,7 +132,7 @@ describe("R8 · resposta manual pelo celular pausa a IA", () => {
   it("eco do próprio envio do CRM (já registrado) → NÃO pausa nada", async () => {
     const cap: Captura = { conversationUpdates: [], rpcs: [] };
     await dispatchWahaEvent(makeAdmin(cap, true), SESSION, envelopeFromMe, "req-2");
-    expect(cap.conversationUpdates.find((u) => u.bot_silenced_until === "infinity")).toBeUndefined();
+    expect(cap.conversationUpdates.find((u) => u.last_handoff_reason !== undefined)).toBeUndefined();
   });
 
   /**
