@@ -379,12 +379,30 @@ jobs:
       #   (1) 17 linhas dependem de WAHA/Resend/Nuvemshop/Redis
       #       (`grep -ciE "waha|resend|nuvemshop|redis"` → 17 linhas, 22 ocorrências).
       #
-      #   (2) `orgRow()` (`:41-43`) faz `.limit(1).single()` em `organizations` —
-      #       pressupõe banco de UMA organização só. O banco do CI é compartilhado
-      #       entre as duas partes do job, e `signup-journey.spec.ts:32` cria uma
-      #       segunda org sem cleanup: quando a parte 2 começa há ≥2, e o `.single()`
-      #       falha. Esta razão NÃO se resolve com variável de ambiente — é o desenho
-      #       do rig, e é por isso que "basta dar as credenciais" não destrava.
+      #   (2) `orgRow()` resolvia a organização com `.limit(1).single()` em
+      #       `organizations`, SEM `where` — pressupondo banco de UMA organização
+      #       só. O banco do CI é compartilhado entre as duas partes do job, e
+      #       `signup-journey.spec.ts:32` cria uma segunda org sem cleanup: quando
+      #       a parte 2 começa, já há ≥2.
+      #
+      #       ⚠️ ESTA LINHA DIZIA QUE "o `.single()` falha". É FALSO, e a frase
+      #       errada é o motivo de a classe ter sobrevivido em quatro lugares:
+      #       ela descrevia o desfecho como barulho quando o desfecho é dano.
+      #       Medido em 2026-09-04 contra PostgREST v14.10, três linhas na tabela:
+      #
+      #           .select(...).limit(1).single()  →  error: null + a PRIMEIRA linha
+      #           .select(...).single()           →  PGRST116 ("Cannot coerce…")
+      #
+      #       O `.limit(1)` recorta ANTES da checagem de singularidade. Ou seja:
+      #       o `beforeAll` desta suíte — que zera `onboarded_at`, apaga
+      #       `ai_agents` e apaga `channel_sessions` — apagava dados de uma
+      #       organização QUALQUER, em silêncio. Levantado por @Elevstudio-Dev
+      #       (PR #559) depois de acontecer numa instalação de trabalho.
+      #
+      #       A instância está corrigida (a org sai do dono do bootstrap) e a
+      #       classe inteira virou gate: `tests/unit/e2e-nao-escolhe-a-primeira-linha`.
+      #       O que continua valendo aqui é a razão (1): esta suíte não roda no CI
+      #       por dependência externa, não por causa do rig de organização.
       #
       # Continua sendo a P0 da doutrina de QA Visual: `e2e` verde NÃO prova a
       # jornada de instalação fresca, que é o produto que se vende.
