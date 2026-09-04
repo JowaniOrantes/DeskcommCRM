@@ -17280,7 +17280,7 @@ create unique index if not exists ai_kbv_version_por_agente_legado
   on public.ai_knowledge_versions (agent_id, version_number)
   where knowledge_source_id is null;
 
--- ---- a moeda da organização deixa de ser presumida (migration 0206) ----
+-- ---- a moeda da organização deixa de ser presumida (migration 0208) ----
 --
 -- O produto inteiro presumia real, e a presunção não morava em lugar nenhum
 -- que alguém pudesse mudar: `catalog_products.moeda` nasce 'BRL' e nenhuma
@@ -17328,6 +17328,30 @@ end $$;
 
 comment on column public.organizations.currency is
   'Moeda do negócio desta organização, ISO-4217. CONTRATO: é a fonte na ESCRITA — o produto herda esta moeda no cadastro, e a moeda que venha no corpo da requisição não decide (corpo não decide unidade, como não decide escopo). A linha do produto guarda a moeda com que nasceu: pedido pago em BRL não vira MXN depois.';
+
+-- ---- elegibilidade da IA por origem do lead (migration 0206) ----
+--
+-- Gate OPT-IN por canal (`channel_sessions.metadata.ai_gate = 'allowlist'`):
+-- ausente / 'open' = comportamento de hoje (a IA responde todo inbound quando há
+-- agente publicado), nenhum self-hoster afetado. Com 'allowlist', a IA só
+-- responde quando o CONTATO está autorizado, e é isto que estas colunas guardam.
+-- Contact-level como `force_human` (a trava oposta). Aditiva e idempotente:
+-- colunas anuláveis, sem default, sem constraint — nenhuma linha existente viola
+-- nada. RLS de `contacts` já cobre (row-level); coluna nova não precisa policy.
+
+alter table public.contacts
+  add column if not exists ai_authorized_at timestamptz;
+
+alter table public.contacts
+  add column if not exists ai_authorized_reason text;
+
+comment on column public.contacts.ai_authorized_at is
+  'Elegibilidade da IA (gate opt-in channel_sessions.metadata.ai_gate=allowlist): quando o contato foi autorizado a ser atendido automaticamente. NULL = não autorizado, a IA não responde. Renovado a cada turno autorizado enquanto a conversa está viva.';
+
+comment on column public.contacts.ai_authorized_reason is
+  'Origem da autorização de IA: respondi:<form>:<submission> | campanha:<id> | automacao:<rule> | retomada_manual.';
+
+notify pgrst, 'reload schema';
 
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
@@ -17402,4 +17426,3 @@ grant execute on function public.fn_decrypt_oauth(bytea) to service_role;
 grant execute on function public.fn_encrypt_oauth(text) to service_role;
 grant execute on function public.fn_lgpd_cascade_redact_contact(uuid, uuid, uuid) to service_role;
 grant execute on function public.fn_update_budget_consumption() to service_role;
-

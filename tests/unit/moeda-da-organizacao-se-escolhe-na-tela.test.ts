@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 /**
  * A MOEDA DA ORGANIZAÇÃO SE ESCOLHE NA TELA, E O QUE SE ESCOLHE É O QUE GRAVA.
  *
- * A migration 0206 criou `organizations.currency`. Coluna sem superfície é
+ * A migration 0208 criou `organizations.currency`. Coluna sem superfície é
  * configuração morta — o invariante 6 de `docs/doctrine/sistema-vivo.md` ("toda
  * configuração tem superfície") existe para isso, e o produto já pagou essa
  * conta: o seletor de idioma do perfil ficou meses salvando um campo que

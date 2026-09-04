@@ -104,7 +104,7 @@ export const produtoCreateSchema = z.object({
   // aceitava a moeda do corpo, mas NENHUMA tela oferecia o campo — nem o
   // formulário de "Novo produto" nem a planilha —, então o único jeito de um
   // produto não ser BRL era chamar a API por fora do produto. Quem escolhe a
-  // moeda é a organização (`organizations.currency`, migration 0206), e o
+  // moeda é a organização (`organizations.currency`, migration 0208), e o
   // servidor a copia na escrita via `moedaDaOrganizacao()`.
   //
   // Fora do schema, o Zod descarta a chave: um corpo com `moeda` não falha, é

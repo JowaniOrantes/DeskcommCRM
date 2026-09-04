@@ -1,4 +1,4 @@
--- 0206 — A MOEDA DA ORGANIZAÇÃO DEIXA DE SER PRESUMIDA
+-- 0208 — A MOEDA DA ORGANIZAÇÃO DEIXA DE SER PRESUMIDA
 --
 -- ─── O que existia antes ───────────────────────────────────────────────────
 --

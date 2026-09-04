@@ -137,6 +137,7 @@ import {
 import { camadaLigada, lerCamadasDaOrg } from '../guardrails/camadas-da-org';
 import { fusoDaOrganizacao } from './fuso-da-org';
 import { renderAgora } from '@/lib/tempo/agora';
+import { decidirElegibilidadeDaConversa } from '@/lib/ai/elegibilidade/consulta-pg';
 
 /**
  * Superfície ESTÁTICA das tools do agente (description + inputSchema) — parte do
@@ -761,7 +762,17 @@ export interface InboundTurnKnobs {
    * Ausente = usa o defaultModel da org (mesma convenção de stageClassifier/jailbreak).
    */
   followupAi?: { model?: string };
+  /**
+   * Janela de validade da autorização de IA de um contato (gate opt-in
+   * `channel_sessions.metadata.ai_gate = 'allowlist'`). Só consultada quando o
+   * canal tem o gate ligado. Ausente nos testes que não o exercitam — o default
+   * de 21 dias é aplicado.
+   */
+  allowlistTtlMs?: number;
 }
+
+/** Default de `allowlistTtlMs` (21 dias) para testes que omitem o knob. */
+export const ALLOWLIST_TTL_MS_PADRAO = 21 * 24 * 60 * 60 * 1000;
 
 export interface InboundTurnDeps {
   crmCfg: CrmEdgeConfig;
@@ -1299,6 +1310,50 @@ async function executarTurnoDoAgente(
   if (await isLeadInHandoff(pool, tenantId, leadId)) {
     runLog.info('turno pulado — lead em handoff humano (bot silenciado)', { kind: job.kind });
     return;
+  }
+
+  // GATE DE ELEGIBILIDADE (opt-in por canal — `metadata.ai_gate = 'allowlist'`).
+  // Segunda checagem, defesa em profundidade: o drain já barra antes de
+  // enfileirar, mas um job pode ter sido enfileirado quando a conversa ainda
+  // estava autorizada e um humano assumiu no meio-tempo, ou o gate do canal
+  // mudou. Canal 'open' (default) → `permite:true`, nada muda. NO-OP no início do
+  // turno, antes de qualquer chamada de modelo — mesmo lugar e mesmo custo do
+  // veto de handoff acima.
+  try {
+    const elegib = await decidirElegibilidadeDaConversa(pool, {
+      organizationId: tenantId,
+      conversationId: input.conversationId,
+      agora: clock(),
+      ttlMs: deps.knobs.allowlistTtlMs ?? ALLOWLIST_TTL_MS_PADRAO,
+    });
+    if (elegib !== null && !elegib.permite) {
+      runLog.info('turno pulado — conversa não elegível para IA', {
+        kind: job.kind,
+        motivo: elegib.motivo,
+      });
+      return;
+    }
+    // KEEP-ALIVE: enquanto a conversa autorizada está viva, renova o carimbo —
+    // assim uma negociação de semanas não expira pela janela de validade, mas um
+    // contato que veio de uma submissão e sumiu volta a NÃO ser elegível depois
+    // da janela. Só no modo 'allowlist' (motivo 'autorizado'); fire-and-forget.
+    if (elegib !== null && elegib.motivo === 'autorizado' && job.kind === 'inbound_turn') {
+      pool
+        .query(
+          `update contacts set ai_authorized_at = now()
+           where organization_id = $1 and id = $2 and ai_authorized_at is not null`,
+          [tenantId, leadId],
+        )
+        .catch((err: unknown) => {
+          runLog.warn('keep-alive da autorização de IA falhou', {
+            error: (err instanceof Error ? err.message : String(err)).slice(0, 120),
+          });
+        });
+    }
+  } catch (err) {
+    runLog.warn('checagem de elegibilidade falhou no turno — seguindo', {
+      error: (err instanceof Error ? err.message : String(err)).slice(0, 160),
+    });
   }
 
   // JANELA ANTI-BAN (7h–22h por padrão, fuso do tenant): fora dela o turno é
