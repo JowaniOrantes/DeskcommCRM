@@ -153,6 +153,18 @@ export function SidebarContent({
         das treze telas dele moram atrás do "Ver tudo em IA"), e o CRM ainda não
         tem um. Quando o quinto destino de CRM aparecer, é hub que se cria, não
         mais 4px que se raspa.
+
+        ✅ O QUINTO APARECEU, e a promessa foi paga. Tarefas (PR #546) levou o
+        CRM a cinco telas e a dobra estourou em 13px — medido em 1280×900,
+        `scrollHeight` 776 contra 763 de altura. O conserto foi `/app/crm`, o
+        hub do grupo: Produtos e Etapas do funil saíram do menu para dentro
+        dele, e nenhum valor deste arquivo mudou por causa disso.
+
+        Fica valendo o mesmo, agora para o próximo grupo: com hub em CRM, IA e
+        Organização, tela nova de qualquer um dos três não pressiona mais o
+        menu. Quem pressionar é um grupo SEM hub — Atendimento (4), Canais (3)
+        ou Análise (3). Quando um deles passar de quatro, a resposta é a mesma:
+        cria-se o hub, não se raspa densidade.
       */}
       <nav className="flex-1 space-y-2 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {

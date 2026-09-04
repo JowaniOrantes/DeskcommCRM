@@ -59,14 +59,20 @@ describe("Sidebar agrupado", () => {
     expect(titulos).toEqual(["Atendimento", "CRM", "Agente de IA", "Canais", "Análise"]);
   });
 
-  it("leva às Etapas do funil sem passar por Configurações", () => {
+  it("leva às Etapas do funil pelo CRM, e não por Configurações", () => {
     comoPapel("admin");
     render(<Sidebar collapsed={false} />);
-    // O rótulo mudou: "Funis" passou a ser a LISTA (/app/kanban) e esta tela,
-    // que configura as colunas, virou "Etapas do funil". Antes as duas
-    // disputavam o mesmo nome no mesmo grupo do menu.
-    const etapas = screen.getByRole("link", { name: "Etapas do funil" });
-    expect(etapas).toHaveAttribute("href", "/app/settings/tenant/pipelines");
+    // ⚠️ O CAMINHO MUDOU, A PROPRIEDADE NÃO. Etapas do funil saiu do menu para
+    // dentro do hub do CRM quando Tarefas virou o quinto destino do grupo e o
+    // menu passou a rolar. A porta continua sendo CRM — "Ver tudo em CRM" leva
+    // a `/app/crm`, e é lá que a tela aparece —, nunca Configurações, que é o
+    // enterro que originou toda esta reorganização.
+    //
+    // O que este teste prende é a porta EXISTIR no grupo certo do sidebar; que
+    // ela desemboca na tela é o e2e `navegacao.spec.ts` que percorre, clicando.
+    const hub = screen.getByRole("link", { name: /Ver tudo em CRM/ });
+    expect(hub).toHaveAttribute("href", "/app/crm");
+    expect(screen.queryByRole("link", { name: "Etapas do funil" })).toBeNull();
   });
 
   it("e os dois itens de funil não disputam o mesmo nome", () => {

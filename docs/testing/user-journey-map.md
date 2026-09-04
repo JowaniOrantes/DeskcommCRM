@@ -1322,6 +1322,32 @@ isso não está escrito em lugar nenhum, e quem adota o helper sem subir o teto 
 dois testes alheios estourarem sem call log de locator. Se você for adotar o
 helper numa spec nova: `test.describe.configure({ timeout: 120_000 })`.
 
+## O menu inteiro cabe na dobra de um notebook? (2026-09-04)
+
+Origem: PR #546 pôs a tela de **Tarefas** no grupo CRM e o menu passou a rolar.
+Medido pela tela, 1280×900, logado como admin: `nav.scrollHeight` **776** contra
+**763** de altura útil — **13px** de excesso, 19 links, 5 grupos. Nenhum título
+de grupo caía fora da dobra; o que quebrava era o `rola`.
+
+A resposta NÃO foi raspar densidade: o comentário de `components/shell/Sidebar.tsx`
+já dizia, desde a vez em que Produtos estourou a dobra por uma linha, que "quando
+o quinto destino de CRM aparecer, é hub que se cria, não mais 4px que se raspa".
+Tarefas foi o quinto. Criou-se `/app/crm` — o mesmo mecanismo (`group.hub`) que o
+grupo IA já usava.
+
+| caso | prioridade | estado |
+|---|---|---|
+| Em 1280×900 o menu inteiro cabe sem rolar | `[P1]` | **PASS**, medido por ferramenta em `tests/e2e/navegacao.spec.ts`: `scrollHeight` **763** = altura **763**, excesso **0**, 18 links. A folga real — distância entre o fim do último grupo e o fim da caixa de conteúdo da `<nav>`, que o `scrollHeight` grampeado NÃO revela — é **19px** |
+| Etapas do funil continua alcançável pelo CRM, não por Configurações | `[P1]` | **PASS**, e o caminho é percorrido inteiro: sidebar → "Ver tudo em CRM" → `/app/crm` → card → `settings/tenant/pipelines`. Evidência em `.superpowers/evidence/nav-hub-crm.png` |
+| Produtos, que saiu do menu, continua tendo porta (DoD 14) | `[P1]` | **PASS**, caso próprio na mesma spec: o link não existe no sidebar (`toHaveCount(0)`) e existe no hub |
+| A folga de 19px é real | — | **PROVADO POR SABOTAGEM.** Um sexto destino de CRM com `sidebar: true` devolve o excesso a exatamente **+13px** e reprova o mesmo caso — previsto antes de rodar, e batido |
+| 19px é menos de uma linha (28px + 4px de intervalo = 32px) | — | **ACEITO, com a saída declarada.** O próximo item de sidebar volta a estourar. Só que CRM, IA e Organização têm hub: tela nova em qualquer um dos três não pressiona mais o menu. Quem ainda pressiona é grupo SEM hub — Atendimento (4), Canais (3), Análise (3) —, e para eles a resposta escrita é a mesma: cria-se o hub |
+
+**O que a medição do `scrollHeight` NÃO responde:** quando o conteúdo cabe, ele é
+grampeado no `clientHeight`, então "excesso 0" e "sobra 200px" dão o MESMO número.
+Quem quiser saber quanta folga restou tem de medir o `bottom` do último filho
+contra a caixa de conteúdo da `<nav>` — foi assim que os 19px saíram.
+
 ## O inbox em tempo real — o defeito que veio de fora (2026-08-24)
 
 **Sintoma relatado pelo dono:** *"Recebemos mensagem e só reflete no inbox (na

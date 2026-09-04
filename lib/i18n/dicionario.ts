@@ -69,6 +69,7 @@ export const DICIONARIO: Traducoes = {
   "Follow-ups": { es: "Seguimientos" },
   Roteadores: { es: "Enrutadores" },
   "Ver tudo em IA": { es: "Ver todo en IA" },
+  "Ver tudo em CRM": { es: "Ver todo en CRM" },
   Conexões: { es: "Conexiones" },
   Webhooks: { es: "Webhooks" },
   Desempenho: { es: "Rendimiento" },
@@ -223,6 +224,16 @@ export const DICIONARIO: Traducoes = {
   "Dados da empresa, retenção de mídia, DPO. Admin only.": {
     es: "Datos de la empresa, retención de medios, DPO. Solo administradores.",
   },
+  // ─── Hub do CRM (NavHub: seções e subtítulo) ───
+  //
+  // As duas seções são a régua que decide o menu, escrita por extenso: o que se
+  // abre todo dia fica no sidebar, o que se define uma vez fica só no hub.
+  "O dia a dia da venda": { es: "El día a día de la venta" },
+  "Preparar a venda": { es: "Preparar la venta" },
+  "Onde a venda acontece — e o que você define uma vez para ela funcionar.": {
+    es: "Donde ocurre la venta — y lo que defines una vez para que funcione.",
+  },
+
   // ─── Hub de Configurações (NavHub: seções, rótulos e descrições das cards) ───
   "Sua conta": { es: "Tu cuenta" },
   "Sua empresa": { es: "Tu empresa" },
