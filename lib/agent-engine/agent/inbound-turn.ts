@@ -234,7 +234,9 @@ export const AGENT_TOOL_DEFS = {
       'sensível) ou quando você atingir o limite do que pode resolver. ' +
       'AVISE O LEAD ANTES: mande uma mensagem dizendo que você vai chamar alguém da equipe e SÓ ENTÃO ' +
       'chame esta ferramenta — depois dela você não consegue mais falar com ele. Se você não avisar, ' +
-      'o sistema manda um aviso padrão no seu lugar. Acionada a ferramenta, encerre o turno.',
+      'o sistema manda um aviso padrão no seu lugar. Acionada a ferramenta, encerre o turno. ' +
+      'NUNCA diga ao lead que "já chamei alguém" ou "já passei para a equipe" sem ter chamado esta ' +
+      'ferramenta NO MESMO turno — a frase no passado não substitui a ação, e ninguém é avisado de verdade.',
     // Schema LARGO para o SDK (o modelo vê o campo); a validação REAL é a whitelist .strict()
     // + guard de prototype pollution dentro de applyRequestHumanHandoff — campo extra/forjado
     // vira erro de ENSINO ao modelo, nunca exceção do SDK nem strip silencioso.
@@ -258,7 +260,9 @@ export const AGENT_TOOL_DEFS = {
       'Abra um caso para um humano de retaguarda quando você NÃO conseguir resolver o pedido do lead ' +
       'sozinho (liberar acesso, corrigir algo num sistema, uma decisão que exige uma pessoa). Você CONTINUA ' +
       'conversando com o lead normalmente — não silencia. Use SEMPRE que for prometer ao lead que alguém vai ' +
-      'verificar/resolver: prometer sem abrir o caso é proibido.',
+      'verificar/resolver: prometer sem abrir o caso é proibido. Isso vale mesmo quando você nomeia a ' +
+      'pessoa ("vou confirmar com o Fulano", "já registrei com a equipe") — nomear alguém não abre o caso; ' +
+      'só esta ferramenta abre. Chame-a NO MESMO turno em que fizer a promessa, nunca depois.',
     // Schema LARGO para o SDK (o modelo vê os campos); a validação REAL é a whitelist
     // .strict() openHumanCaseInputSchema (human-cases.ts) — campo extra/forjado vira
     // erro de ENSINO ao modelo, nunca exceção do SDK nem strip silencioso.
@@ -1622,7 +1626,7 @@ async function executarTurnoDoAgente(
   const openingContext = await getLeadContext(
     pool,
     deps.crmCfg,
-    { tenantId, leadId, conversationId: input.conversationId },
+    { tenantId, leadId, conversationId: input.conversationId, fuso: fusoDaOrg },
     turnContextKnobs,
   );
   if (!openingContext.ok) {
@@ -1987,7 +1991,7 @@ async function executarTurnoDoAgente(
           const releitura = await getLeadContext(
             pool,
             deps.crmCfg,
-            { tenantId, leadId, conversationId: input.conversationId },
+            { tenantId, leadId, conversationId: input.conversationId, fuso: fusoDaOrg },
             turnContextKnobs,
           );
           // Sem esta linha a projeção da abertura seria decorativa: bastaria o
