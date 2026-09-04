@@ -355,6 +355,9 @@ jobs:
         gatilho-de-etapa.spec.ts gatilho-de-caso.spec.ts
         marca-logo.spec.ts
         historico-de-captacao.spec.ts
+        agenda-ocupacao-do-google-na-grade.spec.ts
+        agenda-ocupacao-do-google-no-historico.spec.ts
+        followup-publicado-abre-no-construtor.spec.ts
         automacao-diz-a-verdade.spec.ts
         inbox-quem-manda.spec.ts
         acervo-de-conhecimento.spec.ts
