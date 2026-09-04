@@ -39,6 +39,8 @@ const ORG_ID = "22222222-2222-4222-8222-222222222222";
 
 /** O que a action mandou para o UPDATE — é sobre isto que as asserções falam. */
 let atualizado: Record<string, unknown> | null = null;
+/** O org id que o `.eq()` do UPDATE recebeu — admin client bypassa RLS, então este `.eq()` É a única cerca. */
+let orgIdAtualizado: string | null = null;
 
 function adminFalso() {
   return {
@@ -48,7 +50,12 @@ function adminFalso() {
       }),
       update: (linha: Record<string, unknown>) => {
         atualizado = linha;
-        return { eq: async () => ({ error: null }) };
+        return {
+          eq: async (_coluna: string, valor: string) => {
+            orgIdAtualizado = valor;
+            return { error: null };
+          },
+        };
       },
     }),
     rpc: () => Promise.resolve({ error: null }),
@@ -74,6 +81,7 @@ function entrada(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   atualizado = null;
+  orgIdAtualizado = null;
   vi.mocked(loadAuthUser).mockResolvedValue({
     id: "u1",
     is_platform_admin: false,
@@ -95,6 +103,12 @@ describe("a moeda da organização", () => {
     // ⚠️ MXN e não BRL: com o padrão chumbado este caso passaria verde e a
     // escolha da tela seria decorativa.
     expect(atualizado).toMatchObject({ currency: "MXN" });
+    // ⚠️ O admin client BYPASSA RLS por desenho (única policy de escrita de
+    // `organizations` é `orgs_write_platform_admin`) — o `.eq("id", orgId)`
+    // é a ÚNICA cerca entre "salvei a moeda da minha org" e "salvei a moeda
+    // de toda organização da instalação". Um `.eq()` esquecido escreveria em
+    // todo mundo e este teste continuaria verde sem esta linha.
+    expect(orgIdAtualizado).toBe(ORG_ID);
   });
 
   it("recusa moeda que o produto não serve, antes do banco", () => {

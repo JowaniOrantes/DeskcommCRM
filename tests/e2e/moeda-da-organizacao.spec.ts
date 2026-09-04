@@ -27,7 +27,13 @@ import { test, expect, type Page } from "@playwright/test";
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
 
 let creds = lerCreds();
-const EVIDENCE = path.join(process.cwd(), ".superpowers", "evidence");
+// ⚠️ `evidence/`, não `.superpowers/evidence/` — a segunda é gitignored de
+// propósito. Escrever nela fazia o journey map citar caminho que `git
+// ls-files` não conhece (reprova em `tests/unit/evidencia-citada.test.ts`) e,
+// mais grave: um rerun deste spec não atualizava a evidência que o mapa cita,
+// porque as duas pastas divergem. Mesmo padrão de `agente-novo-e-uso.spec.ts`,
+// `followup-linguagem.spec.ts` e outros ~15 specs.
+const EVIDENCE = path.join(process.cwd(), "evidence", "moeda-da-organizacao");
 mkdirSync(EVIDENCE, { recursive: true });
 
 async function loginAdmin(page: Page): Promise<void> {

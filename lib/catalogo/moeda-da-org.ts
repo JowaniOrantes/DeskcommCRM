@@ -31,12 +31,33 @@ export async function moedaDaOrganizacao(
   supabase: SupabaseClient,
   orgId: string,
 ): Promise<string> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("organizations")
     .select("currency")
     .eq("id", orgId)
     .maybeSingle();
 
   const declarada = (data as { currency?: string | null } | null)?.currency;
-  return declarada ?? MOEDA_PADRAO;
+  if (declarada) return declarada;
+
+  // Cai no padrão sem derrubar o cadastro (doutrina acima), mas o silêncio
+  // tem que deixar RASTRO: sem isto, uma organização em MXN com a leitura
+  // falhando grava cada produto novo em BRL sem que ninguém perceba até o
+  // cliente reclamar do preço errado — o mesmo defeito que esta feature existe
+  // para consertar, só que calado em vez de gritado.
+  const motivo = error?.message ?? "linha da organização não veio (RLS ou removida)";
+  console.error("[moeda-da-org] caiu no padrão", { orgId, motivo });
+  void import("@sentry/nextjs")
+    .then((Sentry) => {
+      Sentry.captureMessage(`[moeda-da-org] caiu no padrão: ${motivo}`, {
+        level: "warning",
+        tags: { subsystem: "catalogo" },
+        extra: { organization_id: orgId },
+      });
+    })
+    .catch(() => {
+      /* sem Sentry configurado: o console.error acima é o que resta */
+    });
+
+  return MOEDA_PADRAO;
 }

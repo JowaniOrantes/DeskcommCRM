@@ -145,6 +145,11 @@ export function formatCentsUSD(cents: number): string {
  *
  * `formatCentsBRL` e `formatCentsUSD` ficam pelo mesmo motivo: atendem o valor
  * do negócio no kanban e o gasto de IA, que são essas outras frentes.
+ *
+ * ⚠️ Havia uma SEXTA, não listada aqui na primeira versão deste comentário:
+ * `lib/mcp/tools/comercio.ts` tinha `precoLegivel()`, o mesmo defeito — e era a
+ * mais grave das seis, porque é o preço que o AGENTE DE IA cota ao cliente por
+ * WhatsApp. Uma revisão pegou a omissão antes do merge; já converge aqui.
  */
 const formatadores = new Map<string, Intl.NumberFormat>();
 
@@ -166,12 +171,30 @@ function formatadorDa(moeda: string): Intl.NumberFormat {
   return novo;
 }
 
+/**
+ * ⚠️ `formatCents` é EXPORTADA e roda em client component (a lista de
+ * produtos). `new Intl.NumberFormat(locale, {style:"currency", currency})`
+ * LANÇA para moeda malformada — medido: `""`, `"BR"` (2 letras), `undefined`,
+ * `null` — mesmo com o CHECK do banco (`^[A-Z]{3}$`) garantindo o formato em
+ * toda linha que passa por ele. A função não pode presumir que todo chamador
+ * futuro respeita essa garantia: um valor ruim não pode derrubar a lista
+ * inteira. As cinco cópias que esta função substitui tinham `try/catch`
+ * (ex.: `CRMSidePanel.tsx:201`); esta usa a mesma rede.
+ */
 export function formatCents(cents: number, moeda: string): string {
-  const nf = formatadorDa(moeda);
-  // O tipo do `Intl` deixa o campo opcional; 2 é o que a esmagadora maioria das
-  // moedas usa e é o que o código fazia em duro antes desta função existir.
-  const casas = nf.resolvedOptions().maximumFractionDigits ?? 2;
-  return nf.format((cents ?? 0) / 10 ** casas);
+  const valor = (cents ?? 0) / 100;
+  try {
+    const nf = formatadorDa(moeda);
+    // O tipo do `Intl` deixa o campo opcional; 2 é o que a esmagadora maioria
+    // das moedas usa e é o que o código fazia em duro antes desta função existir.
+    const casas = nf.resolvedOptions().maximumFractionDigits ?? 2;
+    return nf.format((cents ?? 0) / 10 ** casas);
+  } catch {
+    // Moeda que o `Intl` recusa: mostra o número certo em vez de travar a
+    // tela. Sem `style: "currency"` porque é justamente o `currency` inválido
+    // que lançou — um código de moeda cru é mais honesto que esconder o erro.
+    return `${moeda || "?"} ${valor.toFixed(2)}`;
+  }
 }
 
 /**

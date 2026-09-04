@@ -86,4 +86,26 @@ describe("formatCents", () => {
     expect(semNbsp(formatCents(25000, "CLP"))).toBe("$25.000");
     expect(semNbsp(formatCents(25000, "BRL"))).toBe("R$ 250,00");
   });
+
+
+  /**
+   * ⚠️ `formatCents` é EXPORTADA e roda num client component
+   * (`app/app/products/_client.tsx`) — um valor de moeda ruim não pode
+   * derrubar o render da lista inteira de produtos. Medido antes de escrever
+   * o guard: `new Intl.NumberFormat(locale, {style:"currency", currency})`
+   * LANÇA para `""`, `"BR"` (2 letras), `undefined` e `null`, mesmo que o
+   * CHECK do banco (`^[A-Z]{3}$`) garanta o formato em toda linha que passa
+   * por ele — a função não pode presumir que todo chamador futuro respeita
+   * essa garantia. As cinco cópias que esta função substitui tinham
+   * `try/catch` (ex.: `CRMSidePanel.tsx:201`); esta precisa da mesma rede.
+   */
+  it("não lança para moeda ruim — mostra o número em vez de derrubar a tela", () => {
+    expect(() => formatCents(24990, "")).not.toThrow();
+    expect(() => formatCents(24990, "BR")).not.toThrow();
+    expect(() => formatCents(24990, undefined as unknown as string)).not.toThrow();
+    expect(() => formatCents(24990, null as unknown as string)).not.toThrow();
+
+    // O fallback precisa continuar informativo — o número certo, não "—" nem "".
+    expect(formatCents(24990, "")).toContain("249");
+  });
 });
