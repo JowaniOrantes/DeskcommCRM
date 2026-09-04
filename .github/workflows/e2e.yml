@@ -258,6 +258,7 @@ jobs:
         smoke.spec.ts auth.spec.ts error-pages.spec.ts
         icone-da-marca.spec.ts
         password-recovery.spec.ts signup-journey.spec.ts
+        primeiro-acesso-sem-organizacao.spec.ts
         rbac-roles.spec.ts inbox-scope.spec.ts reset-password-mfa.spec.ts
         degradacao-silenciosa.spec.ts vps-webhook-outbound-ssrf.spec.ts
         kanban-owner-filter.spec.ts queue-assign.spec.ts
