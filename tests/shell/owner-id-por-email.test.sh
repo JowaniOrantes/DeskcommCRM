@@ -133,6 +133,42 @@ check "reset-password.sh resolve o uid pela função" \
 check "reset-password.sh morre quando o uid vem vazio" \
   grep -qE '\[ -n "\$uid" \] \|\| die' "$KIT_DIR/reset-password.sh"
 
+printf '\n\u25b6 o call site EXECUTADO (grep de linha nao e comportamento)\n'
+
+# Os dois greps acima provam que as linhas EXISTEM. Nenhum prova que elas RODAM,
+# e era exatamente ali que morava o residuo: `_common.sh` roda sob
+# `set -euo pipefail` e o consumidor resolve o UUID numa ATRIBUICAO —
+# `uid="$(owner_id_by_email "$EMAIL")"`. O status da atribuicao e o da
+# substituicao, entao uma funcao que devolve nao-zero mata o script NA LINHA
+# ANTERIOR ao `[ -n "$uid" ] || die`. E o `grep` devolve 1 justamente quando nao
+# casa ninguem — o unico caso em que a mensagem tem o que dizer.
+#
+# Medido em 2026-09-03 contra o GoTrue local v2.188.1, e-mail inexistente, estas
+# duas linhas reais: rc=1 e NENHUMA saida. O operador que erra uma letra no
+# endereco nao via aviso nenhum, so o prompt de volta.
+cat > "$WORK/callsite.sh" <<'CALLSITE'
+. "$1"/_common.sh
+uid="$(owner_id_by_email "$2")"
+[ -n "$uid" ] || die "Usuario '$2' nao encontrado."
+printf 'ACHOU %s\n' "$uid"
+CALLSITE
+
+callsite() {  # callsite <email> -> o que o operador ve (stdout + stderr)
+  (
+    NEXT_PUBLIC_SUPABASE_URL="https://exemplo.supabase.co" \
+    SUPABASE_SERVICE_ROLE_KEY="chave-de-teste" COLOR=0 \
+    bash "$WORK/callsite.sh" "$KIT_DIR" "$1" 2>&1
+  )
+}
+
+check "o call site chega ao uid quando o e-mail existe" \
+  test "$(callsite 'ana@empresa.com')" = "ACHOU $ANA"
+
+# A guarda do residuo. Sem o `|| return 0` no fim de `owner_id_by_email`, esta
+# saida e a string VAZIA — nao a mensagem.
+check "e-mail inexistente: o operador VE 'nao encontrado' (o die e alcancavel)" \
+  bash -c 'case "$1" in *"nao encontrado"*) exit 0 ;; *) exit 1 ;; esac' _ "$(callsite 'ninguem@empresa.com')"
+
 printf '\n'
 [ "$FAILS" -eq 0 ] && { printf '✓ owner-id-por-email: tudo verde\n'; exit 0; }
 printf '✗ owner-id-por-email: %d falha(s)\n' "$FAILS"; exit 1

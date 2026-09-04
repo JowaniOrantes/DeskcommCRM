@@ -668,6 +668,20 @@ set_env_var() {
 # Falha FECHADA: se o GoTrue mudar a ordem dos campos, o padrão não casa e a
 # função devolve vazio — quem chama morre com "não encontrado", que é ruim mas
 # recuperável. Devolver o UUID errado, não.
+#
+# ── Por que o `|| return 0` do fim não é enfeite ────────────────────────────
+# `_common.sh` roda sob `set -euo pipefail`, e o consumidor resolve o UUID numa
+# ATRIBUIÇÃO: `uid="$(owner_id_by_email "$EMAIL")"`. O status da atribuição é o
+# da substituição, então uma função que devolve não-zero mata o script ALI — na
+# linha de cima do `[ -n "$uid" ] || die "Usuário não encontrado."`, que nunca
+# chega a rodar. E o `grep` devolve 1 justamente quando não casa ninguém, que é
+# o caso em que a mensagem existe para falar.
+#
+# Medido em 2026-09-03 contra o GoTrue local v2.188.1, e-mail inexistente, as
+# duas linhas reais do reset-password.sh: rc=1 e NENHUMA saída — o operador que
+# erra uma letra no endereço não vê aviso nenhum, só o prompt de volta. "Não
+# encontrado" era uma mensagem inalcançável. O `|| return 0` põe a decisão onde
+# ela pertence: a função devolve VAZIO, e quem chama decide o que dizer.
 owner_id_by_email() {
   local email="$1" resp esc
   resp="$(curl -fsS "${NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?filter=${email}" \
@@ -676,7 +690,7 @@ owner_id_by_email() {
   esc="$(printf '%s' "$email" | sed 's/[.[\*^$]/\\&/g')"
   printf '%s' "$resp" \
     | grep -o "\"id\":\"[0-9a-f-]\{36\}\",\"aud\":\"[^\"]*\",\"role\":\"[^\"]*\",\"email\":\"${esc}\"" \
-    | head -1 | sed 's/^"id":"//;s/".*//'
+    | head -1 | sed 's/^"id":"//;s/".*//' || return 0
 }
 
 # Ativa (idempotente) o cron que dispara o drain de eventos a cada minuto. SEM
