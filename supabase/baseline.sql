@@ -17661,3 +17661,10 @@ create trigger trg_ad_insights_connections_updated_at
 -- próximo restart do serviço, e a doutrina de packaging proíbe pedir a quem
 -- opera uma VPS que reinicie nada depois de um `update.sh`.
 notify pgrst, 'reload schema';
+
+-- ---- agent_inbox_items.resolved_at (migration 0216) ----
+-- `pacing/aviso-de-janela.ts` resolve o aviso de "janela de envio fechada"
+-- gravando `resolved_at = now()`, e a coluna nunca existiu — o UPDATE falhava
+-- em produção (engolido, fire-and-forget), e o aviso ficava aberto pra sempre.
+alter table public.agent_inbox_items
+  add column if not exists resolved_at timestamptz;
