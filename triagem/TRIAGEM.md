@@ -1035,3 +1035,42 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     ... | jq '{verdes: [...|select(.state=="SUCCESS")]|length,
                faltando: [...|select(.state!="SUCCESS")|"\(.name)=\(.state)"]}'
     ```
+31. **`exit 1` com RODAPÉ VAZIO não é reprovação — é "não rodou nada".** E numa sabotagem essa
+    confusão é fatal, porque o vermelho é justamente o resultado que você **espera**: você lê "a
+    guarda pegou" quando o que aconteceu foi o comando não ter medido coisa alguma.
+
+    Medido em 2026-09-03. Uma sonda passou dois caminhos de teste via variável sem aspas — e **o
+    shell aqui é `zsh`, que não faz word-splitting de `$VAR`**. O vitest recebeu um único argumento
+    inexistente, respondeu `No test files found` e saiu **1**. Os **cinco primeiros** resultados de
+    sabotagem daquele PR vieram assim, e quase foram lidos como acerto.
+
+    O que denuncia é o **rodapé**: `Test Files … | Tests …` ausente ou zerado. `exit 1` sozinho é
+    ambíguo entre três coisas — reprovou, não achou arquivo, não conseguiu carregar —, e as três
+    exigem reações opostas.
+
+    ```bash
+    pnpm test:unit <alvo> > /tmp/s.log 2>&1; echo "exit=$?"
+    grep -aE "Test Files|Tests " /tmp/s.log | tail -2   # VAZIO aqui = não mediu, não "reprovou"
+    ```
+
+    **A regra: toda sabotagem declara, além do exit code, quantos casos rodaram.** Previsão de
+    *"1 vermelho de 12"* é verificável; previsão de *"vai dar erro"* é satisfeita por um comando
+    quebrado. E no `zsh`, prefira **argumentos literais** ou `bash -c` — `${=VAR}` existe, mas
+    lembrar dele é o tipo de coisa que falha no dia cansado.
+32. **Saturação produz vermelho falso em MASSA, e a massa é o sinal.** Uma rodada de `test:unit`
+    reprovou **19 arquivos e 39 casos** — *nenhum* deles tocado pelo PR, todos com
+    `Test timed out in 15000ms` — enquanto um `test:shell` corria em paralelo. Serializado e sozinho:
+    **639/639 verde, zero timeouts**.
+
+    A assinatura que distingue de defeito real, e ela é barata de ler:
+
+    | sinal | saturação | defeito |
+    |---|---|---|
+    | quantidade | dezenas de arquivos de uma vez | poucos, concentrados |
+    | mensagem | `Test timed out` / `Hook timed out` | asserção nomeada |
+    | relação com o diff | arquivos que o PR **não toca** | arquivos do PR |
+    | reprodução isolada | **verde** | vermelho de novo |
+
+    **Nunca reporte contagem medida sob concorrência.** Rode `uptime`, serialize, e diga na medição
+    que serializou — um número colhido em máquina saturada não é conservador nem otimista: é outro
+    número, de outra pergunta.
