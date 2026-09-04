@@ -6,7 +6,7 @@
  * A pergunta "qual versão o editor está editando?" tinha DUAS respostas, e elas
  * discordavam justamente no estado que o produto nomeia na tela:
  *
- *   TELA     — `escolherVersoesDaTela` (`app/app/ai/agents/[id]/page.tsx:164`):
+ *   TELA     — `escolherVersoesDaTela`, chamada em `app/app/ai/agents/[id]/page.tsx`:
  *              rascunho **VIGENTE** > publicada > última versão. Um rascunho
  *              ANTERIOR à publicada foi superado por ela: não abre, não publica.
  *   SERVIDOR — `saveAgentDraftAction`: o rascunho de MAIOR `version_number`,
@@ -38,7 +38,8 @@
  *
  * Quem é a publicada se decide por `ai_agents.published_version_id` — o ponteiro
  * que o motor executa (`agent-config.ts`) —, nunca por `status = 'published'`,
- * que é palpite: há agente em produção com os dois discordando. O último caso
+ * que é palpite: o cabeçalho de `versoes-da-tela.ts` registra a medição de
+ * produção em que os dois discordam num mesmo agente. O último caso
  * deste arquivo é o que separa as duas réguas.
  *
  * Pré-condição de schema (conferida em `supabase/baseline.sql`):

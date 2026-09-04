@@ -205,8 +205,9 @@ export async function saveAgentDraftAction(
     // MEDIDA, não palpite. O ponteiro é o que o motor executa (`agent-config.ts`
     // faz `join … on v.id = a.published_version_id`); `status = 'published'` é
     // rótulo, e os dois já divergem em produção. `?? null` é obrigatório e não
-    // enfeite: no schema a coluna é `uuid` NULL sem default (baseline.sql:1019,
-    // FK `on delete set null`), então `null` é o dado "não há publicada" —
+    // enfeite: no schema a coluna é `uuid` NULL sem default (procure por
+    // `"published_version_id" "uuid"` em `supabase/baseline.sql`; a FK é `on
+    // delete set null`), então `null` é o dado "não há publicada" —
     // enquanto `undefined` faria a régua cair no palpite. Medido com [v8
     // published, v7 draft, v6 published] e ponteiro em v6: pela medida o
     // rascunho vigente é a v7; pelo palpite não há rascunho vigente nenhum, e
