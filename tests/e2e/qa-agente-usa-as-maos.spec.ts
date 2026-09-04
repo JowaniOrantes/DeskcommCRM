@@ -438,6 +438,14 @@ test.describe("QA — o agente usa as mãos que a W4 entregou?", () => {
     console.info(`[QA] cenários nesta corrida: ${aRodar.map((c) => c.nome).join(", ")}`);
 
     const relatorio: string[] = [];
+    /**
+     * Quantos cenarios PRODUZIRAM alguma coisa. O relatorio em markdown la
+     * embaixo tambem e artefato versionado de uma medicao real — e, ao
+     * contrario dos turnos JSON, NENHUM teste o le. Sobrescreve-lo com uma
+     * corrida vazia e destruicao que nada acusa. Medido em 2026-09-04: 507
+     * linhas de respostas reais trocadas por 35 de "NENHUMA / failed".
+     */
+    let cenariosQueMediram = 0;
     for (const cenario of aRodar) {
       const res = await page.request.post(
         `${APP_URL}/api/v1/ai/agents/${agenteId}/versions/${versaoId}/test`,
@@ -542,6 +550,7 @@ test.describe("QA — o agente usa as mãos que a W4 entregou?", () => {
        * cenário que nunca foi tentado.
        */
       const mediuAlgo = (data.final_text ?? "").trim().length > 0 || nomes.length > 0;
+      if (mediuAlgo) cenariosQueMediram += 1;
       if (!mediuAlgo) {
         console.info(
           `[QA] ${cenario.nome}: HTTP 200 mas o turno veio VAZIO (status=${data.status}). ` +
@@ -597,8 +606,21 @@ test.describe("QA — o agente usa as mãos que a W4 entregou?", () => {
       );
     }
 
+    // Mesma regra dos turnos: corrida em que NADA mediu nao encosta no artefato
+    // versionado. Ela ainda e gravada, ao lado, para a corrida ficar visivel.
+    if (cenariosQueMediram === 0) {
+      console.info(
+        "[QA] nenhum cenario produziu resposta — o relatorio versionado nao foi tocado. " +
+          "A corrida foi para qa-turnos-do-agente__sem-resposta.md.",
+      );
+    }
     fs.writeFileSync(
-      path.join(SAIDA, "qa-turnos-do-agente.md"),
+      path.join(
+        SAIDA,
+        cenariosQueMediram > 0
+          ? "qa-turnos-do-agente.md"
+          : "qa-turnos-do-agente__sem-resposta.md",
+      ),
       `# QA — o agente usando as capacidades da W4\n\n` +
         `Modelo real, dry-run, pelo endpoint do botão "Executar teste".\n\n` +
         relatorio.join("\n\n---\n\n"),
