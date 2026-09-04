@@ -5456,6 +5456,7 @@ export type Database = {
           cnpj: string | null
           created_at: string
           created_by: string | null
+          currency: string
           display_name: string
           dpo_email: string | null
           id: string
@@ -5481,6 +5482,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           display_name: string
           dpo_email?: string | null
           id?: string
@@ -5506,6 +5508,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           display_name?: string
           dpo_email?: string | null
           id?: string
