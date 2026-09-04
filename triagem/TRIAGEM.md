@@ -1200,3 +1200,71 @@ apareceu quando o objeto certo foi nomeado. Num *merge commit*, o autor visível
 assinante do trabalho é o **segundo pai** (`HEAD^2`). Uma guarda que lesse o autor do merge recusaria
 a própria release — e passaria em todo teste que não fosse um merge assinado por bot. Não é um gate
 que nasce vermelho (modo 21): é pior, **nasce verde e só vermelha em produção**.
+
+### Modo 35 — a árvore recém-criada não tem `node_modules`, e o gate mente nos dois sentidos
+
+`git worktree add` copia o que está versionado, e `node_modules` não está. Numa árvore nova:
+
+| comando | o que devolve | o que parece |
+|---|---|---|
+| `npx tsc --noEmit -p tsconfig.json` | **exit=0, 0 erros** — tendo carregado **9 arquivos** | sucesso |
+| `npx vitest run <arquivo>` | baixa outra versão da rede, não resolve `vitest/config`, **exit=1 sem rodapé** | teste vermelho |
+
+As duas saídas enganam em direções **opostas**, e a primeira é a pior: ela devolve o número
+**otimista**, que ninguém questiona. Um `typecheck` que passou é a última coisa que alguém relê.
+
+O gatilho mecânico, que custa um comando:
+
+```bash
+npx tsc --noEmit -p tsconfig.json --listFilesOnly | wc -l   # milhares = mediu; dezenas = não mediu
+```
+
+Para conferências que não dependem de tipos — duplicata de chave, o regex de um gate, ordem de blocos —
+**reproduza a regra com `python3`/`grep` na própria árvore e valide com controle positivo.** Sai em
+segundos, contra o gigabyte de um `pnpm install` que você não vai reusar.
+
+### Modo 36 — o hook recusa o commit, e o `push` seguinte publica o SHA errado calado
+
+Um `git commit` barrado por hook de governança não interrompe o bloco: o `push` na linha seguinte roda,
+publica **o HEAD que já existia**, e devolve sucesso. O eco que você escreveu (`echo "salva: ✓"`) sai
+igual ao do caminho certo.
+
+Foi assim que três branches nasceram apontando para o commit da `main`, com o trabalho inteiro só no
+disco de uma árvore descartável — o modo 33 e o modo 36 se somando.
+
+Duas defesas, e a segunda é a que pega:
+
+```bash
+DESKCOMM_GOV_MIGRATION_EDIT=1 git commit ...        # a variável que o hook exige
+git log --oneline -1 && git diff --stat origin/main..HEAD   # o commit EXISTE e tem o tamanho certo?
+```
+
+É a mesma família do [bloco que edita e commita]: **um bloco onde um passo falha e o seguinte
+"tem sucesso" produz uma afirmação verdadeira sobre a coisa errada.** Nunca deixe o eco de sucesso
+depender só de o último comando ter retornado zero.
+
+### Modo 37 — extrações paralelas escolhem todas o mesmo número de migration
+
+Três recortes do mesmo PR gigante, rodando ao mesmo tempo. Cada um lê `ls supabase/migrations/`, vê que
+o último é `0207`, e escolhe `0208`. Duas escolhem até o **mesmo timestamp**.
+
+Sozinha, cada uma está certa — e é isso que torna o modo invisível: nenhuma revisão individual pega.
+A colisão só existe no conjunto, e o conjunto não é revisado por ninguém.
+
+E o número livre **não se descobre na `main`**: ele se descobre nos **PRs abertos**, que já reservaram
+os seguintes sem tê-los mergeado.
+
+```bash
+# o que a main já tem
+git ls-tree --name-only origin/main supabase/migrations/ | grep -oE "_0[0-9]{3}_" | sort -u | tail -1
+# o que os PRs ABERTOS já reservaram
+for P in $(gh pr list --state open --json number --jq '.[].number'); do
+  gh pr view $P --json files --jq '.files[].path' | grep -oE "_0[0-9]{3}_" | sed "s|^|#$P |"
+done | sort -u
+```
+
+**E renumerar é três arquivos, não um.** O nome do `.sql`, o rótulo `-- ---- … (migration NNNN) ----`
+no apêndice do `baseline.sql`, e a linha do `MANIFEST.md`. No MANIFEST o número vem **colado ao slug**
+(`0208_juntar_contatos_duplicados`), então um `sed` por palavra isolada não o alcança — e o
+`grep -c 0208` seguinte devolve `1` por causa de outra ocorrência qualquer, **confirmando um conserto
+que não aconteceu**. Confira pelo conteúdo da linha, não pela contagem.
