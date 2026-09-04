@@ -17247,6 +17247,75 @@ comment on column public.catalog_products.controla_estoque is
   'false = item que não se conta (decant, sob encomenda). A busca do agente não o esconde por quantidade zero.';
 
 
+-- ---- mover em lote sem colidir posição (migration 0208) ----
+--
+-- A barra de ações em lote mandava UM `position_in_stage` para o lote inteiro, e
+-- o handler o gravava em N linhas: trinta cards movidos terminavam com o MESMO
+-- número na etapa de destino. `midpoint(prev, next)` devolve NaN quando os dois
+-- vizinhos são iguais (`lib/kanban/fractional-indexing.ts`) — então o primeiro
+-- arrasto para ENTRE dois cards do lote mandava NaN como posição, e antes disso
+-- a ordem entre eles já era indefinida.
+--
+-- Esta função dá a cada card do lote uma posição DISTINTA (piso da etapa de
+-- destino + 1000 por card, na ordem em que estavam no quadro) num único
+-- `update` — o que também torna o lote atômico: move todos ou nenhum.
+--
+-- `security INVOKER`: a RLS de crm_leads é o piso. `p_organization_id` é o
+-- escopo explícito que a doutrina exige (org do cookie, nunca do body).
+-- Idempotente: `create or replace`, nenhuma coluna, nenhum dado da instalação
+-- tocado.
+
+create or replace function public.fn_mover_leads_em_lote(
+  p_organization_id uuid,
+  p_lead_ids uuid[],
+  p_stage_id uuid
+) returns table (lead_id uuid, from_stage_id uuid, pipeline_id uuid)
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_piso numeric;
+begin
+  select coalesce(max(l.position_in_stage), 0)
+    into v_piso
+    from public.crm_leads l
+   where l.organization_id = p_organization_id
+     and l.stage_id = p_stage_id
+     and not (l.id = any(p_lead_ids));
+
+  return query
+  with alvo as (
+    select l.id,
+           l.stage_id    as from_stage_id,
+           l.pipeline_id as pipeline_id,
+           row_number() over (order by l.stage_id, l.position_in_stage, l.id) as ordem
+      from public.crm_leads l
+     where l.organization_id = p_organization_id
+       and l.id = any(p_lead_ids)
+  ),
+  movidos as (
+    update public.crm_leads l
+       set stage_id          = p_stage_id,
+           position_in_stage = v_piso + (a.ordem * 1000),
+           updated_at        = now()
+      from alvo a
+     where l.id = a.id
+       and l.organization_id = p_organization_id
+    returning l.id, a.from_stage_id, a.pipeline_id
+  )
+  select m.id, m.from_stage_id, m.pipeline_id from movidos m;
+end;
+$$;
+
+comment on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) is
+  'Move um lote de leads para uma etapa dando a cada um posição DISTINTA (piso da etapa de destino + 1000 por card, na ordem em que estavam no quadro). Existe porque gravar a mesma position_in_stage em N linhas quebra o midpoint() do arrasto seguinte (prev === next → NaN) e deixa a ordem do quadro indefinida. Devolve uma linha por card movido, com a etapa de ORIGEM, para o handler emitir a atividade de timeline de cada um.';
+
+revoke all     on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) from public;
+revoke execute on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) from anon;
+grant  execute on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid)
+  to authenticated, service_role;
+
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ ESTE BLOCO É, DE PROPÓSITO, O ÚLTIMO DO ARQUIVO. Apêndice novo entra ANTES

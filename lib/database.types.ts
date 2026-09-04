@@ -6957,6 +6957,14 @@ export type Database = {
         Args: { p_org: string; p_user: string }
         Returns: string
       }
+      fn_mover_leads_em_lote: {
+        Args: { p_lead_ids: string[]; p_organization_id: string; p_stage_id: string }
+        Returns: {
+          from_stage_id: string
+          lead_id: string
+          pipeline_id: string
+        }[]
+      }
       fn_podar_fila_de_jobs: {
         Args: { p_limite?: number; p_retencao_dias?: number }
         Returns: number
