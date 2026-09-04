@@ -32,6 +32,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { phoneForDisplay } from "@/lib/channels/phone-variants";
+import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import {
   useContactDuplicates,
   type GrupoDuplicado,
@@ -49,10 +50,6 @@ const ROTULO_DO_MOTIVO: Record<MotivoDeDuplicidade, string> = {
   email: "mesmo e-mail",
   telefone_em_conflito: "telefone que o WhatsApp deixou em conflito",
 };
-
-function nomeVisivel(c: { name: string | null; display_name: string | null; id: string }): string {
-  return c.display_name?.trim() || c.name?.trim() || `#${c.id.slice(0, 8)}`;
-}
 
 function GrupoDeDuplicados({
   grupo,
@@ -117,7 +114,7 @@ function GrupoDeDuplicados({
               aria-label={t("Manter este cadastro")}
             />
             <span className="min-w-0">
-              <span className="block truncate font-medium">{nomeVisivel(c)}</span>
+              <span className="block truncate font-medium">{rotuloDoContato(c)}</span>
               <span className="block truncate text-muted-foreground">{c.email ?? "—"}</span>
               <span className="block truncate text-muted-foreground">
                 {c.phone_number ? phoneForDisplay(c.phone_number) : "—"}
