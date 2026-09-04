@@ -369,6 +369,12 @@ jobs:
         agenda-google-volta-nao-desloga.spec.ts
         i18n-espanhol-na-tela.spec.ts
         inbox-abas-espelham-o-comando.spec.ts
+        moeda-da-organizacao.spec.ts
+      # `moeda-da-organizacao` entrou na PARTE_2 em 2026-09-04, ao lado de
+      # `navegacao` — mesmo domínio (Configurações) e a mesma ausência de
+      # dependência: sem WAHA, Resend, Nuvemshop ou Redis. Toca a organização
+      # única do banco do CI (troca a moeda e devolve para BRL no afterEach),
+      # o mesmo cuidado que `troca-de-organizacao-tem-volta` já toma.
       # Cada item aqui tem o motivo MEDIDO, não presumido — e o gate cobra que a
       # lista exista e some com as outras duas.
       #
