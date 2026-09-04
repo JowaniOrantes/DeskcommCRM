@@ -17355,7 +17355,7 @@ create unique index if not exists ai_kbv_version_por_agente_legado
   where knowledge_source_id is null;
 
 
--- ---- Relatório de atividades (migration 0208) ----
+-- ---- Relatório de atividades (migration 0212) ----
 -- Leitura de `crm_lead_activities` no eixo do PERÍODO. Até aqui o barramento só
 -- era lido por negócio e por contato: "o que a equipe fez esta semana" obrigava
 -- a abrir negócio por negócio. A agregação roda no Postgres de propósito —
