@@ -86,6 +86,7 @@ export const DICIONARIO: Traducoes = {
   "Todos os números": { es: "Todos los números" },
   "Todas as tags": { es: "Todas las etiquetas" },
   "Apenas não lidos": { es: "Solo no leídos" },
+  "Não lidos": { es: "No leídos" },
   Fila: { es: "Cola" },
   Minhas: { es: "Mías" },
   Todas: { es: "Todas" },
@@ -3822,6 +3823,7 @@ export const DICIONARIO: Traducoes = {
     es: "Conversación no encontrada o fuera de tu acceso.",
   },
   "Selecione uma conversa": { es: "Selecciona una conversación" },
+  "Ou navegue com J e K": { es: "O navega con J y K" },
   Ficha: { es: "Ficha" },
   "Ficha do contato": { es: "Ficha del contacto" },
   Hoje: { es: "Hoy" },
@@ -4653,6 +4655,12 @@ export const DICIONARIO: Traducoes = {
   "contatos": { es: "contactos" },
   "carregados — há mais resultados": { es: "cargados — hay más resultados" },
   "Contato já estava anonimizado.": { es: "El contacto ya estaba anonimizado." },
+  "Contato já estava anonimizado, e não faltava nada.": {
+    es: "El contacto ya estaba anonimizado, y no faltaba nada.",
+  },
+  "Anonimização retomada: o que faltava foi redigido agora.": {
+    es: "Anonimización retomada: lo que faltaba se ha redactado ahora.",
+  },
   "Contato anonimizado.": { es: "Contacto anonimizado." },
   "Anonimizar contato (LGPD)": { es: "Anonimizar contacto (LGPD)" },
   "Esta ação é irreversível. O nome será substituído por \"Contato Anonimizado #N\", email/telefone/CPF serão limpos, e atividades terão conteúdo redigido.": {

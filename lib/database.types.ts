@@ -2756,6 +2756,8 @@ export type Database = {
       }
       contacts: {
         Row: {
+          ai_authorized_at: string | null
+          ai_authorized_reason: string | null
           anonymized_at: string | null
           avatar_storage_path: string | null
           avatar_updated_at: string | null
@@ -2790,6 +2792,8 @@ export type Database = {
           wa_lid: string | null
         }
         Insert: {
+          ai_authorized_at?: string | null
+          ai_authorized_reason?: string | null
           anonymized_at?: string | null
           avatar_storage_path?: string | null
           avatar_updated_at?: string | null
@@ -2824,6 +2828,8 @@ export type Database = {
           wa_lid?: string | null
         }
         Update: {
+          ai_authorized_at?: string | null
+          ai_authorized_reason?: string | null
           anonymized_at?: string | null
           avatar_storage_path?: string | null
           avatar_updated_at?: string | null

@@ -244,6 +244,22 @@ export function AgendaClient({
     [agendamentos],
   );
 
+  /**
+   * O que é ACIONÁVEL — o que a lista "Próximos" pode oferecer botão para fazer.
+   *
+   * Ocupação vinda do Google fica de fora: ela é bloco de terceiro, o id é de
+   * `calendar_external_events`, e as rotas de remarcar/cancelar procuram em
+   * `calendar_appointments`. Ver o comentário longo no `HistoricoDaAgenda`
+   * abaixo, com o 404 medido.
+   *
+   * A GRADE recebe `agendamentosDaGrade` (tudo menos cancelado) — é lá que a ocupação
+   * precisa aparecer, e é lá que ela já é desenhada inerte.
+   */
+  const agendamentosAcionaveis = React.useMemo(
+    () => agendamentos.filter((a) => a.origem !== "google_sync"),
+    [agendamentos],
+  );
+
   const passo = visao === "mes" ? 30 : visao === "semana" ? 7 : 1;
   // O PADRÃO de formato também muda de idioma, não só o locale: em português
   // "d 'de' MMMM" tem a preposição escrita à mão dentro do padrão, e em
@@ -701,8 +717,37 @@ export function AgendaClient({
         </SheetContent>
       </Sheet>
 
+      {/*
+        ⚠️ A LISTA DAQUI NÃO É A MESMA DA GRADE, e a diferença é uma linha.
+
+        `GradeDaAgenda` conhece `origem` e desenha o bloco do Google inerte
+        (`disabled`, sem arraste, rótulo "Ocupado"). `HistoricoDaAgenda` NÃO
+        conhece origem: ela decide o botão por `disabled={!onRemarcar}`, que é
+        uma prop do componente inteiro e não da linha. Passar a mesma lista aos
+        dois faz a ocupação do Google chegar em "Próximos" com **Remarcar e
+        Cancelar habilitados** — e cancelar responde 404, porque o id é de
+        `calendar_external_events` e a rota procura em `calendar_appointments`.
+
+        Medido pela tela em 2026-09-03, na triagem do PR #474:
+
+          DELETE /api/v1/agenda/agendamentos
+          → 404 {"error":{"code":"not_found","message":"Agendamento não encontrado."}}
+          toast vermelho aos 1,5s, o painel continua aberto, a linha continua na
+          lista, e `calendar_external_events.status` segue `confirmed`.
+
+        É o "controle decorativo" que o comentário de `GradeDaAgenda` diz que
+        esta base já pagou uma vez, replantado no componente irmão — e o #474 o
+        tornou PERMANENTE: antes dele a linha só existia no primeiro frame da
+        semana corrente (a semente do servidor) e sumia no primeiro refetch.
+
+        Filtrar é o conserto certo, e não é escolha estética: bloco anônimo do
+        Google não é um compromisso NOSSO. Não há o que remarcar, não há o que
+        cancelar, e "Ocupado · 15:00–16:00" numa lista de próximos atendimentos
+        não informa nada que a grade — que O DESENHA no horário — já não diga
+        melhor. A ocupação continua inteira onde ela serve.
+      */}
       <HistoricoDaAgenda
-        agendamentos={agendamentos}
+        agendamentos={agendamentosAcionaveis}
         pessoas={pessoas}
         agora={new Date()}
         className="max-h-[320px]"
