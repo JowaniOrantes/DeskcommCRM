@@ -144,7 +144,7 @@ export function CalendarioDeTarefas({ tarefas, podeEditar, aoAbrirTarefa, aoClic
                     aoAbrirTarefa(tarefa);
                   }}
                   className={cn(
-                    "w-full truncate rounded px-1.5 py-0.5 text-left text-[10px] font-medium",
+                    "w-full truncate rounded-md px-1.5 py-0.5 text-left text-[10px] font-medium",
                     estaEncerrada(tarefa)
                       ? "bg-muted text-muted-foreground line-through"
                       : estaAtrasada(tarefa)

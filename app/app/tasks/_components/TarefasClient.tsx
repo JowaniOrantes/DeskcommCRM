@@ -103,7 +103,7 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
               onClick={() => setModo("lista")}
               aria-pressed={modo === "lista"}
               className={cn(
-                "flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors",
+                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 modo === "lista"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
@@ -117,7 +117,7 @@ export function TarefasClient({ podeEditar }: { podeEditar: boolean }) {
               onClick={() => setModo("calendario")}
               aria-pressed={modo === "calendario"}
               className={cn(
-                "flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors",
+                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                 modo === "calendario"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
