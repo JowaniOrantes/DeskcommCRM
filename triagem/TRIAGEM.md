@@ -1035,6 +1035,26 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     ... | jq '{verdes: [...|select(.state=="SUCCESS")]|length,
                faltando: [...|select(.state!="SUCCESS")|"\(.name)=\(.state)"]}'
     ```
+
+    ⚠️ **E "AUSENTE" em `gh pr checks` tem DUAS causas opostas.** Um check obrigatório pode não
+    aparecer porque (a) o workflow nunca foi disparado — e aí alguém precisa agir — ou porque (b)
+    ele está **rodando agora** e o *check de fachada* (o job que agrega os filhos, como o `e2e` e o
+    `imagens-ok`) só reporta no fim. Medido em 2026-09-04: `gh pr checks` dizia `e2e=AUSENTE` num PR
+    cujo `actions/runs` mostrava `e2e: in_progress`.
+
+    As duas causas pedem coisas opostas — liberar/re-disparar contra apenas esperar —, então **a
+    lista de checks não basta: confirme pelo run**.
+
+    ```bash
+    SHA=$(gh pr view <n> --json headRefOid --jq .headRefOid)
+    gh api "repos/{owner}/{repo}/actions/runs?head_sha=$SHA&per_page=20" \
+      --jq '.workflow_runs[] | "\(.name): \(.status)/\(.conclusion // "-")"'
+    ```
+
+    É a terceira vez que `gh pr checks` engana nesta doutrina — nos modos 17 e 18 mostrando o run
+    **velho**, aqui escondendo o run **em curso**. A regra que sai das três: **`gh pr checks` serve
+    para ver o que já concluiu; para saber o que está acontecendo, vá ao `actions/runs` do
+    `head_sha`.**
 31. **`exit 1` com RODAPÉ VAZIO não é reprovação — é "não rodou nada".** E numa sabotagem essa
     confusão é fatal, porque o vermelho é justamente o resultado que você **espera**: você lê "a
     guarda pegou" quando o que aconteceu foi o comando não ter medido coisa alguma.
