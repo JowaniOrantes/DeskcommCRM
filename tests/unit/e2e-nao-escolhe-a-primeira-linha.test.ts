@@ -99,7 +99,13 @@ function arquivosDeE2E(): string[] {
   return saida.sort();
 }
 
-const RE_CADEIA = /\.from\(\s*"([a-z_]+)"\s*\)((?:[^;]|\n)*?);/g;
+// `[^;]` JÁ casa `\n` — a alternância `(?:[^;]|\n)` que estava aqui dava DOIS
+// caminhos para o mesmo caractere, e o backtracking do quantificador preguiçoso
+// virava exponencial (CodeQL js/redos, alerta #17): com `.from("a")` seguido de N
+// quebras de linha, N=28 levava 1,9s e N=30 levava 26,5s. Sem a alternância a
+// linguagem casada é a MESMA — conferido match a match (índice + texto) nos 83
+// arquivos de tests/e2e, 75 matches idênticos — e N=200000 passa a levar 1ms.
+const RE_CADEIA = /\.from\(\s*"([a-z_]+)"\s*\)([^;]*?);/g;
 const RE_FILTRO = /\.(eq|in|match|or|filter|neq|gt|gte|lt|lte|like|ilike|contains|is)\(/;
 
 interface Achado {
