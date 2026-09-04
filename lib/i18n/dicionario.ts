@@ -4011,6 +4011,38 @@ export const DICIONARIO: Traducoes = {
   "Você não tem nenhuma organização ativa. Aceite um convite ou contate o admin.": {
     es: "No tienes ninguna organización activa. Acepta una invitación o contacta al admin.",
   },
+
+  // ─── Recuperação do primeiro acesso (/get-started) ───
+  "Você não tem nenhuma organização ativa. Configure sua organização ou aceite um convite.": {
+    es: "No tienes ninguna organización activa. Configura tu organización o acepta una invitación.",
+  },
+  "Configurar minha organização": { es: "Configurar mi organización" },
+  "Campos personalizados": { es: "Campos personalizados" },
+  "Campos definidos no funil padrão da organização.": {
+    es: "Campos definidos en el embudo predeterminado de la organización.",
+  },
+  "Configure sua organização": { es: "Configura tu organización" },
+  "Sua conta foi confirmada, mas a organização inicial ainda não foi criada. Informe o nome da sua empresa para concluir o primeiro acesso e abrir o onboarding do CRM.": {
+    es: "Tu cuenta fue confirmada, pero la organización inicial aún no fue creada. Indica el nombre de tu empresa para completar el primer acceso y abrir la configuración inicial del CRM.",
+  },
+  "Se você recebeu um convite, não crie uma organização nova. Use o link do convite ou peça ao administrador para reenviá-lo.": {
+    es: "Si recibiste una invitación, no crees una organización nueva. Usa el enlace de la invitación o pide al administrador que la reenvíe.",
+  },
+  // "Nome da empresa" já existe no bloco do cadastro — a chave é a mesma frase.
+  "Preparando seu ambiente…": { es: "Preparando tu entorno…" },
+  "Continuar para o onboarding": { es: "Continuar a la configuración inicial" },
+  "Informe um nome de empresa com 2 a 120 caracteres.": {
+    es: "Indica un nombre de empresa de 2 a 120 caracteres.",
+  },
+  "Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.": {
+    es: "Demasiados intentos. Espera unos minutos antes de volver a intentarlo.",
+  },
+  "Esta conta tem um convite pendente ou inválido. Use o link do convite ou peça um novo ao administrador.": {
+    es: "Esta cuenta tiene una invitación pendiente o inválida. Usa el enlace de la invitación o pide una nueva al administrador.",
+  },
+  "Não foi possível concluir a organização agora. Tente novamente ou contate o administrador da instalação.": {
+    es: "No fue posible completar la organización ahora. Inténtalo de nuevo o contacta al administrador de la instalación.",
+  },
   "Adicionar tag à conversa": { es: "Agregar etiqueta a la conversación" },
   "Fechar conversa?": { es: "¿Cerrar conversación?" },
   "O cliente ainda não escreveu — a janela de 24h nunca abriu. Só um modelo aprovado sai daqui.": {
@@ -6205,6 +6237,17 @@ export const DICIONARIO: Traducoes = {
   "Atendimentos já resolvidos que alguém marcou como aproveitáveis, com os dados pessoais removidos.": { es: "Atenciones ya resueltas que alguien marcó como aprovechables, con los datos personales quitados." },
   "Entra sozinha: conversas resolvidas que alguém marcar como aproveitáveis pela IA são anonimizadas e indexadas em lote.": { es: "Entra sola: las conversaciones resueltas que alguien marque como aprovechables por la IA se anonimizan y se indexan en lote." },
   "Catálogo de produtos": { es: "Catálogo de productos" },
+
+  // ─── Moeda da organização (Configurações › Organização, migration 0206) ───
+  //
+  // O RÓTULO das opções do seletor não tem chave de propósito: é código ISO +
+  // símbolo ("MXN · $"), que não se traduz. A primeira versão usava nomes
+  // ("Peso mexicano") por chave DINÂMICA, que o guarda do AST não enxerga —
+  // passariam no CI e cairiam no português na tela em espanhol.
+  "Moeda": { es: "Moneda" },
+  "Vale para todo preço do catálogo. Produto já cadastrado guarda a moeda com que nasceu.": {
+    es: "Vale para todo precio del catálogo. Un producto ya cargado conserva la moneda con la que nació.",
+  },
   "Os produtos sincronizados da sua loja, com preço, descrição e disponibilidade.": { es: "Los productos sincronizados de tu tienda, con precio, descripción y disponibilidad." },
   "Entra sozinho: os produtos vêm da sincronização com a sua loja, não de conteúdo digitado aqui.": { es: "Entra solo: los productos vienen de la sincronización con tu tienda, no de contenido escrito aquí." },
   "Escolhida por você no painel de Provedores.": { es: "La elegiste en el panel de Proveedores." },
