@@ -6372,6 +6372,50 @@ export const DICIONARIO: Traducoes = {
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
 
+  // ─── Configurações › Organização — zona de perigo (extraído do PR #556) ───
+  "Zona de perigo": { es: "Zona de peligro" },
+  "Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.":
+    {
+      es: "Borra definitivamente los mensajes, conversaciones, negocios, contactos, citas y pedidos de esta organización. Sirve para volver a empezar las pruebas desde cero antes de atender de verdad.",
+    },
+  "Continuam de pé: as pessoas da equipe, as configurações, os funis e etapas, os agentes de IA e os canais de WhatsApp já conectados.":
+    {
+      es: "Siguen en pie: las personas del equipo, las configuraciones, los embudos y etapas, los agentes de IA y los canales de WhatsApp ya conectados.",
+    },
+  "Apagar todos os dados de atendimento": { es: "Borrar todos los datos de atención" },
+  "Apagar todos os dados de atendimento?": { es: "¿Borrar todos los datos de atención?" },
+  "Esta ação é irreversível. Mensagens, conversas, negócios, contatos, agendamentos e pedidos de":
+    {
+      es: "Esta acción es irreversible. Mensajes, conversaciones, negocios, contactos, citas y pedidos de",
+    },
+  "serão apagados de vez.": { es: "serán borrados definitivamente." },
+  Digite: { es: "Escriba" },
+  "para confirmar": { es: "para confirmar" },
+  "Apagando…": { es: "Borrando…" },
+  "Apagar de vez": { es: "Borrar definitivamente" },
+  "Dados apagados": { es: "Datos borrados" },
+  mensagens: { es: "mensajes" },
+  conversas: { es: "conversaciones" },
+  "Só quem administra esta empresa pode apagar os dados.": {
+    es: "Solo quien administra esta empresa puede borrar los datos.",
+  },
+  "O nome digitado não confere com o nome da organização.": {
+    es: "El nombre escrito no coincide con el nombre de la organización.",
+  },
+  "Digite o nome da organização para confirmar.": {
+    es: "Escriba el nombre de la organización para confirmar.",
+  },
+  "Não consegui apagar os dados agora.": { es: "No pude borrar los datos ahora." },
+  "Sua sessão expirou. Entre de novo para continuar.": {
+    es: "Su sesión expiró. Entre de nuevo para continuar.",
+  },
+  "Não consegui identificar sua empresa. Recarregue a página.": {
+    es: "No pude identificar su empresa. Recargue la página.",
+  },
+  "Confirme o código do seu aplicativo de duas etapas e tente de novo.": {
+    es: "Confirme el código de su aplicación de dos pasos e inténtelo de nuevo.",
+  },
+
   // ─── Importar leads de planilha (extraído do PR #418) ───
   "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
   "Um arquivo CSV com uma linha por lead. Os leads entram na primeira etapa do funil escolhido.": {

@@ -399,6 +399,12 @@ export const AUDIT_ACTIONS = [
   // de fora chama. Só audita quando alguma tarefa mexeu em dado.
   "relogio.tick_run",
 
+  // Zona de perigo de Configurações › Organização: o admin zera os dados de
+  // atendimento da própria organização para recomeçar os testes. Um DELETE não
+  // deixa rastro sozinho — esta linha é o único registro de que a organização
+  // foi esvaziada, por quem, e de quanto (as contagens vão no metadata).
+  "org.dados_operacionais_apagados",
+
   // O catálogo da loja (migration 0204). Preço de venda é dado que a equipe
   // disputa — quem mudou e quando precisa ficar registrado.
   "catalog_product.created",
