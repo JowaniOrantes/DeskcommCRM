@@ -640,7 +640,25 @@ jobs:
           # o playwright rodar a suíte INTEIRA (ou nenhuma) e o job ficaria
           # verde medindo outra coisa.
           [ -n "$LISTA" ] || { echo "::error::lista da parte ${{ matrix.parte }} vazia"; exit 1; }
-          pnpm exec playwright test --workers=1 $LISTA
+          # `--reporter=list` NÃO é preferência de leitura: é o INSTRUMENTO que
+          # mede o custo de cada spec, e sem ele a partição das duas listas volta
+          # a ser chutada.
+          #
+          # O reporter default em CI é o `dot`, e ele destrói justamente o dado
+          # que decide o balanceamento: os pontos saem em rajada, esvaziados só
+          # quando outro processo escreve na saída, e o timestamp do Actions é
+          # por LINHA. Medido no run 33820766602 (verde): a parte 1 despejou
+          # **37 pontos numa linha só**, cobrindo 4,9 min — 37 testes que se
+          # tornam indistinguíveis entre si. Reconstruir tempo por spec a partir
+          # disso é o terceiro proxy ruim que este arquivo já viu, e os dois
+          # anteriores INVERTERAM o sinal da medição (ver o bloco de
+          # `SPECS_PARTE_1` abaixo).
+          #
+          # Com o `list`, cada teste vira uma linha com caminho e duração
+          # (`✓ 12 [chromium] › tests/e2e/x.spec.ts:9:5 › título (3.4s)`), e a
+          # soma por arquivo sai de um `gh run view <id> --log`. Custo medido:
+          # ~240 linhas a mais de log, zero segundo de execução.
+          pnpm exec playwright test --workers=1 $LISTA --reporter=list
         env:
           # Só o que NÃO vem do `.env.e2e`: isto é ajuste de CI, não config do
           # produto. CI = 1 IP para todos os specs, e o teto de produção
