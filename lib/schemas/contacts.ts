@@ -13,6 +13,20 @@ const PHONE_REGEX = /^\+\d{8,15}$/;
 const CPF_DIGITS = /^\d{11}$/;
 
 /**
+ * Teto de 32 KB no jsonb inteiro. O CHECK do banco só garante que é OBJETO —
+ * sem limite de tamanho, um cliente da API escreveria megabytes numa coluna que
+ * a listagem de contatos traz inteira, e o custo apareceria como "a tela de
+ * contatos ficou lenta", longe da causa.
+ */
+const CUSTOM_FIELDS_MAX_BYTES = 32_768;
+
+const customFieldsSchema = z
+  .record(z.string().min(1).max(80), z.unknown())
+  .refine((value) => JSON.stringify(value).length <= CUSTOM_FIELDS_MAX_BYTES, {
+    message: "Campos personalizados excedem o limite de 32 KB",
+  });
+
+/**
  * CPF check-digit validator (algoritmo oficial Receita Federal).
  * Rejeita repetidos (00000000000, 11111111111, ...) e dígitos verificadores inválidos.
  */
@@ -48,6 +62,7 @@ export const contactCreateSchema = z.object({
   source: z.string().min(1).default("manual"),
   source_metadata: z.record(z.string(), z.unknown()).optional(),
   consent: z.record(z.string(), z.unknown()).optional(),
+  custom_fields: customFieldsSchema.optional(),
 });
 export type ContactCreate = z.infer<typeof contactCreateSchema>;
 
