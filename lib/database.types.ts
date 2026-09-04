@@ -2766,6 +2766,7 @@ export type Database = {
           blocked_reason: string | null
           consent: Json
           cpf_encrypted: string | null
+          custom_fields: Json
           cpf_hash: string | null
           created_at: string
           created_by_user_id: string | null
@@ -2802,6 +2803,7 @@ export type Database = {
           blocked_reason?: string | null
           consent?: Json
           cpf_encrypted?: string | null
+          custom_fields?: Json
           cpf_hash?: string | null
           created_at?: string
           created_by_user_id?: string | null
@@ -2838,6 +2840,7 @@ export type Database = {
           blocked_reason?: string | null
           consent?: Json
           cpf_encrypted?: string | null
+          custom_fields?: Json
           cpf_hash?: string | null
           created_at?: string
           created_by_user_id?: string | null
@@ -5682,6 +5685,7 @@ export type Database = {
           cnpj: string | null
           created_at: string
           created_by: string | null
+          currency: string
           display_name: string
           dpo_email: string | null
           id: string
@@ -5707,6 +5711,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           display_name: string
           dpo_email?: string | null
           id?: string
@@ -5732,6 +5737,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           display_name?: string
           dpo_email?: string | null
           id?: string
