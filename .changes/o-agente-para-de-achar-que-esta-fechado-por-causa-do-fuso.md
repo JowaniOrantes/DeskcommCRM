@@ -4,20 +4,17 @@ secao: corrigido
 titulo: O agente para de achar que está fechado por causa do fuso
 ---
 
-O histórico de mensagens entregava ao agente o horário de cada mensagem em
-UTC, cru do banco — enquanto o relógio "## Agora" do mesmo prompt já mostrava
-a hora certa no fuso da organização. Um agente instruído a comparar o
-horário exato de cada mensagem contra o expediente local via uma mensagem
-enviada às 15:45 (horário de São Paulo) como "18:45" e respondia que a loja
-estava fechada dentro do próprio horário de atendimento que ele citava na
-resposta.
+O agente recebia o horário de cada mensagem do histórico em UTC, e não no fuso
+da sua organização — três horas à frente, para quem está no horário de
+Brasília. Uma mensagem enviada às 15:45 chegava até ele como 18:45.
 
-Medido em produção em duas instalações distintas, no mesmo dia: uma cliente
-mandou uma mensagem às 15:45 e recebeu "estamos fechados" com a oficina
-ainda aberta; dois dias depois, outra cliente recebeu a mesma resposta
-errada às 13h de uma sexta-feira, dentro do horário comercial citado pelo
-próprio agente.
+Isso só doía em agentes instruídos a conferir o relógio antes de responder:
+eles concluíam que já era fora do expediente e respondiam "estamos fechados",
+citando na mesma frase o horário de atendimento dentro do qual o cliente ainda
+estava. O erro passou despercebido porque o resto do agente já mostrava a hora
+certa — só o horário das mensagens do histórico saía errado. Foi visto em
+produção em dois dias diferentes, com clientes reais recebendo "estamos
+fechados" em pleno horário comercial.
 
-Agora cada mensagem do histórico chega ao agente já convertida para a hora
-de parede do fuso da organização, com o mesmo relógio que o bloco "## Agora"
-usa. O agente compara maçã com maçã.
+Agora o horário de cada mensagem chega ao agente já no fuso da sua organização,
+o mesmo que ele usa para saber que dia e que horas são.
