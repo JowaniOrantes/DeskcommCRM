@@ -92,7 +92,7 @@ export function BulkActionBar({
         lead_ids: selectedIds,
         // Sem `position_in_stage`: um escalar não posiciona N cards sem
         // empatá-los, e empate quebra o `midpoint()` do arrasto seguinte. Quem
-        // dá a posição de cada um é `fn_mover_leads_em_lote` (migration 0208).
+        // dá a posição de cada um é `fn_mover_leads_em_lote` (migration 0209).
         params: { stage_id: stageId },
       },
       { onSuccess: () => onClear() },

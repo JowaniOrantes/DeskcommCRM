@@ -48,23 +48,3 @@ export function intervaloDaColuna(
   const fim = Math.max(ancora, alvo);
   return ordenados.slice(inicio, fim + 1);
 }
-
-/**
- * Aplica marcar/desmarcar de um conjunto sobre a seleção corrente.
- *
- * Devolve um array novo preservando a ordem de entrada da seleção — a barra
- * mostra a contagem, e uma ordem que muda a cada clique faria a mesma seleção
- * mandar ids em ordens diferentes para a API a cada tentativa.
- */
-export function aplicarSelecao(
-  atual: readonly string[],
-  ids: readonly string[],
-  marcar: boolean,
-): string[] {
-  if (marcar) {
-    const vistos = new Set(atual);
-    return [...atual, ...ids.filter((id) => !vistos.has(id))];
-  }
-  const remover = new Set(ids);
-  return atual.filter((id) => !remover.has(id));
-}

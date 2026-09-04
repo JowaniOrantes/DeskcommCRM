@@ -25,6 +25,13 @@ export const dynamic = "force-dynamic";
 
 const MAX_BULK = 50;
 
+/** Uma linha do retorno de `fn_mover_leads_em_lote` (migration 0209). */
+interface LeadMovidoEmLote {
+  lead_id: string;
+  from_stage_id: string;
+  pipeline_id: string;
+}
+
 export async function POST(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
   const supabase = await createClient();
@@ -124,19 +131,25 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   switch (input.action) {
     case "move": {
-      // 0208: quem posiciona é o banco. Escrever aqui um `position_in_stage`
-      // escalar para N linhas dava a TODOS os cards do lote o mesmo número, e
-      // `midpoint(prev, next)` devolve NaN quando os vizinhos empatam — o
-      // primeiro arrasto para entre dois cards do lote mandava NaN como posição.
-      // A função dá uma posição distinta a cada um e faz do lote uma transação
-      // só: move todos ou não move nenhum.
+      // Migration 0209: quem posiciona é o banco. Escrever aqui um
+      // `position_in_stage` escalar para N linhas dava a TODOS os cards do lote
+      // o mesmo número, e `midpoint(prev, next)` devolve NaN quando os vizinhos
+      // empatam — o primeiro arrasto para entre dois cards do lote mandava NaN
+      // como posição. A função dá uma posição distinta a cada um e faz do lote
+      // uma transação só: move todos ou não move nenhum.
+      //
+      // O tipo é declarado aqui porque `createClient()` deste repo devolve um
+      // cliente SEM o genérico `Database` — sem a anotação, `data` chega como
+      // `any` e a checagem some justamente no lugar que passou a depender de
+      // três campos vindos do banco.
       const { data, error } = await supabase.rpc("fn_mover_leads_em_lote", {
         p_organization_id: organizationId,
         p_lead_ids: visibleIds,
         p_stage_id: input.params.stage_id,
       });
       if (error) return fail("internal_error", error.message, 500, { requestId });
-      updatedCount = data?.length ?? 0;
+      const movidosNoBanco = (data ?? []) as LeadMovidoEmLote[];
+      updatedCount = movidosNoBanco.length;
 
       // Per-lead lead.stage_changed so the automation engine (which only
       // consumes per-entity events) fires for bulk moves too — mirrors
@@ -146,7 +159,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       // dentro do mesmo `update`, então não existe janela em que outra escrita
       // mova o card entre a leitura e a atualização e a timeline conte a
       // transição errada.
-      const movidos = (data ?? []).filter((r) => r.from_stage_id !== input.params.stage_id);
+      const movidos = movidosNoBanco.filter((r) => r.from_stage_id !== input.params.stage_id);
 
       // Wave 3 (CORE 2): mover 30 cards de uma vez é 30 mudanças de estado —
       // cada uma entra no barramento, senão o lote inteiro fica invisível na

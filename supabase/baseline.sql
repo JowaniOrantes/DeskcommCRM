@@ -17333,6 +17333,9 @@ as $$
 declare
   v_piso numeric;
 begin
+  -- `coalesce(..., 0)` cobre a etapa vazia; o DEFAULT da coluna é 1000, então
+  -- o primeiro card de um lote para uma etapa vazia cai em 1000, como um card
+  -- criado à mão.
   select coalesce(max(l.position_in_stage), 0)
     into v_piso
     from public.crm_leads l
@@ -17345,6 +17348,10 @@ begin
     select l.id,
            l.stage_id    as from_stage_id,
            l.pipeline_id as pipeline_id,
+           -- A ordem do lote no destino é a ordem em que ele estava no quadro:
+           -- etapa, depois posição. `id` só desempata para o resultado ser
+           -- determinístico (dois cards podem legitimamente empatar hoje —
+           -- é justamente o estado que esta migration deixa de produzir).
            row_number() over (order by l.stage_id, l.position_in_stage, l.id) as ordem
       from public.crm_leads l
      where l.organization_id = p_organization_id

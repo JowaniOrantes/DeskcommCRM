@@ -5112,12 +5112,23 @@ export const DICIONARIO: Traducoes = {
   "selecionados": { es: "seleccionados" },
   "Mover para…": { es: "Mover a…" },
   "Atribuir a…": { es: "Asignar a…" },
+  "Responsável…": { es: "Responsable…" },
   "Eu": { es: "Yo" },
   "Remover responsável": { es: "Quitar responsable" },
   "nova tag": { es: "nueva etiqueta" },
   "Esta ação remove os leads selecionados. Não pode ser desfeita.": {
     es: "Esta acción elimina los leads seleccionados. No se puede deshacer.",
   },
+  // Seleção em lote no quadro (migration 0209). A frase perdeu o substantivo
+  // "leads" de propósito: o funil renomeia o que está nos cards
+  // (`crm_pipelines.vocabulary`), e uma frase que crava "leads" contradiz a
+  // própria tela em quem chamou de Cliente ou Pedido.
+  "Esta ação remove o que está selecionado. Não pode ser desfeita.": {
+    es: "Esta acción elimina lo que está seleccionado. No se puede deshacer.",
+  },
+  "Selecionar": { es: "Seleccionar" },
+  "Selecionar todos em": { es: "Seleccionar todos en" },
+  "Desmarcar todos em": { es: "Desmarcar todos en" },
   "Abrir esta conversa no Inbox": { es: "Abrir esta conversación en la Bandeja" },
   "conversa sem mensagens": { es: "conversación sin mensajes" },
   "Valor inválido": { es: "Valor inválido" },

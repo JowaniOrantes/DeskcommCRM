@@ -1,4 +1,4 @@
--- 0208 · Mover em lote deixa de empilhar todos os cards na MESMA posição.
+-- 0209 · Mover em lote deixa de empilhar todos os cards na MESMA posição.
 --
 -- ─── O sintoma ───────────────────────────────────────────────────────────────
 -- `components/kanban/BulkActionBar.tsx` manda UM escalar para o lote inteiro
