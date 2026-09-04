@@ -224,34 +224,10 @@ describe("projeção — o que o Conversador pode ver", () => {
   });
 
   describe("contra os turnos REAIS que vazaram (evidence/)", () => {
-    /**
-     * OS NOMES DE ARQUIVO AQUI ENVELHECERAM, e o conserto foi medido em
-     * 2026-09-03. Os turnos de evidência foram renomeados — ganharam o
-     * segmento `sem-operacao__` no meio — e estes casos ficaram apontando
-     * para caminhos que não existem mais. Dois efeitos distintos:
-     *
-     *   - `operador__9-quem-pode-mexer.json` virou
-     *     `operador__sem-operacao__9-quem-pede-mexer.json`. O arquivo existe,
-     *     só mudou de nome, e o caso volta a medir com o nome novo.
-     *
-     *   - `operador__7-automacoes-e-falhas.json` AINDA EXISTE, mas foi
-     *     regravado numa rodada em que aquele turno não chamou ferramenta
-     *     nenhuma: `tool_calls` é uma lista vazia. Medido nos 28 arquivos da
-     *     pasta, NENHUM contém mais o payload `unsafe_url:https_required`.
-     *
-     * O caso do `unsafe_url` está `skip` com o motivo escrito, e não apagado:
-     * a projeção que ele guardava — erro técnico cru não chega ao cliente —
-     * continua valendo, e o dia em que alguém regravar um turno com esse erro
-     * o caso volta com um `it` de volta. Apagar teria trocado uma lacuna
-     * visível por nenhuma pergunta.
-     */
-    const TURNO_COM_UUID = "operador__sem-operacao__1-ler-o-funil.json";
-
-    it.skip("o payload que produziu 'unsafe_url:https_required' sai limpo depois da projeção", () => {
-      // SEM EVIDÊNCIA desde 2026-09-03: nenhum dos 28 turnos em
-      // `evidence/ia-360-w4/medicao-vazamento/turnos/` contém mais esse
-      // payload. Reativar quando um turno com o erro for regravado.
+    it("o payload que produziu 'unsafe_url:https_required' sai limpo depois da projeção", () => {
       const turno = carregarTurno("operador__7-automacoes-e-falhas.json");
+      // Primeiro: a evidência é o que eu penso que é. Sem este controle, um
+      // arquivo trocado faria o caso passar sem medir nada.
       const cruJson = JSON.stringify(resultadosDeFerramenta(turno));
       expect(cruJson, "controle: o payload real deve conter o erro cru").toContain("unsafe_url:https_required");
 
@@ -261,17 +237,14 @@ describe("projeção — o que o Conversador pode ver", () => {
       expect(projetadoJson).toContain("não usa conexão segura");
     });
 
-    it("os UUIDs de um turno real não sobrevivem à projeção", () => {
-      // 12 UUIDs neste turno, medidos. O controle abaixo garante que a
-      // evidência é o que se pensa que é: sem ele, um arquivo trocado faria
-      // o caso passar sem medir nada.
-      const turno = carregarTurno(TURNO_COM_UUID);
+    it("os UUIDs que o mesmo turno trazia não sobrevivem", () => {
+      const turno = carregarTurno("operador__7-automacoes-e-falhas.json");
       expect(JSON.stringify(resultadosDeFerramenta(turno)), "controle").toMatch(RE_UUID);
       expect(JSON.stringify(projetarRetornoDeTool(resultadosDeFerramenta(turno)))).not.toMatch(RE_UUID);
     });
 
     it("o turno que despejou UUID de usuário na tela do cliente sai sem nenhum", () => {
-      const turno = carregarTurno("operador__sem-operacao__9-quem-pode-mexer.json");
+      const turno = carregarTurno("operador__9-quem-pode-mexer.json");
       expect(JSON.stringify(resultadosDeFerramenta(turno)), "controle").toMatch(RE_UUID);
       expect(JSON.stringify(projetarRetornoDeTool(resultadosDeFerramenta(turno)))).not.toMatch(RE_UUID);
     });
