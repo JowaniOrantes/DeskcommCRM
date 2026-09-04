@@ -103,7 +103,16 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
 
   if (error) {
-    const previsto = DESFECHOS[error.message?.trim() ?? ""];
+    // Casamento por CONTINÊNCIA, não por igualdade. O `message` que o PostgREST
+    // devolve é o do `raise`, mas isso é contrato de uma camada que não é nossa:
+    // basta ele passar a decorar a linha ("...: insufficient_role") para a
+    // igualdade parar de casar — e o modo de falha seria 500 em TODO desfecho
+    // previsto, ou seja, o operador lendo "o sistema quebrou" quando o que houve
+    // foi "esse contato não serve". A continência sobrevive à decoração; os seis
+    // rótulos não são prefixo um do outro, então não há ambiguidade.
+    const bruto = error.message ?? "";
+    const chave = Object.keys(DESFECHOS).find((k) => bruto.includes(k));
+    const previsto = chave ? DESFECHOS[chave] : undefined;
     if (previsto) {
       return fail(previsto.code, previsto.message, previsto.status, { requestId });
     }
