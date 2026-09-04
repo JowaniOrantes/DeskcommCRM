@@ -148,7 +148,7 @@ beforeAll(() => {
 describe("relatório de atividades — a função", () => {
   it("existe e é SECURITY INVOKER (o escopo é a RLS, não uma checagem paralela)", () => {
     const linha = sql(`
-      select p.prosecdef::text
+      select p.prosecdef
         from pg_proc p
         join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.proname = 'fn_activity_report';
@@ -158,10 +158,10 @@ describe("relatório de atividades — a função", () => {
 
   it("não é alcançável pela anon key, e é alcançável por quem tem sessão", () => {
     const anon = sql(
-      `select has_function_privilege('anon', 'public.fn_activity_report(uuid,timestamptz,timestamptz,text,int)', 'EXECUTE')::text;`,
+      `select has_function_privilege('anon', 'public.fn_activity_report(uuid,timestamptz,timestamptz,text,int)', 'EXECUTE');`,
     );
     const auth = sql(
-      `select has_function_privilege('authenticated', 'public.fn_activity_report(uuid,timestamptz,timestamptz,text,int)', 'EXECUTE')::text;`,
+      `select has_function_privilege('authenticated', 'public.fn_activity_report(uuid,timestamptz,timestamptz,text,int)', 'EXECUTE');`,
     );
     expect(anon).toBe("f");
     expect(auth).toBe("t");
@@ -169,7 +169,7 @@ describe("relatório de atividades — a função", () => {
 
   it("tem o índice do recorte por período (senão o relatório varre a org inteira)", () => {
     const existe = sql(
-      `select exists(select 1 from pg_indexes where schemaname='public' and indexname='idx_lead_activities_org_perf')::text;`,
+      `select exists(select 1 from pg_indexes where schemaname='public' and indexname='idx_lead_activities_org_perf');`,
     );
     expect(existe).toBe("t");
   });
