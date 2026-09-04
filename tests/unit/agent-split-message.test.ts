@@ -57,7 +57,7 @@ describe("splitIntoBubbles", () => {
   });
 
   it("não insere espaço espúrio dentro de um valor em reais (R$ 7. 990)", () => {
-    const out = splitIntoBubbles("O valor é R$ 7.990 à vista no Pix.", 600);
+    const out = splitIntoBubbles("O valor é R$ 7.990 à vista no Pix.", 30);
     expect(out.join(" ")).not.toContain("7. 990");
     expect(out.join(" ")).toContain("7.990");
   });
