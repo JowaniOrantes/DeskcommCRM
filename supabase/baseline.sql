@@ -17247,7 +17247,7 @@ comment on column public.catalog_products.controla_estoque is
   'false = item que não se conta (decant, sob encomenda). A busca do agente não o esconde por quantidade zero.';
 
 
--- ---- mover em lote sem colidir posição (migration 0208) ----
+-- ---- mover em lote sem colidir posição (migration 0209) ----
 --
 -- A barra de ações em lote mandava UM `position_in_stage` para o lote inteiro, e
 -- o handler o gravava em N linhas: trinta cards movidos terminavam com o MESMO
