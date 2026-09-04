@@ -15,6 +15,22 @@ import type {
 } from "@/lib/schemas";
 import type { Conversation } from "@/lib/types/messaging";
 
+/**
+ * Prepara o termo digitado para viajar dentro de um `or=` do PostgREST.
+ *
+ * Exportada para ser testável: o defeito que ela impede é de SINTAXE, e sintaxe
+ * se verifica sem subir banco. O comportamento contra o PostgREST de verdade
+ * está em `tests/e2e/`.
+ */
+export function termoSeguroParaOr(bruto: string): string {
+  return bruto
+    .trim()
+    // curingas do `ilike` (Postgres)
+    .replace(/[%_]/g, (m) => `\\${m}`)
+    // gramática do `or=` (PostgREST) — viram o próprio curinga
+    .replace(/[,()]/g, "*");
+}
+
 type SB = SupabaseClient;
 
 /**
@@ -189,7 +205,44 @@ export async function listConversationsHandler(
   }
 
   if (q.search) {
-    const s = q.search.trim().replace(/[%_]/g, (m) => `\\${m}`);
+    // ─── O TERMO NÃO PODE QUEBRAR A SINTAXE DO `.or()` ────────────────────
+    //
+    // Dois escapes diferentes, para dois parsers diferentes, e eles NÃO se
+    // substituem:
+    //
+    //   `%` e `_` são curingas do `ilike` (Postgres) — escapados com `\`.
+    //   `,` `(` `)` são a GRAMÁTICA do `or=` (PostgREST) — e para eles o
+    //   PostgREST não oferece escape nenhum dentro de um valor sem aspas.
+    //
+    // Medido contra o PostgREST v14.10 do stack local deste repo, buscando um
+    // contato que existe:
+    //
+    //   or=(display_name.ilike.*DIAG, 178*,…)   → HTTP 400 PGRST100
+    //                                             "failed to parse logic tree"
+    //   or=(display_name.ilike.*DIAG* 178*,…)   → 200, 3 resultados
+    //
+    // Ou seja: um cliente cadastrado como "Sobrenome, Nome" — que é como meia
+    // agenda de CRM é digitada — DERRUBA a busca do Inbox, não devolve lista
+    // vazia. E a vírgula não precisa estar no banco: basta o atendente digitá-la.
+    //
+    // AS DUAS SAÍDAS ÓBVIAS FORAM MEDIDAS E AS DUAS FALHAM:
+    //
+    //   aspas duplas no valor .... `ilike."*IAG*"` → 0 resultados contra
+    //                              `ilike.*IAG*` → 3. Dentro das aspas o `*`
+    //                              deixa de ser curinga; consertaria a sintaxe
+    //                              e mataria a busca.
+    //   barra invertida .......... `ilike.*I\,AG*` → HTTP 400. O PostgREST não
+    //                              tem escape para a vírgula fora de aspas.
+    //
+    // O que sobra, e é o que está aqui: trocar o metacaractere pelo PRÓPRIO
+    // curinga. "Silva, João" vira `*Silva* João*`, que casa "Silva, João" no
+    // banco — o `%` cobre a vírgula. A busca fica ligeiramente mais larga, e
+    // essa direção é a certa: o custo é achar um vizinho a mais; o custo do
+    // outro lado é a tela em branco com 400.
+    //
+    // O controle que impede o degenerado está no teste: termo inexistente
+    // continua devolvendo ZERO. Sem ele, "troque tudo por `*`" passaria.
+    const s = termoSeguroParaOr(q.search);
 
     // ─── A BUSCA ALCANÇA O CONTATO, NÃO SÓ A ÚLTIMA MENSAGEM ──────────────
     //
