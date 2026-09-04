@@ -1126,3 +1126,38 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     re-run reproduzia a base errada; aqui o SHA está certo e o que falhou foi o ambiente. **Re-run
     contra falha de ambiente é correto; contra staleness é teatro.** A pergunta que separa as duas:
     *o que mudou desde a falha — o código ou a máquina?*
+33. **A prévia do merge é árvore DESCARTÁVEL — commitar nela perde o trabalho em silêncio.** O passe
+    3 manda montar a prévia (`git merge-tree` ou um worktree com a `main` mesclada) para rodar os
+    gates. Essa árvore existe para **medir**, não para guardar.
+
+    Medido em 2026-09-04, e o desfecho foi público: escrevi o fragmento de versão e o conserto de um
+    gate de privacidade **dentro da prévia**, dei o veredito no PR do contribuidor dizendo que os
+    dois estavam feitos, e mergeei o PR dele pelo GitHub. A prévia nunca foi empurrada. O conserto
+    dele entrou; **os dois artefatos que eu prometi, não** — e a afirmação ficou escrita no PR dele
+    por horas.
+
+    ```
+    .changes/<o fragmento>                 → não existe na main
+    <a constante do gate estendido>        → 0 ocorrências na main
+    ```
+
+    **Não há sintoma.** Sem conflito, sem vermelho, sem nada: o merge do PR do contribuidor é
+    legítimo e completo — só que o *seu* trabalho estava noutra árvore, que ninguém pediu para
+    ninguém.
+
+    A regra: **trabalho seu nasce numa branch a partir de `origin/main`, nunca na prévia.** Se você
+    já escreveu na prévia, `cherry-pick` para uma branch de verdade **antes** de mergear o PR que a
+    originou — depois do merge, a prévia vira uma árvore órfã que só você sabe que existe, e o
+    worktree pode ser varrido por qualquer limpeza.
+
+    E há a verificação que fecha, que custa um comando por artefato prometido:
+
+    ```bash
+    # depois de mergear, confira na main o que você DISSE que fez
+    git show origin/main:<caminho do artefato> >/dev/null 2>&1 && echo ok || echo "NÃO CHEGOU"
+    ```
+
+    Foi a **segunda** vez no mesmo dia que um artefato ficou para trás de um merge — a primeira foi
+    uma guarda empurrada 89 segundos depois (modo 16). As duas têm a mesma forma: **o merge entrega
+    o que estava no PR, e nada mais**; tudo o que você prometeu e não pôs lá dentro precisa de um
+    caminho próprio, e de uma conferência depois.
