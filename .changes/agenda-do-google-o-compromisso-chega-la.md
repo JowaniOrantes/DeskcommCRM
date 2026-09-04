@@ -4,8 +4,8 @@ secao: corrigido
 titulo: O compromisso marcado aqui passa a aparecer na Agenda do Google — e o que está ocupado lá aparece aqui
 ---
 
-Quem conectou a Agenda do Google tinha a integração **ligada e sem efeito
-nenhum**, nas duas direções, e nada na tela dizia isso.
+Quem conectou a Agenda do Google tinha a integração **ligada e sem efeito nenhum**.
+Valia nas duas direções, e nada na tela dizia isso.
 
 **Nada saía daqui.** O compromisso era marcado, o sistema tentava criá-lo lá a
 cada cinco minutos, e o Google recusava todas as vezes — por um detalhe de
