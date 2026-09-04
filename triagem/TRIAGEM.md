@@ -1177,94 +1177,86 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     árvore ter cumprido a função dela, que é sumir. É a diferença entre esquecer a chave em cima da
     mesa e deixá-la dentro do saco de lixo: o segundo caso não pede memória melhor, pede não pôr.
 
-### Modo 34 — o erro de objeto: medir com precisão perfeita a coisa errada
+34. **o erro de objeto: medir com precisão perfeita a coisa errada.** **Sintoma:** um alarme grave, sustentado por uma medição correta. O comando rodou, a saída é real, o
+    raciocínio fecha — e a conclusão é falsa, porque o objeto medido não era o objeto em vigor.
 
-**Sintoma:** um alarme grave, sustentado por uma medição correta. O comando rodou, a saída é real, o
-raciocínio fecha — e a conclusão é falsa, porque o objeto medido não era o objeto em vigor.
+    O caso que gerou este modo quase virou um relatório de que a release não sairia: a guarda que
+    autoriza o corte não tinha rodada para o commit que removeu os fragmentos. Verdade — e irrelevante.
+    Aquele commit era o de **dentro do PR**; quem está na `main` é o **merge**, e a guarda roda no merge.
 
-O caso que gerou este modo quase virou um relatório de que a release não sairia: a guarda que
-autoriza o corte não tinha rodada para o commit que removeu os fragmentos. Verdade — e irrelevante.
-Aquele commit era o de **dentro do PR**; quem está na `main` é o **merge**, e a guarda roda no merge.
+    O modo é traiçoeiro porque **imita rigor**. Quem mede com cuidado sente que está sendo cuidadoso, e o
+    cuidado se aplica todo à execução da medida, nenhum à escolha do que medir. Medir de novo, com mais
+    capricho, não sai do buraco: devolve a mesma resposta errada com mais casas decimais.
 
-O modo é traiçoeiro porque **imita rigor**. Quem mede com cuidado sente que está sendo cuidadoso, e o
-cuidado se aplica todo à execução da medida, nenhum à escolha do que medir. Medir de novo, com mais
-capricho, não sai do buraco: devolve a mesma resposta errada com mais casas decimais.
+    A pergunta que sai, e ela vem **antes** do comando:
 
-A pergunta que sai, e ela vem **antes** do comando:
+    > **Sobre qual objeto esta regra roda?** O commit ou o merge? A branch ou a prévia? O arquivo no
+    > disco ou o do `origin/main`? A função ou o *call site*?
 
-> **Sobre qual objeto esta regra roda?** O commit ou o merge? A branch ou a prévia? O arquivo no
-> disco ou o do `origin/main`? A função ou o *call site*?
+    E o corolário, que é o achado dentro do achado: a mesma guarda tinha um segundo modo de falha que só
+    apareceu quando o objeto certo foi nomeado. Num *merge commit*, o autor visível é **quem clicou**; o
+    assinante do trabalho é o **segundo pai** (`HEAD^2`). Uma guarda que lesse o autor do merge recusaria
+    a própria release — e passaria em todo teste que não fosse um merge assinado por bot. Não é um gate
+    que nasce vermelho (modo 21): é pior, **nasce verde e só vermelha em produção**.
 
-E o corolário, que é o achado dentro do achado: a mesma guarda tinha um segundo modo de falha que só
-apareceu quando o objeto certo foi nomeado. Num *merge commit*, o autor visível é **quem clicou**; o
-assinante do trabalho é o **segundo pai** (`HEAD^2`). Uma guarda que lesse o autor do merge recusaria
-a própria release — e passaria em todo teste que não fosse um merge assinado por bot. Não é um gate
-que nasce vermelho (modo 21): é pior, **nasce verde e só vermelha em produção**.
+35. **a árvore recém-criada não tem `node_modules`, e o gate mente nos dois sentidos.** `git worktree add` copia o que está versionado, e `node_modules` não está. Numa árvore nova:
 
-### Modo 35 — a árvore recém-criada não tem `node_modules`, e o gate mente nos dois sentidos
+    | comando | o que devolve | o que parece |
+    |---|---|---|
+    | `npx tsc --noEmit -p tsconfig.json` | **exit=0, 0 erros** — tendo carregado **9 arquivos** | sucesso |
+    | `npx vitest run <arquivo>` | baixa outra versão da rede, não resolve `vitest/config`, **exit=1 sem rodapé** | teste vermelho |
 
-`git worktree add` copia o que está versionado, e `node_modules` não está. Numa árvore nova:
+    As duas saídas enganam em direções **opostas**, e a primeira é a pior: ela devolve o número
+    **otimista**, que ninguém questiona. Um `typecheck` que passou é a última coisa que alguém relê.
 
-| comando | o que devolve | o que parece |
-|---|---|---|
-| `npx tsc --noEmit -p tsconfig.json` | **exit=0, 0 erros** — tendo carregado **9 arquivos** | sucesso |
-| `npx vitest run <arquivo>` | baixa outra versão da rede, não resolve `vitest/config`, **exit=1 sem rodapé** | teste vermelho |
+    O gatilho mecânico, que custa um comando:
 
-As duas saídas enganam em direções **opostas**, e a primeira é a pior: ela devolve o número
-**otimista**, que ninguém questiona. Um `typecheck` que passou é a última coisa que alguém relê.
+    ```bash
+    npx tsc --noEmit -p tsconfig.json --listFilesOnly | wc -l   # milhares = mediu; dezenas = não mediu
+    ```
 
-O gatilho mecânico, que custa um comando:
+    Para conferências que não dependem de tipos — duplicata de chave, o regex de um gate, ordem de blocos —
+    **reproduza a regra com `python3`/`grep` na própria árvore e valide com controle positivo.** Sai em
+    segundos, contra o gigabyte de um `pnpm install` que você não vai reusar.
 
-```bash
-npx tsc --noEmit -p tsconfig.json --listFilesOnly | wc -l   # milhares = mediu; dezenas = não mediu
-```
+36. **o hook recusa o commit, e o `push` seguinte publica o SHA errado calado.** Um `git commit` barrado por hook de governança não interrompe o bloco: o `push` na linha seguinte roda,
+    publica **o HEAD que já existia**, e devolve sucesso. O eco que você escreveu (`echo "salva: ✓"`) sai
+    igual ao do caminho certo.
 
-Para conferências que não dependem de tipos — duplicata de chave, o regex de um gate, ordem de blocos —
-**reproduza a regra com `python3`/`grep` na própria árvore e valide com controle positivo.** Sai em
-segundos, contra o gigabyte de um `pnpm install` que você não vai reusar.
+    Foi assim que três branches nasceram apontando para o commit da `main`, com o trabalho inteiro só no
+    disco de uma árvore descartável — o modo 33 e o modo 36 se somando.
 
-### Modo 36 — o hook recusa o commit, e o `push` seguinte publica o SHA errado calado
+    Duas defesas, e a segunda é a que pega:
 
-Um `git commit` barrado por hook de governança não interrompe o bloco: o `push` na linha seguinte roda,
-publica **o HEAD que já existia**, e devolve sucesso. O eco que você escreveu (`echo "salva: ✓"`) sai
-igual ao do caminho certo.
+    ```bash
+    DESKCOMM_GOV_MIGRATION_EDIT=1 git commit ...        # a variável que o hook exige
+    git log --oneline -1 && git diff --stat origin/main..HEAD   # o commit EXISTE e tem o tamanho certo?
+    ```
 
-Foi assim que três branches nasceram apontando para o commit da `main`, com o trabalho inteiro só no
-disco de uma árvore descartável — o modo 33 e o modo 36 se somando.
+    É a mesma família do [bloco que edita e commita]: **um bloco onde um passo falha e o seguinte
+    "tem sucesso" produz uma afirmação verdadeira sobre a coisa errada.** Nunca deixe o eco de sucesso
+    depender só de o último comando ter retornado zero.
 
-Duas defesas, e a segunda é a que pega:
+37. **extrações paralelas escolhem todas o mesmo número de migration.** Três recortes do mesmo PR gigante, rodando ao mesmo tempo. Cada um lê `ls supabase/migrations/`, vê que
+    o último é `0207`, e escolhe `0208`. Duas escolhem até o **mesmo timestamp**.
 
-```bash
-DESKCOMM_GOV_MIGRATION_EDIT=1 git commit ...        # a variável que o hook exige
-git log --oneline -1 && git diff --stat origin/main..HEAD   # o commit EXISTE e tem o tamanho certo?
-```
+    Sozinha, cada uma está certa — e é isso que torna o modo invisível: nenhuma revisão individual pega.
+    A colisão só existe no conjunto, e o conjunto não é revisado por ninguém.
 
-É a mesma família do [bloco que edita e commita]: **um bloco onde um passo falha e o seguinte
-"tem sucesso" produz uma afirmação verdadeira sobre a coisa errada.** Nunca deixe o eco de sucesso
-depender só de o último comando ter retornado zero.
+    E o número livre **não se descobre na `main`**: ele se descobre nos **PRs abertos**, que já reservaram
+    os seguintes sem tê-los mergeado.
 
-### Modo 37 — extrações paralelas escolhem todas o mesmo número de migration
+    ```bash
+    # o que a main já tem
+    git ls-tree --name-only origin/main supabase/migrations/ | grep -oE "_0[0-9]{3}_" | sort -u | tail -1
+    # o que os PRs ABERTOS já reservaram
+    for P in $(gh pr list --state open --json number --jq '.[].number'); do
+      gh pr view $P --json files --jq '.files[].path' | grep -oE "_0[0-9]{3}_" | sed "s|^|#$P |"
+    done | sort -u
+    ```
 
-Três recortes do mesmo PR gigante, rodando ao mesmo tempo. Cada um lê `ls supabase/migrations/`, vê que
-o último é `0207`, e escolhe `0208`. Duas escolhem até o **mesmo timestamp**.
-
-Sozinha, cada uma está certa — e é isso que torna o modo invisível: nenhuma revisão individual pega.
-A colisão só existe no conjunto, e o conjunto não é revisado por ninguém.
-
-E o número livre **não se descobre na `main`**: ele se descobre nos **PRs abertos**, que já reservaram
-os seguintes sem tê-los mergeado.
-
-```bash
-# o que a main já tem
-git ls-tree --name-only origin/main supabase/migrations/ | grep -oE "_0[0-9]{3}_" | sort -u | tail -1
-# o que os PRs ABERTOS já reservaram
-for P in $(gh pr list --state open --json number --jq '.[].number'); do
-  gh pr view $P --json files --jq '.files[].path' | grep -oE "_0[0-9]{3}_" | sed "s|^|#$P |"
-done | sort -u
-```
-
-**E renumerar é três arquivos, não um.** O nome do `.sql`, o rótulo `-- ---- … (migration NNNN) ----`
-no apêndice do `baseline.sql`, e a linha do `MANIFEST.md`. No MANIFEST o número vem **colado ao slug**
-(`0208_juntar_contatos_duplicados`), então um `sed` por palavra isolada não o alcança — e o
-`grep -c 0208` seguinte devolve `1` por causa de outra ocorrência qualquer, **confirmando um conserto
-que não aconteceu**. Confira pelo conteúdo da linha, não pela contagem.
+    **E renumerar é três arquivos, não um.** O nome do `.sql`, o rótulo `-- ---- … (migration NNNN) ----`
+    no apêndice do `baseline.sql`, e a linha do `MANIFEST.md`. No MANIFEST o número vem **colado ao slug**
+    (`0208_juntar_contatos_duplicados`), então um `sed` por palavra isolada não o alcança — e o
+    `grep -c 0208` seguinte devolve `1` por causa de outra ocorrência qualquer, **confirmando um conserto
+    que não aconteceu**. Confira pelo conteúdo da linha, não pela contagem.
