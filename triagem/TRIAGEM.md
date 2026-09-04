@@ -1074,3 +1074,30 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     **Nunca reporte contagem medida sob concorrência.** Rode `uptime`, serialize, e diga na medição
     que serializou — um número colhido em máquina saturada não é conservador nem otimista: é outro
     número, de outra pergunta.
+
+    ### A mesma doença no CI: o vermelho do VIZINHO
+
+    Na máquina local a saturação vira timeout; no runner ela vira **porta ocupada**. Medido em
+    2026-09-04, num `e2e` reprovado:
+
+    ```
+    failed to bind host port for 0.0.0.0:54324 … address already in use
+    Error: failed to start containers
+    ```
+
+    O ambiente **não subiu** — nenhuma spec chegou a rodar —, e o job aparece como `failure` igual a
+    uma asserção quebrada. Com a fila cheia (23 runs enfileirados naquele momento, todos vindos dos
+    merges do próprio dia), dois jobs disputam a mesma porta fixa do stack local.
+
+    **Como distinguir de defeito, e é barato:** procure no log a fase em que morreu. Se a falha
+    aparece **antes** de qualquer nome de spec — em "Subir Supabase local", em `docker`, em bind de
+    porta —, nenhuma asserção foi avaliada e o vermelho não é do PR.
+
+    ```bash
+    gh run view --job <id> --log-failed | grep -aE "address already in use|failed to start containers"
+    ```
+
+    ⚠️ **E aqui `gh run rerun` É o certo**, ao contrário do modo 18: lá o problema era o SHA velho e
+    re-run reproduzia a base errada; aqui o SHA está certo e o que falhou foi o ambiente. **Re-run
+    contra falha de ambiente é correto; contra staleness é teatro.** A pergunta que separa as duas:
+    *o que mudou desde a falha — o código ou a máquina?*
