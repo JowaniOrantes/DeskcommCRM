@@ -517,11 +517,45 @@ test.describe("QA — o agente usa as mãos que a W4 entregou?", () => {
       console.info(`[QA] status:   ${data.status} · ${data.latency_ms ?? "?"}ms`);
       console.info(`[QA] resposta: ${(data.final_text ?? "(vazia)").slice(0, 400)}`);
 
+      /**
+       * ⚠️ O TURNO SÓ SOBRESCREVE A MEDIÇÃO SE TIVER MEDIDO ALGUMA COISA.
+       *
+       * O irmão de cima já protege o caminho do HTTP != 200, e o comentário dele
+       * conta o estrago de 2026-08-08. Ficou aberto o outro caminho, e ele é mais
+       * sorrateiro: SEM CHAVE DE IA a rota responde **200**, porque o pedido foi
+       * aceito — o agente é que pula o turno (`reason='ai_gateway_key_missing'`,
+       * o aviso que `lib/env.ts` imprime em toda inicialização). `res.ok()` é
+       * verdadeiro, o gravador segue em frente, e um registro vazio cai por cima
+       * do turno REAL versionado.
+       *
+       * Aconteceu de novo em 2026-09-04, nesta máquina: 1.758 linhas apagadas
+       * dos 10 `operador__*.json`, trocadas por 80. Os testes de unidade ficaram
+       * vermelhos (o controle positivo pegou, como desenhado), e o vermelho foi
+       * lido como "os turnos foram renomeados" — o que levou a um commit que
+       * DESLIGAVA o caso. A medição histórica sobreviveu por `git checkout`; o
+       * diagnóstico errado quase não.
+       *
+       * A régua não olha `status`, olha RESULTADO: um turno que não produziu
+       * texto nem chamou ferramenta não mediu nada, seja qual for o vocabulário
+       * de status daquela versão. E ele continua sendo gravado — ao lado, como o
+       * `__falhou` —, porque cenário que some do diretório é indistinguível de
+       * cenário que nunca foi tentado.
+       */
+      const mediuAlgo = (data.final_text ?? "").trim().length > 0 || nomes.length > 0;
+      if (!mediuAlgo) {
+        console.info(
+          `[QA] ${cenario.nome}: HTTP 200 mas o turno veio VAZIO (status=${data.status}). ` +
+            `Gravando ao lado, em __sem-resposta.json — a medição versionada não é tocada. ` +
+            `Se você esperava medir de verdade, falta chave de IA.`,
+        );
+      }
+
       fs.writeFileSync(
-        dump,
+        mediuAlgo ? dump : dump.replace(/\.json$/, "__sem-resposta.json"),
         JSON.stringify(
           {
             prompt_kind: PROMPT_KIND,
+            mediu: mediuAlgo,
             cenario: cenario.nome,
             mensagem: cenario.mensagem,
             esperado: cenario.esperado,
