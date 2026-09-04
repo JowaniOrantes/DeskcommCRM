@@ -1,4 +1,4 @@
--- 0208 — agent_inbox_items ganha resolved_at: a coluna que o código já supunha existir.
+-- 0216 — agent_inbox_items ganha resolved_at: a coluna que o código já supunha existir.
 --
 -- ─── O defeito, medido em produção (VPS, 2026-09-04) ───────────────────────
 --

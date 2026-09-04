@@ -17427,7 +17427,7 @@ grant execute on function public.fn_encrypt_oauth(text) to service_role;
 grant execute on function public.fn_lgpd_cascade_redact_contact(uuid, uuid, uuid) to service_role;
 grant execute on function public.fn_update_budget_consumption() to service_role;
 
--- ---- agent_inbox_items.resolved_at (migration 0208) ----
+-- ---- agent_inbox_items.resolved_at (migration 0216) ----
 -- `pacing/aviso-de-janela.ts` resolve o aviso de "janela de envio fechada"
 -- gravando `resolved_at = now()`, e a coluna nunca existiu — o UPDATE falhava
 -- em produção (engolido, fire-and-forget), e o aviso ficava aberto pra sempre.
