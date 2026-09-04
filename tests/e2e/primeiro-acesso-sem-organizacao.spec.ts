@@ -169,11 +169,19 @@ test.describe("conta confirmada e sem organização", () => {
       .eq("user_id", idOrfao)
       .maybeSingle();
     expect(data, "nenhum vínculo foi criado — a tela navegou sem provisionar").not.toBeNull();
-    orgCriadaId = (data as { organization_id: string }).organization_id;
-    expect((data as { role: string }).role).toBe("admin");
-    expect(
-      (data as { organizations: { display_name: string } }).organizations.display_name,
-    ).toBe("Clínica Recuperada E2E");
+    const vinculo = data as unknown as {
+      organization_id: string;
+      role: string;
+      // O embed to-one do PostgREST chega objeto, mas o tipo gerado diz array —
+      // aceitar os dois é o que o resto da casa faz (ver `settingsDoEmbed`).
+      organizations: { display_name: string } | { display_name: string }[];
+    };
+    orgCriadaId = vinculo.organization_id;
+    expect(vinculo.role).toBe("admin");
+    const org = Array.isArray(vinculo.organizations)
+      ? vinculo.organizations[0]
+      : vinculo.organizations;
+    expect(org?.display_name).toBe("Clínica Recuperada E2E");
   });
 });
 
