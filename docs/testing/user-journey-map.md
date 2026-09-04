@@ -1613,3 +1613,37 @@ primeiro elemento com `class="border"` da tela de login é o `<input>`
 autofocado — ele casa `focus-visible:border-accent-500` e devolve a cor do
 foco. A sonda só mede elemento real, e pula elemento em foco e elemento que já
 traga classe de cor própria.
+
+---
+
+## O campo que oferecia hoje e o servidor recusava (2026-09-03)
+
+Achado de varredura adversarial contra o PR #496, no SHA `f700f3e1`. Mesma tela
+do #496 — **Conexões › Proteção de envio** —, campo ao lado do que ele acabara
+de consertar, e o mesmo desfecho para quem opera: a ficha inteira deixa de
+salvar.
+
+`<input type="date">` fala em dia LOCAL; `AntiBanSheet` encaixa o dia escolhido
+às 12h UTC (meia-noite viraria o dia anterior a oeste); e a guarda do schema
+comparava esse encaixe com `Date.now()` — um DIA contra um RELÓGIO.
+
+| régua | recusa começa | recusa para | quem sente |
+|---|---|---|---|
+| dia que a tela mostra (`America/Sao_Paulo`, UTC−3) | 03:00 UTC | 12:00 UTC | 00:00 às 09:00 no relógio de quem opera |
+| dia UTC (o que o `max` do campo oferecia, vindo de `toISOString()`) | 00:00 UTC | 12:00 UTC | as primeiras 12 horas UTC do dia |
+
+Medido varrendo as 48 meias-horas do dia com relógio falso, chamando o schema
+real com a carga exata que a tela monta — não pela tela: **NÃO MEDIDO** pelo
+browser num ambiente fresco estilo VPS. O que a varredura de horas prova é a
+fronteira; o que ela não prova é o que o operador vê quando ela dispara.
+
+**A lição, e ela não é sobre fusos.** O produto oferece o dia num campo e o
+recusa no servidor: a mesma classe do controle decorativo, ao contrário — não é
+o controle que não faz nada, é o limite do campo que promete o que a outra ponta
+nega. Toda validação de data merece a pergunta *"as duas pontas falam do mesmo
+dia, ou uma delas fala de instante?"*.
+
+**Onde mais essa pergunta cabe** (levantado, **não medido**, e fora do escopo do
+conserto): `lib/kanban/filters.ts` e `lib/automation/throttle.ts` derivam "hoje"
+de `toISOString().slice(0, 10)`, que é o dia UTC. Se algum deles compara com dia
+local, é a mesma classe.
