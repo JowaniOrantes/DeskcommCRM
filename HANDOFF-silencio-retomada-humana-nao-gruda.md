@@ -1,19 +1,27 @@
 # HANDOFF — o silêncio de 3h da retomada humana não gruda no banco
 
+> **Nota de privacidade.** Este registro foi anonimizado antes de entrar no
+> repositório, que é **público**: nomes de lead, de atendente e de tenant, o
+> valor negociado e os UUIDs de produção viraram rótulos. Nada disso é
+> necessário para o defeito — o que importa são os horários, o
+> `sent_via='external_device'` e a sequência de chamadas, e esses estão
+> intactos. O caso continua reproduzível.
+
+
 > ⚠️ **INSTRUÇÃO PERMANENTE:** ler no INÍCIO de toda sessão que investigue este
 > defeito e ATUALIZAR + COMMITAR a cada avanço. Progresso só conta com PROVA
 > VISÍVEL (query real contra produção, log real, reprodução real — não
 > "deveria funcionar"). Commitar este arquivo junto — mudança só no working
 > tree se perde.
 
-## O caso que expôs o defeito (tenant YADEA, 2026-09-02)
+## O caso que expôs o defeito (um tenant de produção, 2026-09-02)
 
-A lead Neide (`contacts.id = 32eea20e-57f5-4794-8f45-4ab3d2f97391`,
-`conversations.id = fe5cdf2f-ebe2-4dbd-a1d9-c7bbf4a7586e`) conversou com o
-agente Ricardo. Em paralelo, um humano (provavelmente o Fernando) respondeu ela
+A lead (`contacts.id = <contato-1>`,
+`conversations.id = <conversa-2>`) conversou com o
+agente o agente. Em paralelo, um humano (um atendente da oficina) respondeu ela
 **direto pelo WhatsApp do celular da oficina** — três mensagens `fromMe=true`,
 `sent_via='external_device'`, às 11:59:45, 12:09:42 e 12:18:53 (nota fiscal,
-prazo de 2 dias, valor de R$250).
+prazo de 2 dias, um valor fechado).
 
 `handleOutboundFromUserPhone` (`lib/waha/ingest.ts`) existe exatamente para
 esse caso: ao ver `fromMe=true` fora do composer/IA, chama
@@ -22,15 +30,15 @@ esse caso: ao ver `fromMe=true` fora do composer/IA, chama
 nenhuma das três vezes.** O bot continuou respondendo por cima do humano
 (ex.: às 12:11:40, mais de 100s depois da 2ª tentativa de silêncio), pedindo de
 novo informação que o humano já tinha resolvido — e é daí que nasce o efeito
-colateral que motivou a investigação original: o Ricardo dizendo "já registrei
-sua dúvida com o Fernando" sem nunca ter chamado nenhuma ferramenta de handoff
+colateral que motivou a investigação original: o agente dizendo "já registrei
+sua dúvida com o o atendente" sem nunca ter chamado nenhuma ferramenta de handoff
 (ver commit deste mesmo dia em `operator-turn.ts`/`inbound-turn.ts` — prompts
 reforçados para não descrever uma ação que não foi executada).
 
 ## O que foi MEDIDO, sem sucesso em explicar
 
 ```
-$ psql "$SUPABASE_DB_URL" -c "select bot_silenced_until, now() from conversations where id='fe5cdf2f-ebe2-4dbd-a1d9-c7bbf4a7586e'"
+$ psql "$SUPABASE_DB_URL" -c "select bot_silenced_until, now() from conversations where id='<conversa-2>'"
  bot_silenced_until | now
 ---------------------+-------------------------------
                      | 2026-09-02 12:28:13.536988+00
@@ -40,12 +48,12 @@ $ psql "$SUPABASE_DB_URL" -c "select bot_silenced_until, now() from conversation
 Eliminado, um por um, com evidência — **não é nenhum destes**:
 
 1. **Código não deployado** — `faf9446ba` (fix de 30/ago, mesmo tenant,
-   "Fernando") é ancestral de `v1.11.0`, a tag rodando em produção.
+   "o atendente") é ancestral de `v1.11.0`, a tag rodando em produção.
 2. **RLS bloqueando silenciosamente** — `service_role` tem `rolbypassrls=true`
    medido (`select rolbypassrls from pg_roles`), e a JWT do `.env` decodifica
    com `role: service_role` correto.
 3. **Contato/conversa duplicados** (LID vs telefone) — só existe 1 contato e 1
-   conversa para a Neide (`wa_identity` bate, `wa_lid` bate).
+   conversa para a lead (`wa_identity` bate, `wa_lid` bate).
 4. **Corrida de fila/timing** — o job que respondeu por cima (`647cdd97`) foi
    criado às 12:11:21 e rodou às 12:11:29, **mais de 100s** depois do silêncio
    ter sido setado (12:09:43). Folga enorme, não é corrida.
@@ -119,7 +127,7 @@ processou a request como um `UPDATE ... 0 rows` (silencioso) ou algo mais.
 - `typecheck` 0, `lint` 0, `tests/unit/operador-*.test.ts` +
   `tests/unit/handoff-fernando-fiacao.test.ts` + `tests/unit/entrega-de-capacidade.test.ts`
   → 55/55 verdes.
-- Card da Neide (`crm_leads.id = 37ef7305-4200-479a-ab3d-689a175ee1f9`) movido
-  manualmente para o estágio `repassado-fernando`, com atividade registrada em
+- Card da lead (`crm_leads.id = <id-3>`) movido
+  manualmente para o estágio `repassado-ao-atendente`, com atividade registrada em
   `crm_lead_activities` explicando a correção manual — o estágio **não**
   reflete uma automação corrigida, é conserto pontual daquele card.
