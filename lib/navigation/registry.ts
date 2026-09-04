@@ -462,6 +462,20 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     sidebar: true,
   },
   {
+    // Irmã de "Desempenho", não a mesma coisa: lá é DESFECHO (funil agora,
+    // ganho/perdido por atendente); aqui é o TRABALHO que aconteceu no
+    // período, com quem fez cada coisa. Um mês inteiro atendido pela IA e um
+    // mês inteiro atendido pela equipe têm o mesmo desfecho e histórias
+    // opostas — só esta tela distingue as duas.
+    href: "/app/activities",
+    label: "Atividades",
+    description:
+      "Relatório do que a equipe e os agentes fizeram no período: quanto, quem e de que tipo.",
+    icon: ClockCounterClockwise,
+    group: "analise",
+    sidebar: true,
+  },
+  {
     href: "/app/audit",
     label: "Audit Log",
     description: "Quem fez o quê, quando — o histórico que não se apaga.",
