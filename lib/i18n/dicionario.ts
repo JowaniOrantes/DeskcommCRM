@@ -6380,6 +6380,33 @@ export const DICIONARIO: Traducoes = {
   "leads criados": { es: "leads creados" },
   "contatos novos": { es: "contactos nuevos" },
   "Colunas que não reconheci:": { es: "Columnas que no reconocí:" },
+
+  // ─── Relatório de atividades (/app/activities) ───
+  //
+  // "acontecimento"/"acontecimentos" são o PLURAL da mesma contagem e entram
+  // como duas chaves porque a tela escolhe uma das duas — espanhol tem a mesma
+  // distinção, então nenhuma das duas pode faltar.
+  "O que aconteceu na operação no período — e quanto disso foi a equipe.": {
+    es: "Lo que pasó en la operación en el período — y cuánto de eso fue el equipo.",
+  },
+  Últimos: { es: "Últimos" },
+  "Erro ao carregar o relatório.": { es: "Error al cargar el informe." },
+  acontecimento: { es: "suceso" },
+  acontecimentos: { es: "sucesos" },
+  "Nada aconteceu neste período": { es: "No pasó nada en este período" },
+  "Nenhum acontecimento foi registrado na janela escolhida — nem por pessoas, nem pelos agentes. Aumente o período ou confira se o atendimento está de pé.":
+    {
+      es: "No se registró ningún suceso en la ventana elegida — ni por personas, ni por los agentes. Amplíe el período o revise si la atención está funcionando.",
+    },
+  "Ver conversas": { es: "Ver conversaciones" },
+  "A equipe": { es: "El equipo" },
+  "Os agentes": { es: "Los agentes" },
+  "Quem fez": { es: "Quién lo hizo" },
+  "O que foi feito": { es: "Qué se hizo" },
+  "Linha do tempo da operação": { es: "Línea de tiempo de la operación" },
+  "A lista mostra só os mais recentes.": { es: "La lista muestra solo los más recientes." },
+  "No período houve": { es: "En el período hubo" },
+  "acontecimentos.": { es: "sucesos." },
 };
 
 /**

@@ -8,7 +8,7 @@
  *
  * ## Escopo — a própria RLS, e por isso o client é o do USUÁRIO
  *
- * `fn_activity_report` é SECURITY INVOKER (migration 0208). Chamada com o client
+ * `fn_activity_report` é SECURITY INVOKER (migration 0215). Chamada com o client
  * de sessão (cookie validado), a policy `crm_lead_activities_select` (0042) faz
  * o recorte: `agent` em modo 'own' recebe só as atividades dos negócios dele,
  * viewer/manager/admin recebem a organização. Trocar isto pelo admin client
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     items_truncated: false,
   }) as unknown as RelatorioBruto;
 
-  const nomes = await resolveNomes(supabase, bruto);
+  const nomes = await resolveNomes(supabase, activeOrg.orgId, bruto);
 
   // O vocabulário do funil PADRÃO da organização. O relatório é org-wide, então
   // não há um funil a que ele pertença — e o padrão é o que a organização
@@ -143,6 +143,7 @@ export async function GET(req: NextRequest): Promise<Response> {
  */
 async function resolveNomes(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
   bruto: RelatorioBruto,
 ): Promise<NomesConhecidos> {
   const usuarios: Record<string, string | null> = {};
@@ -165,8 +166,15 @@ async function resolveNomes(
   }
 
   if (idsDeAgente.length > 0) {
-    // Client do usuário de novo: a RLS de `ai_agents` é do mesmo inquilino.
-    const { data } = await supabase.from("ai_agents").select("id, name").in("id", idsDeAgente);
+    // Client do usuário de novo — e AINDA ASSIM com `organization_id` escrito:
+    // quem pertence a duas organizações passa na RLS das duas, e a doutrina
+    // manda toda query que cruza tabela tenant-aware dizer o inquilino em voz
+    // alta em vez de terceirizar o recorte.
+    const { data } = await supabase
+      .from("ai_agents")
+      .select("id, name")
+      .eq("organization_id", orgId)
+      .in("id", idsDeAgente);
     for (const a of data ?? []) agentes[a.id] = a.name;
   }
 

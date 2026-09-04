@@ -40,7 +40,7 @@ import {
 } from "@/lib/leads/activity-vocabulary";
 
 // ---------------------------------------------------------------------------
-// O que `fn_activity_report` devolve (migration 0208) — identificadores, nunca
+// O que `fn_activity_report` devolve (migration 0215) — identificadores, nunca
 // nomes: quem sabe traduzir id em nome é a camada que também sabe degradar
 // quando o nome falta.
 // ---------------------------------------------------------------------------

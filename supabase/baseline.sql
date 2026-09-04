@@ -17304,7 +17304,7 @@ comment on column public.contacts.ai_authorized_reason is
 
 notify pgrst, 'reload schema';
 
--- ---- Relatório de atividades (migration 0212) ----
+-- ---- Relatório de atividades (migration 0215) ----
 -- Leitura de `crm_lead_activities` no eixo do PERÍODO. Até aqui o barramento só
 -- era lido por negócio e por contato: "o que a equipe fez esta semana" obrigava
 -- a abrir negócio por negócio. A agregação roda no Postgres de propósito —
