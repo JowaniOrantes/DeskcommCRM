@@ -1161,3 +1161,42 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     uma guarda empurrada 89 segundos depois (modo 16). As duas têm a mesma forma: **o merge entrega
     o que estava no PR, e nada mais**; tudo o que você prometeu e não pôs lá dentro precisa de um
     caminho próprio, e de uma conferência depois.
+
+    **E há uma distinção que muda o conserto**, apontada por quem revisou este modo. As três
+    ocorrências têm a mesma forma, mas o *lugar* onde o trabalho ficou preso é diferente em espécie:
+
+    | onde o trabalho ficou | por que se perdeu | o que conserta |
+    |---|---|---|
+    | branch empurrada, PR de outro | ninguém **olhou** | um lembrete: conferir depois do merge |
+    | commit local, não empurrado | ninguém **puxou** | um comando: `git show origin/main:` |
+    | **árvore de prévia** | a árvore **existe para ser destruída** | não commitar ali, nunca |
+
+    Os dois primeiros são acidentes de atenção. O terceiro não é: a prévia é **descartável por
+    construção**. Trabalho commitado nela não corre o risco de se perder — ele **já nasce perdido**,
+    e nenhuma disciplina de conferência corrige isso, porque a conferência acontece depois de a
+    árvore ter cumprido a função dela, que é sumir. É a diferença entre esquecer a chave em cima da
+    mesa e deixá-la dentro do saco de lixo: o segundo caso não pede memória melhor, pede não pôr.
+
+### Modo 34 — o erro de objeto: medir com precisão perfeita a coisa errada
+
+**Sintoma:** um alarme grave, sustentado por uma medição correta. O comando rodou, a saída é real, o
+raciocínio fecha — e a conclusão é falsa, porque o objeto medido não era o objeto em vigor.
+
+O caso que gerou este modo quase virou um relatório de que a release não sairia: a guarda que
+autoriza o corte não tinha rodada para o commit que removeu os fragmentos. Verdade — e irrelevante.
+Aquele commit era o de **dentro do PR**; quem está na `main` é o **merge**, e a guarda roda no merge.
+
+O modo é traiçoeiro porque **imita rigor**. Quem mede com cuidado sente que está sendo cuidadoso, e o
+cuidado se aplica todo à execução da medida, nenhum à escolha do que medir. Medir de novo, com mais
+capricho, não sai do buraco: devolve a mesma resposta errada com mais casas decimais.
+
+A pergunta que sai, e ela vem **antes** do comando:
+
+> **Sobre qual objeto esta regra roda?** O commit ou o merge? A branch ou a prévia? O arquivo no
+> disco ou o do `origin/main`? A função ou o *call site*?
+
+E o corolário, que é o achado dentro do achado: a mesma guarda tinha um segundo modo de falha que só
+apareceu quando o objeto certo foi nomeado. Num *merge commit*, o autor visível é **quem clicou**; o
+assinante do trabalho é o **segundo pai** (`HEAD^2`). Uma guarda que lesse o autor do merge recusaria
+a própria release — e passaria em todo teste que não fosse um merge assinado por bot. Não é um gate
+que nasce vermelho (modo 21): é pior, **nasce verde e só vermelha em produção**.
