@@ -1,4 +1,4 @@
--- 0208 — juntar contatos duplicados sem perder histórico.
+-- 0215 — juntar contatos duplicados sem perder histórico.
 --
 -- ─── O que estava faltando ──────────────────────────────────────────────────
 -- A coluna `contacts.is_merged_into` existe desde a 0003 e é o que faz os três

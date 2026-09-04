@@ -17380,13 +17380,13 @@ grant execute on function public.fn_update_budget_consumption() to service_role;
 
 
 
--- ---- juntar contatos duplicados (migration 0208) ----
+-- ---- juntar contatos duplicados (migration 0215) ----
 -- Apêndice DERIVADO do arquivo da migration, não copiado à mão: o corpo abaixo é
--- `supabase/migrations/20260903230000_0208_juntar_contatos_duplicados.sql` na
+-- `supabase/migrations/20260904190000_0215_juntar_contatos_duplicados.sql` na
 -- íntegra. Ele já é idempotente e auto-curativo (`create or replace function` +
 -- revoke/grant), então re-aplicar num clone pelo `update.sh` é seguro.
 
--- 0208 — juntar contatos duplicados sem perder histórico.
+-- 0215 — juntar contatos duplicados sem perder histórico.
 --
 -- ─── O que estava faltando ──────────────────────────────────────────────────
 -- A coluna `contacts.is_merged_into` existe desde a 0003 e é o que faz os três

@@ -6963,6 +6963,14 @@ export type Database = {
         Args: { p_org: string; p_user: string }
         Returns: string
       }
+      fn_mesclar_contatos: {
+        Args: {
+          p_contato_principal: string
+          p_contatos_secundarios: string[]
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       fn_podar_fila_de_jobs: {
         Args: { p_limite?: number; p_retencao_dias?: number }
         Returns: number
