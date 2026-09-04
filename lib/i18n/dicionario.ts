@@ -6534,6 +6534,17 @@ export const DICIONARIO: Traducoes = {
   "Preenchido, o Google envia o convite por e-mail para esta pessoa.":
     { es: "Si se completa, Google envía la invitación por correo a esta persona." },
 
+
+  // ─── Importar leads de planilha (extraído do PR #418) ───
+  "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
+  "Um arquivo CSV com uma linha por lead. Os leads entram na primeira etapa do funil escolhido.": {
+    es: "Un archivo CSV con una línea por lead. Los leads entran en la primera etapa del embudo elegido.",
+  },
+  "Funil de destino": { es: "Embudo de destino" },
+  "Escolher o arquivo CSV": { es: "Elegir el archivo CSV" },
+  "leads criados": { es: "leads creados" },
+  "contatos novos": { es: "contactos nuevos" },
+  "Colunas que não reconheci:": { es: "Columnas que no reconocí:" },
 };
 
 /**
