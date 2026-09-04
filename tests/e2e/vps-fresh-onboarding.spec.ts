@@ -236,9 +236,16 @@ test.describe("J1 — onboarding do dono numa instalação fresca", () => {
     await page.waitForURL(/\/onboarding\/testar/, { timeout: 20_000 });
     await snap(page, "j1.7-testar");
 
+    // `eq(organization_id)` pela MESMA razão de `orgRow()` acima: sem ele, este
+    // `select` lê os agentes de TODAS as organizações do banco, e o
+    // `expect(length).toBe(1)` deixa de medir "o wizard criou um agente" e passa
+    // a medir "o banco inteiro tem um agente" — que é falso em qualquer
+    // instalação com uso, e vermelho por motivo que não é o desta jornada.
+    const orgDoDono = await orgRow();
     const { data: agents } = await svc
       .from("ai_agents")
-      .select("id, name, is_active, is_default, published_version_id");
+      .select("id, name, is_active, is_default, published_version_id")
+      .eq("organization_id", orgDoDono.id);
     expect(agents?.length).toBe(1);
     expect(agents?.[0]).toMatchObject({ name: "Tomik QA", is_active: true, is_default: true });
 
@@ -256,7 +263,15 @@ test.describe("J1 — onboarding do dono numa instalação fresca", () => {
     // E o provedor da versão é o MESMO que a instalação escolheu. Comparar com
     // uma string fixa aqui não provaria nada: o teste passaria justamente na
     // instalação Anthropic, que é a única em que o defeito não aparecia.
-    const { data: org } = await svc.from("organizations").select("settings").limit(1).maybeSingle();
+    // A SEGUNDA instância de "a primeira organização" neste mesmo arquivo. Aqui
+    // ela não apaga nada — faz pior de um jeito silencioso: `escolhido` vira o
+    // provedor de OUTRA organização, e a asserção abaixo passa ou reprova sem
+    // relação com a instalação que o wizard acabou de configurar.
+    const { data: org } = await svc
+      .from("organizations")
+      .select("settings")
+      .eq("id", orgDoDono.id)
+      .maybeSingle();
     const escolhido =
       (org?.settings as { llm?: { provider?: string } } | null)?.llm?.provider ?? "anthropic";
     expect(versoes?.[0]?.provider).toBe(escolhido);
