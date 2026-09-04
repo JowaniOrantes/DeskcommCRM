@@ -513,6 +513,11 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     `modeloDeAmbiente` recebendo `null` onde o tipo é `string | undefined`. **Tipo e comportamento
     são eixos independentes** — a ordem certa é `typecheck` **depois** da última edição, nunca antes.
 
+    ⚠️ **E a spec de e2e não é exceção: o Playwright TRANSPILA sem checar tipo.** Medido em
+    2026-09-04 — uma spec rodou **verde com um erro de tipo dentro dela**, e quem o achou foi o
+    `pnpm typecheck`. Spec verde não diz nada sobre os tipos dela, exatamente como o `test:unit` não
+    diz.
+
     ⚠️ **E o mesmo comando pode ter duas dimensões DENTRO dele, em sequência.** O `next build`
     imprime **`✓ Compiled successfully`** e só **depois** roda **`Running TypeScript`**. O check
     verde do primeiro passo aparece na tela **antes** de o segundo ter começado — e foi ali que um
