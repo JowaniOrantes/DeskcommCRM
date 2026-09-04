@@ -94,7 +94,24 @@ export function KanbanCard({
   // A CAIXA abaixo existe porque modificador não se descobre: até ela, a única
   // porta para o lote era saber que ctrl+clique fazia algo — e um recurso que
   // só quem já sabe encontra não é recurso, é folclore.
-  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+  //
+  // ⚠️ UMA função, dois pontos de entrada — e a duplicação que existia aqui
+  // custou o recurso inteiro no alvo mais óbvio. O TÍTULO é um `<button>` com
+  // `stopPropagation()` (ver abaixo), então o clique nele NUNCA chega a este
+  // handler; e o `onClick` do título ignorava os modificadores e abria o dossiê
+  // sempre. Medido pela tela em 2026-09-04, com 6 cards e a âncora no 2º:
+  //
+  //   shift+clique no TÍTULO do 5º  → 1 marcado, 1 diálogo aberto (o dossiê)
+  //   shift+clique no CORPO  do 5º  → 4 marcados, 0 diálogos
+  //
+  // O título é o maior e mais natural alvo do card. Quem lê "Segurando Shift,
+  // um clique seleciona tudo entre o card anterior e o que você clicou" e clica
+  // no card clica no nome dele — e recebia o dossiê.
+  const decidirClique = (e: {
+    shiftKey: boolean;
+    metaKey: boolean;
+    ctrlKey: boolean;
+  }): void => {
     if (e.shiftKey) {
       onSelect?.(card.id, "intervalo");
       return;
@@ -105,6 +122,7 @@ export function KanbanCard({
     }
     onOpen?.(card.id);
   };
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => decidirClique(e);
 
   return (
     <Draggable draggableId={card.id} index={index}>
@@ -207,8 +225,12 @@ export function KanbanCard({
                 <button
                   type="button"
                   onClick={(e) => {
+                    // `stopPropagation` continua: sem ele o handler do card
+                    // rodaria de novo e o gesto seria contado duas vezes (um
+                    // ctrl+clique marcaria e desmarcaria no mesmo instante).
+                    // Por isso a DECISÃO tem de ser tomada aqui também.
                     e.stopPropagation();
-                    onOpen?.(card.id);
+                    decidirClique(e);
                   }}
                   className="text-left hover:underline"
                 >
