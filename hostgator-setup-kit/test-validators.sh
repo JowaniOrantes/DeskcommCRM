@@ -434,6 +434,30 @@ if [ ! -f "$EXEMPLO" ]; then
   printf '  — pulado: %s não existe (kit fora do repositório)\n' "$EXEMPLO"
 else
   GRAVA="$(grep -oE '^[[:space:]]*envq [A-Z_0-9]+' install.sh | awk '{print $2}' | sort -u)"
+  # VACUIDADE — a lista de escrita é a régua deste caso, e uma régua CURTA acusa
+  # o inocente. `$GRAVA` sai de um pipeline de três estágios; quando a máquina
+  # está saturada ele às vezes volta truncado, e o efeito não é um teste que
+  # falha em reconhecer o defeito: é um teste que INVENTA um, nomeando chaves que
+  # o install.sh grava na linha seguinte.
+  #
+  # Medido duas vezes com load average acima de 30, no mesmo dia e no mesmo
+  # arquivo: uma rodada acusou VAPID_PUBLIC_KEY, outra ANTHROPIC_API_KEY e
+  # WAHA_HMAC_SECRET — as três com `envq` presente no install.sh, e as duas
+  # rodadas seguintes verdes. Conjuntos diferentes a cada vez é a assinatura de
+  # régua truncada, não de defeito.
+  #
+  # O piso não precisa acompanhar o crescimento do install.sh: ele separa
+  # "pipeline morreu no meio" de "lista completa", e qualquer valor bem abaixo do
+  # real serve. Para ver quantas há hoje:
+  #   grep -cE '^[[:space:]]*envq [A-Z_0-9]+' hostgator-setup-kit/install.sh
+  n_grava="$(printf '%s\n' "$GRAVA" | grep -c . || true)"
+  if [ "${n_grava:-0}" -lt 30 ]; then
+    printf '  ✗ a lista de escrita voltou com %s chave(s) — a régua está truncada, não o install.sh\n' "${n_grava:-0}"
+    printf '     (cenário INCONCLUSIVO: sem régua inteira, toda acusação abaixo seria falsa)\n'
+    fail=1
+    GRAVA=""
+    novas=""
+  else
   novas=""
   for k in $(grep -oE '^[A-Z_0-9]+=' "$EXEMPLO" | tr -d '=' | sort -u); do
     printf '%s\n' "$GRAVA" | grep -qx "$k" && continue
@@ -446,6 +470,7 @@ else
     fail=1
   else
     printf '  ✓ nenhuma chave nova fora da lista de escrita\n'
+  fi
   fi
   estagnada=""
   for k in $DIVIDA; do
