@@ -4697,6 +4697,12 @@ export const DICIONARIO: Traducoes = {
     es: "Conversaciones, mensajes, negocios e historial pasan a la que se queda. La ficha antigua no se borra: queda como registro de la fusión. No se puede deshacer.",
   },
   "Juntar": { es: "Juntar" },
+  "Juntar contatos": { es: "Juntar contactos" },
+  "Juntar estes cadastros?": { es: "¿Juntar estas fichas?" },
+  "fica.": { es: "se queda." },
+  "será absorvido e sai da lista de contatos. Mensagens, negócios e histórico passam para quem fica. Não há como desfazer.": {
+    es: "será absorbida y sale de la lista de contactos. Mensajes, negocios e historial pasan a la que se queda. No se puede deshacer.",
+  },
   "Juntando…": { es: "Juntando…" },
   "Contatos juntados.": { es: "Contactos juntados." },
   "Contatos juntados. {n} registro(s) continuaram no cadastro antigo — veja a auditoria.": {

@@ -13,6 +13,20 @@
  * frente e os dois cadastros lado a lado. Aplicar a sugestão sozinha economiza
  * um clique e cobra o preço de um cadastro errado que ninguém volta atrás.
  *
+ * ─── E por que o "Juntar" pergunta antes ────────────────────────────────────
+ * Este botão chamava a API DIRETO. Medido pela tela em 2026-09-04: um clique
+ * disparava `POST /contacts/merge` em 253 ms, sem nenhum passo intermediário —
+ * a única ação sem desfazer do produto era também a única sem porteiro. A
+ * EXCLUSÃO de um contato, que é a ação menos grave das duas (some com um
+ * cadastro; a fusão reescreve o histórico de dois), já abria um `AlertDialog`
+ * em `ContactsTable`. O aviso de irreversibilidade que já existia aqui é
+ * parágrafo de leitura: ele informa, mas não intercepta o clique errado — e o
+ * rádio fica a poucos pixels do botão, então errar o alvo é barato.
+ *
+ * A confirmação NOMEIA quem fica e quem é absorvido, em vez de perguntar "tem
+ * certeza?": o erro que ela precisa pegar não é "cliquei sem querer", é
+ * "escolhi o vencedor errado", e para esse erro só o nome na frente serve.
+ *
  * ─── Vocabulário ───────────────────────────────────────────────────────────
  * Nada aqui conhece nicho. "Contato" é contato em e-commerce, clínica,
  * imobiliária e infoproduto; o `vocabulary` do funil renomeia lead/deal, não
@@ -29,6 +43,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { phoneForDisplay } from "@/lib/channels/phone-variants";
@@ -61,10 +84,18 @@ function GrupoDeDuplicados({
   const t = useT();
   const merge = useMergeContacts();
   const [principal, setPrincipal] = useState(grupo.principal_sugerido);
+  const [confirmando, setConfirmando] = useState(false);
 
   const secundarios = grupo.contatos.map((c) => c.id).filter((id) => id !== principal);
+  const contatoPrincipal = grupo.contatos.find((c) => c.id === principal);
+  const nomeDeQuemFica = contatoPrincipal ? rotuloDoContato(contatoPrincipal, t) : "";
+  const nomesAbsorvidos = grupo.contatos
+    .filter((c) => c.id !== principal)
+    .map((c) => rotuloDoContato(c, t))
+    .join(", ");
 
   async function juntar() {
+    setConfirmando(false);
     try {
       const res = await merge.mutateAsync({
         primary_contact_id: principal,
@@ -139,10 +170,42 @@ function GrupoDeDuplicados({
             "Conversas, mensagens, negócios e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.",
           )}
         </p>
-        <Button size="sm" onClick={juntar} disabled={merge.isPending || secundarios.length === 0}>
+        <Button
+          size="sm"
+          onClick={() => setConfirmando(true)}
+          disabled={merge.isPending || secundarios.length === 0}
+        >
           {merge.isPending ? t("Juntando…") : t("Juntar")}
         </Button>
       </div>
+
+      {/*
+        O porteiro da única ação sem desfazer. Ele NOMEIA os dois lados: o erro
+        que precisa pegar é "escolhi o vencedor errado", e para esse erro
+        "tem certeza?" não serve de nada.
+      */}
+      <AlertDialog open={confirmando} onOpenChange={setConfirmando}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Juntar estes cadastros?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`${nomeDeQuemFica} ${t("fica.")} ${nomesAbsorvidos} ${t(
+                "será absorvido e sai da lista de contatos. Mensagens, negócios e histórico passam para quem fica. Não há como desfazer.",
+              )}`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={merge.isPending}>{t("Cancelar")}</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void juntar()}
+              disabled={merge.isPending}
+            >
+              {merge.isPending ? t("Juntando…") : t("Juntar contatos")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

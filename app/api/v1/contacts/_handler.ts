@@ -95,6 +95,24 @@ export async function listContactsHandler(
     .from("contacts")
     .select(SELECT_COLS)
     .eq("organization_id", ctx.organization_id)
+    // A LÁPIDE DE FUSÃO NÃO É UM CONTATO VIVO.
+    //
+    // `is_merged_into` marca o cadastro que foi absorvido por outro. Ele não é
+    // apagado de propósito (é o que libera telefone e e-mail para o vencedor
+    // herdar, e é o registro da fusão), mas ele deixou de ser uma pessoa da
+    // base — e o resto do produto já o trata assim: `contacts/duplicates`, o
+    // webhook de captação (`webhooks/in/[token]`) e as duas leituras de
+    // `lib/channels/contato-por-telefone` filtram `is_merged_into is null`.
+    // Esta listagem era a ÚNICA que não filtrava.
+    //
+    // Sem esta linha, a fusão parece não ter acontecido: medido pela tela em
+    // 2026-09-04, logo depois de juntar dois cadastros a lista seguia mostrando
+    // OS DOIS, com o mesmo telefone e ambos com status "ativo" — e quem opera
+    // ou tenta juntar de novo (o diálogo de duplicados já não os oferece) ou
+    // conclui que o recurso não funciona. Antes de a fusão existir na tela, a
+    // coluna só era escrita por uma data migration de mão única, e por isso
+    // ninguém tinha esbarrado nisto.
+    .is("is_merged_into", null)
     .order(sortCol, { ascending: asc, nullsFirst: false })
     .order("id", { ascending: asc })
     .limit(q.limit + 1);
