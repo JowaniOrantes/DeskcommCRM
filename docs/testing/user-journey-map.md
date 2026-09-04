@@ -1613,3 +1613,35 @@ primeiro elemento com `class="border"` da tela de login é o `<input>`
 autofocado — ele casa `focus-visible:border-accent-500` e devolve a cor do
 foco. A sonda só mede elemento real, e pula elemento em foco e elemento que já
 traga classe de cor própria.
+
+## J20 — Uma loja no México escolhe sua moeda `[P0]` (2026-09-04)
+
+Migration 0206 dá a `organizations` uma coluna `currency`; o resto do frente
+(seletor, herança no catálogo, formatação) não valia nada sem provar pela tela
+que a escolha sobrevive e que o preço sai do jeito certo — a mesma armadilha
+que o seletor de idioma do perfil já teve antes desta feature: campo que
+aceita clique e não muda nada.
+
+Banco: `supabase/baseline.sql` reaplicado no Supabase local (idempotente —
+`add column if not exists`, confirmado sem perda de dado na única organização
+que já existia). `pnpm e2e:build && pnpm test:e2e -- moeda-da-organizacao`,
+Chromium real, login com MFA real.
+
+| Caso | Prioridade | Resultado |
+|---|---|---|
+| Trocar para peso mexicano em Configurações › Organização e RECARREGAR a página | `[P0]` | **PASS.** `#currency` mostra `MXN` depois do `page.reload()` — não só depois de salvar. Evidência: `evidence/moeda-da-organizacao/moeda-01-antes.png`, `evidence/moeda-da-organizacao/moeda-02-mxn-salvo.png`, `evidence/moeda-da-organizacao/moeda-03-mxn-apos-reload.png` |
+| Produto cadastrado com a organização em MXN mostra o preço na convenção mexicana | `[P0]` | **PASS.** `$249.90` — ponto decimal, cifrão na frente. **Não** `MXN 249,90`, que era o que `comoMoeda()` (removida neste PR) mostrava: a asserção nega esse texto explicitamente, porque uma spec que só checasse "o preço apareceu" teria passado verde com o defeito antigo. Evidência: `evidence/moeda-da-organizacao/moeda-04-produto-mxn.png` |
+
+**Achado de infraestrutura, não desta feature:** `pnpm e2e:build` falhou na
+primeira tentativa com `Cannot find module '@tailwindcss/postcss'` — o merge de
+`upstream/main` trouxe a migração para Tailwind 4 (`package.json` já
+declarava a dependência), mas `pnpm install` não tinha rodado depois. `pnpm
+install` + `pnpm build` (exit 0) resolveram antes de tentar o e2e de novo.
+
+**Achado de doutrina, não desta feature:** o piso de Postgres mudou de pg17
+para pg15 no mesmo merge (PR #422, `tests/unit/baseline-no-piso-do-postgres.test.ts`
+novo). Conferido: a migration 0206 não usa nada exclusivo de pg17 (só `ADD
+COLUMN`, `UPDATE`, `ALTER COLUMN`, um bloco `DO` com `pg_constraint`), e
+`scripts/test-db.sh` já sobe `pgvector/pgvector:pg15` — os `pnpm test:db`
+anteriores desta sessão já corriam contra o piso certo, mesmo antes deste
+achado.
