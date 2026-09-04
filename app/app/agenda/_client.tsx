@@ -514,7 +514,10 @@ export function AgendaClient({
               value={emailConvidado}
               onChange={(e) => setEmailConvidado(e.target.value)}
               className={cn(
-                "mt-1 w-full rounded-md border bg-surface p-2 text-sm outline-none",
+                // `outline-hidden`, não `outline-none`: no Tailwind 4 os dois
+                // trocaram de significado, e o `outline-none` do v4 apaga o
+                // contorno que o modo de alto contraste do sistema usa.
+                "mt-1 w-full rounded-md border bg-surface p-2 text-sm outline-hidden",
                 emailConvidadoInvalido
                   ? "border-danger focus:border-danger"
                   : "border-border focus:border-border-strong",
