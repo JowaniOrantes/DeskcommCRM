@@ -258,6 +258,7 @@ jobs:
         smoke.spec.ts auth.spec.ts error-pages.spec.ts
         icone-da-marca.spec.ts
         password-recovery.spec.ts signup-journey.spec.ts
+        primeiro-acesso-sem-organizacao.spec.ts
         rbac-roles.spec.ts inbox-scope.spec.ts reset-password-mfa.spec.ts
         degradacao-silenciosa.spec.ts vps-webhook-outbound-ssrf.spec.ts
         kanban-owner-filter.spec.ts queue-assign.spec.ts
@@ -372,7 +373,19 @@ jobs:
         agenda-google-volta-nao-desloga.spec.ts
         i18n-espanhol-na-tela.spec.ts
         inbox-abas-espelham-o-comando.spec.ts
+        moeda-da-organizacao.spec.ts
         zona-de-perigo-apaga-dados-de-teste.spec.ts
+      # `moeda-da-organizacao` entrou na PARTE_2 em 2026-09-04, ao lado de
+      # `navegacao` — mesmo domínio (Configurações) e a mesma ausência de
+      # dependência: sem WAHA, Resend, Nuvemshop ou Redis. Toca a organização
+      # única do banco do CI (troca a moeda e devolve para BRL no afterEach),
+      # o mesmo cuidado que `troca-de-organizacao-tem-volta` já toma.
+      #
+      # `zona-de-perigo` entrou na mesma leva e no mesmo grupo, e por um
+      # cuidado a mais: ela APAGA dados, e por isso NÃO toca a organização
+      # compartilhada do banco do CI — o seed dela cria duas organizações
+      # próprias e descartáveis, e o caso zera uma para provar que a outra
+      # sai inteira. Sem WAHA, Resend, Nuvemshop ou Redis.
       # Cada item aqui tem o motivo MEDIDO, não presumido — e o gate cobra que a
       # lista exista e some com as outras duas.
       #
@@ -512,14 +525,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/preparar-node
+        # O teto do preâmbulo mora aqui porque passo de composite action não
+        # aceita `timeout-minutes`. Razão e medições: o cabeçalho da action.
+        timeout-minutes: 5
 
       - uses: supabase/setup-cli@v3
         with:
