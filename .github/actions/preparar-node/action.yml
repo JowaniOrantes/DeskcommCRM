@@ -67,7 +67,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        versao=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"pnpm@\([^"]*\)".*/\1/p' package.json)
+        versao=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"pnpm@\([^"]*\)".*/\1/p' package.json | head -1)
         if [ -z "$versao" ]; then
           echo "::error::package.json não declara packageManager: \"pnpm@<versão>\"" >&2
           exit 1
