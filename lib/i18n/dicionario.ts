@@ -4685,6 +4685,12 @@ export const DICIONARIO: Traducoes = {
   "contatos": { es: "contactos" },
   "carregados — há mais resultados": { es: "cargados — hay más resultados" },
   "Contato já estava anonimizado.": { es: "El contacto ya estaba anonimizado." },
+  "Contato já estava anonimizado, e não faltava nada.": {
+    es: "El contacto ya estaba anonimizado, y no faltaba nada.",
+  },
+  "Anonimização retomada: o que faltava foi redigido agora.": {
+    es: "Anonimización retomada: lo que faltaba se ha redactado ahora.",
+  },
   "Contato anonimizado.": { es: "Contacto anonimizado." },
   "Anonimizar contato (LGPD)": { es: "Anonimizar contacto (LGPD)" },
   "Esta ação é irreversível. O nome será substituído por \"Contato Anonimizado #N\", email/telefone/CPF serão limpos, e atividades terão conteúdo redigido.": {
@@ -6395,6 +6401,17 @@ export const DICIONARIO: Traducoes = {
   "Salvar produto": { es: "Guardar producto" },
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
+
+  // ─── Importar leads de planilha (extraído do PR #418) ───
+  "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
+  "Um arquivo CSV com uma linha por lead. Os leads entram na primeira etapa do funil escolhido.": {
+    es: "Un archivo CSV con una línea por lead. Los leads entran en la primera etapa del embudo elegido.",
+  },
+  "Funil de destino": { es: "Embudo de destino" },
+  "Escolher o arquivo CSV": { es: "Elegir el archivo CSV" },
+  "leads criados": { es: "leads creados" },
+  "contatos novos": { es: "contactos nuevos" },
+  "Colunas que não reconheci:": { es: "Columnas que no reconocí:" },
 };
 
 /**
