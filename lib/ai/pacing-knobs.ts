@@ -87,12 +87,17 @@ export function diaDeHojeLocal(agora: Date = new Date()): string {
  * pegar.
  *
  * A folga de até um dia é segura porque data futura **não** adianta o
- * aquecimento — ela o atrasa. `idadeEmDias` faz `Math.max(0, …)`, então futuro
- * vira idade 0, o degrau mais conservador dos `PACING_DEFAULTS` (20 envios/dia).
- * Medido em `tests/unit/aquecimento-idade-do-numero.test.ts` ("data no futuro
- * não vira idade negativa"). O comentário anterior desta guarda afirmava o
- * oposto ("ela ADIANTARIA o aquecimento") e era a justificativa de um rigor que
- * só machucava quem estava certo.
+ * aquecimento — ela o atrasa. Quem decide isso é o MOTOR, não esta guarda:
+ * `lib/agent-engine/pacing/engine.ts` faz `Math.max(0, …)` na idade, e o
+ * comentário dele já dizia por quê — "number_activated_at no futuro (typo do
+ * admin / clock skew) cai no degrau MAIS conservador — warm-up falha FECHADO".
+ * Idade 0 é o primeiro degrau dos `PACING_DEFAULTS`: 20 envios/dia. O mesmo
+ * está preso em `tests/unit/aquecimento-idade-do-numero.test.ts` ("data no
+ * futuro não vira idade negativa").
+ *
+ * O comentário anterior desta guarda afirmava o oposto ("ela ADIANTARIA o
+ * aquecimento") e era a justificativa de um rigor que só machucava quem estava
+ * certo — a razão escrita contradizia o motor que ela dizia proteger.
  */
 export function diaDeclaradoJaComecou(iso: string, agora: Date = new Date()): boolean {
   const instante = Date.parse(iso);
