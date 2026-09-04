@@ -4677,6 +4677,34 @@ export const DICIONARIO: Traducoes = {
     es: "Customer 360 — busca, filtra y gestiona contactos.",
   },
   "Importar CSV": { es: "Importar CSV" },
+  // ── Juntar contatos duplicados ──────────────────────────────────────────
+  "Duplicados": { es: "Duplicados" },
+  "Contatos duplicados": { es: "Contactos duplicados" },
+  "A mesma pessoa cadastrada duas vezes. Escolha qual cadastro fica; o outro é absorvido sem perder histórico.": {
+    es: "La misma persona registrada dos veces. Elige cuál ficha se queda; la otra se absorbe sin perder historial.",
+  },
+  "Nenhum contato duplicado encontrado.": { es: "No se encontraron contactos duplicados." },
+  "Agrupados por": { es: "Agrupados por" },
+  "mesmo telefone": { es: "mismo teléfono" },
+  "mesmo e-mail": { es: "mismo correo" },
+  "telefone que o WhatsApp deixou em conflito": {
+    es: "teléfono que WhatsApp dejó en conflicto",
+  },
+  "Manter este cadastro": { es: "Mantener esta ficha" },
+  "Este fica": { es: "Esta se queda" },
+  "Será absorvido por quem fica": { es: "Será absorbida por la que se queda" },
+  "Conversas, mensagens, negócios e histórico passam para quem fica. O cadastro antigo não é apagado — vira registro de fusão. Não há como desfazer.": {
+    es: "Conversaciones, mensajes, negocios e historial pasan a la que se queda. La ficha antigua no se borra: queda como registro de la fusión. No se puede deshacer.",
+  },
+  "Juntar": { es: "Juntar" },
+  "Juntando…": { es: "Juntando…" },
+  "Contatos juntados.": { es: "Contactos juntados." },
+  "Contatos juntados. {n} registro(s) continuaram no cadastro antigo — veja a auditoria.": {
+    es: "Contactos juntados. {n} registro(s) siguieron en la ficha antigua — revisa la auditoría.",
+  },
+  "Mostrando os duplicados entre os contatos mais antigos. Junte estes e reabra para ver os próximos.": {
+    es: "Mostrando los duplicados entre los contactos más antiguos. Junta estos y vuelve a abrir para ver los siguientes.",
+  },
   "Novo contato": { es: "Nuevo contacto" },
   "Buscar por nome, email ou telefone…": { es: "Buscar por nombre, email o teléfono…" },
   "todas": { es: "todas" },
