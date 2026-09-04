@@ -427,8 +427,9 @@ describe("nenhum chamador de produção decide a publicada pelo palpite", () => 
     .map((p) => relative(".", p));
 
   it("a sonda enxerga alguma coisa (controle positivo)", () => {
-    // Sem isto, uma varredura que devolvesse zero arquivo — `git grep` mudo,
-    // caminho errado, arquivo renomeado — passaria como "nenhum defeito".
+    // Sem isto, uma varredura que devolvesse zero arquivo — pasta renomeada,
+    // filtro de extensão que parou de casar, arquivo movido — passaria como
+    // "nenhum defeito". Ausência só vale se a sonda cobre a categoria.
     expect(arquivos.length, "a varredura não achou chamador nenhum: sonda cega").toBeGreaterThan(0);
     expect(arquivos).toContain("app/app/ai/agents/[id]/page.tsx");
     expect(arquivos).toContain("app/app/ai/agents/[id]/_actions.ts");
