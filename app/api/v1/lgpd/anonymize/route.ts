@@ -17,7 +17,9 @@ import { type NextRequest } from "next/server";
 import { audit } from "@/lib/audit";
 import { ApiError } from "@/lib/api/types";
 import { ok, fail } from "@/lib/api/wrappers";
+import { loadAuthUser } from "@/lib/auth/server";
 import { requireRole } from "@/lib/auth/require-role";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { lgpdAnonymizeSchema, validateRequest } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,6 +36,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (authErr || !user) {
     return fail("unauthenticated", "Auth required.", 401, { requestId });
   }
+  const authUser = await loadAuthUser();
+  const t = (texto: string) => traduzir(texto, authUser?.idioma ?? "pt-BR");
 
   let input;
   try {
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     return fail("internal_error", selErr.message, 500, { requestId });
   }
   if (!existing) {
-    return fail("not_found", "Contato não encontrado.", 404, { requestId });
+    return fail("not_found", t("Contato não encontrado."), 404, { requestId });
   }
 
   // Permission: admin NA ORG DO CONTATO (pode diferir da org ativa do cookie)
