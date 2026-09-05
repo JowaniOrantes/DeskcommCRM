@@ -6512,6 +6512,10 @@ export const DICIONARIO: Traducoes = {
   "Assumiu a conversa e pausou o atendimento automático": { es: "Asumió la conversación y pausó la atención automática" },
   "Assumiu o atendimento desta conversa": { es: "Asumió la atención de esta conversación" },
   "Atendimento devolvido, mas o sinal de retomada do acompanhamento falhou — tente de novo.": { es: "Atención devuelta, pero la señal de reanudación del seguimiento falló — intenta de nuevo." },
+  "Atendimento devolvido ao agente com o registro do que a equipe decidiu": {
+    es: "Atención devuelta al agente con el registro de lo que el equipo decidió",
+  },
+  "Atendimento devolvido ao agente": { es: "Atención devuelta al agente" },
   "Body JSON inválido.": { es: "Body JSON inválido." },
   "Body inválido.": { es: "Body inválido." },
   "Cole o conteúdo do material antes de criar.": { es: "Pega el contenido del material antes de crear." },
