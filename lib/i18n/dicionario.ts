@@ -69,6 +69,7 @@ export const DICIONARIO: Traducoes = {
   "Follow-ups": { es: "Seguimientos" },
   Roteadores: { es: "Enrutadores" },
   "Ver tudo em IA": { es: "Ver todo en IA" },
+  "Ver tudo em CRM": { es: "Ver todo en CRM" },
   "Ver tudo em Análise": { es: "Ver todo en Análisis" },
   Conexões: { es: "Conexiones" },
   Webhooks: { es: "Webhooks" },
@@ -224,6 +225,16 @@ export const DICIONARIO: Traducoes = {
   "Dados da empresa, retenção de mídia, DPO. Admin only.": {
     es: "Datos de la empresa, retención de medios, DPO. Solo administradores.",
   },
+  // ─── Hub do CRM (NavHub: seções e subtítulo) ───
+  //
+  // As duas seções são a régua que decide o menu, escrita por extenso: o que se
+  // abre todo dia fica no sidebar, o que se define uma vez fica só no hub.
+  "O dia a dia da venda": { es: "El día a día de la venta" },
+  "Preparar a venda": { es: "Preparar la venta" },
+  "Onde a venda acontece — e o que você define uma vez para ela funcionar.": {
+    es: "Donde ocurre la venta — y lo que defines una vez para que funcione.",
+  },
+
   // ─── Hub da Análise (NavHub: seções e subtítulo) ───
   //
   // As duas seções são a régua do menu escrita por extenso: o que se pergunta
@@ -6642,6 +6653,47 @@ export const DICIONARIO: Traducoes = {
     { es: "Si se completa, Google envía la invitación por correo a esta persona." },
 
 
+  // ─── Tarefas (extraídas do PR #418) ───
+  "Tarefas": { es: "Tareas" },
+  "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.": {
+    es: "Lo que quedó acordado, con plazo. Una tarea ligada a un negocio aparece en la línea de tiempo de él.",
+  },
+  "O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer.": {
+    es: "Lo que quedó acordado, con plazo — y lo que ya venció sin que nadie lo hiciera.",
+  },
+  "Em aberto": { es: "Abiertas" },
+  "Lista": { es: "Lista" },
+  "Calendário": { es: "Calendario" },
+  "Não foi possível carregar as tarefas.": { es: "No se pudieron cargar las tareas." },
+  "Nova tarefa": { es: "Nueva tarea" },
+  "Editar tarefa": { es: "Editar tarea" },
+  "Atrasadas": { es: "Atrasadas" },
+  "Esta semana": { es: "Esta semana" },
+  "Mais tarde": { es: "Más tarde" },
+  "Sem prazo": { es: "Sin plazo" },
+  "Encerradas": { es: "Cerradas" },
+  "Nenhuma tarefa por aqui": { es: "Ninguna tarea por aquí" },
+  "Enquanto isto estiver vazio, o que foi combinado vive só na memória de alguém.": {
+    es: "Mientras esto esté vacío, lo que se acordó vive solo en la memoria de alguien.",
+  },
+  "Marcar como concluída": { es: "Marcar como completada" },
+  "Reabrir a tarefa": { es: "Reabrir la tarea" },
+  "Editar a tarefa": { es: "Editar la tarea" },
+  "Apagar a tarefa": { es: "Eliminar la tarea" },
+  "O que precisa ser feito": { es: "Qué hay que hacer" },
+  "Ex.: ligar de volta para fechar a proposta": { es: "Ej.: llamar de vuelta para cerrar la propuesta" },
+  "O que você vai querer lembrar quando chegar a hora": {
+    es: "Lo que vas a querer recordar cuando llegue el momento",
+  },
+  "Prazo": { es: "Plazo" },
+  "Situação": { es: "Situación" },
+  "Em andamento": { es: "En curso" },
+  "Escreva um título para a tarefa.": { es: "Escribe un título para la tarea." },
+  "Não foi possível salvar a tarefa.": { es: "No se pudo guardar la tarea." },
+  "Baixa": { es: "Baja" },
+  "Média": { es: "Media" },
+  "Alta": { es: "Alta" },
+  "mais": { es: "más" },
   // ─── Configurações › Organização — zona de perigo (extraído do PR #556) ───
   "Zona de perigo": { es: "Zona de peligro" },
   "Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.":

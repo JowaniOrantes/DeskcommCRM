@@ -97,10 +97,17 @@ export interface NavDestination {
  * Hub só onde o grupo passa de 4 telas. Abaixo disso ele cabe inteiro no
  * sidebar, e um hub de 3 itens seria só um clique a mais para chegar onde já
  * dava para chegar.
+ *
+ * O CRM cruzou essa linha com a tela de Tarefas (PR #546), e o hub dele é a
+ * cobrança de uma promessa escrita: o comentário de densidade do `Sidebar.tsx`
+ * dizia, desde a vez em que Produtos estourou a dobra por uma linha, que
+ * "quando o quinto destino de CRM aparecer, é hub que se cria, não mais 4px que
+ * se raspa". Tarefas foi o quinto. Raspar de novo devolveria 13px e adiaria a
+ * mesma conversa para a sexta tela.
  */
 export const NAV_GROUPS: NavGroup[] = [
   { id: "atendimento", label: "Atendimento" },
-  { id: "crm", label: "CRM" },
+  { id: "crm", label: "CRM", hub: { href: "/app/crm", label: "Ver tudo em CRM" } },
   { id: "ia", label: "Agente de IA", hub: { href: "/app/ai", label: "Ver tudo em IA" } },
   { id: "canais", label: "Canais" },
   { id: "analise", label: "Análise", hub: { href: "/app/analise", label: "Ver tudo em Análise" } },
@@ -202,6 +209,7 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Seus funis de venda — clique em um para abrir o quadro de clientes.",
     icon: Kanban,
     group: "crm",
+    section: "O dia a dia da venda",
     sidebar: true,
   },
   {
@@ -210,6 +218,21 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "As pessoas do outro lado da conversa e seu histórico.",
     icon: Users,
     group: "crm",
+    section: "O dia a dia da venda",
+    sidebar: true,
+  },
+  {
+    // Extraída do PR #418 (@clinicacentrodosorrisosc-code). Fica no CRM e no
+    // sidebar porque é tela de USO DIÁRIO — quem atende abre para ver o que
+    // vence hoje, do mesmo jeito que abre o Inbox. Sem `minRole`: `viewer` VÊ
+    // o que o time combinou (é informação de operação), e a criação é cobrada
+    // pela rota, com `requireRole("agent")`.
+    href: "/app/tasks",
+    label: "Tarefas",
+    description: "O que ficou combinado, com prazo — e o que já venceu sem ninguém fazer.",
+    icon: ListChecks,
+    group: "crm",
+    section: "O dia a dia da venda",
     sidebar: true,
   },
   {
@@ -218,15 +241,27 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     // que ninguém nunca preencheu — e o efeito não era silêncio: era o agente
     // respondendo "não tenho nada com esse nome" para uma loja de estoque cheio.
     //
-    // Fica no grupo do CRM, e não em Configurações, porque consultar preço é
-    // trabalho de quem ATENDE, todo dia — diferente de "tipos de agendamento",
-    // que se configura uma vez.
+    // Fica no grupo do CRM, e não em Configurações, porque o catálogo é insumo
+    // de VENDA: ele existe para o agente responder preço na conversa.
+    //
+    // ⚠️ ESTA FRASE DIZIA "consultar preço é trabalho de quem ATENDE, todo dia",
+    // e era o argumento para o `sidebar: true`. Ela se contradizia com a própria
+    // descrição do destino, uma linha abaixo: quem responde o preço é o
+    // atendente de IA, dentro do Inbox. O humano não abre esta tela para
+    // vender — abre para cadastrar o que vende.
     href: "/app/products",
     label: "Produtos",
     description: "O catálogo da loja, com o preço que o atendente de IA responde.",
     icon: Storefront,
     group: "crm",
-    sidebar: true,
+    section: "Preparar a venda",
+    // SEM `sidebar`: mora atrás de "Ver tudo em CRM".
+    //
+    // O critério é QUEM CONSOME a tela, e a descrição acima já o entrega: o
+    // preço quem responde é o atendente de IA, dentro da conversa. Esta tela é
+    // onde o catálogo se CADASTRA — trabalho de quando entra produto novo ou
+    // muda preço, não de toda manhã. Quem atende não a abre para vender; abre o
+    // Inbox e o funil, que continuam no menu.
   },
   {
     // A promessa que o comentário da Agenda fazia desde que ela nasceu. Aqui se
@@ -265,8 +300,18 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "As colunas de cada funil, o vocabulário do negócio e os motivos de perda.",
     icon: Funnel,
     group: "crm",
+    section: "Preparar a venda",
     minRole: "manager",
-    sidebar: true,
+    // SEM `sidebar`: mora atrás de "Ver tudo em CRM".
+    //
+    // ⚠️ O ACHADO ORIGINAL NÃO FOI DESFEITO. Ele era "esta tela está enterrada
+    // em CONFIGURAÇÕES e ninguém sabe que existe" — o problema era o GRUPO
+    // errado, não a profundidade. Ela continua sendo CRM: aparece no hub do
+    // CRM, no ⌘K, e o caminho é "CRM › Ver tudo em CRM", nunca mais
+    // "Configurações". O que muda é a frequência: desenhar as colunas do funil
+    // e escrever os motivos de perda é trabalho de montagem, feito uma vez e
+    // revisitado por `manager` de vez em quando — enquanto Funis, Contatos e
+    // Tarefas se abrem todo dia. É esse o corte que decide quem fica no menu.
   },
 
   // ---- Agente de IA — montar, ensinar, acompanhar ----
