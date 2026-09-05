@@ -6396,6 +6396,35 @@ export const DICIONARIO: Traducoes = {
   "leads criados": { es: "leads creados" },
   "contatos novos": { es: "contactos nuevos" },
   "Colunas que não reconheci:": { es: "Columnas que no reconocí:" },
+  // Mensagens de erro de lib/leads/planilha.ts e app/api/v1/leads/import/route.ts
+  "A planilha precisa de uma coluna com o nome do negócio ou do contato. Encontrei: ": {
+    es: "La planilla necesita una columna con el nombre del negocio o del contacto. Encontré: ",
+  },
+  "sem nome do negócio nem do contato": { es: "sin nombre del negocio ni del contacto" },
+  "valor não reconhecido (": { es: "valor no reconocido (" },
+  " — escreva assim: 1.200,00": { es: " — escríbalo así: 1.200,00" },
+  "telefone não reconhecido (": { es: "teléfono no reconocido (" },
+  " — o negócio entrou sem contato": { es: " — el negocio entró sin contacto" },
+  "Envie o arquivo como multipart/form-data.": {
+    es: "Envía el archivo como multipart/form-data.",
+  },
+  "Envie o arquivo no campo 'file'.": { es: "Envía el archivo en el campo 'file'." },
+  "Escolha o funil e a etapa de destino.": { es: "Elige el embudo y la etapa de destino." },
+  "Arquivo maior que ": { es: "Archivo mayor que " },
+  "A planilha tem": { es: "La planilla tiene" },
+  "linhas; o limite é": { es: "líneas; el límite es" },
+  "por importação.": { es: "por importación." },
+  "o contato não pôde ser criado — o negócio entrou sem ele": {
+    es: "el contacto no pudo ser creado — el negocio entró sin él",
+  },
+  "linha recusada pelo banco": { es: "línea rechazada por la base de datos" },
+  // Mensagens de erro de app/api/v1/products/import/route.ts
+  "Formato não suportado — envie um arquivo .csv. No Excel use 'Salvar como' → 'CSV UTF-8'.": {
+    es: "Formato no soportado — envía un archivo .csv. En Excel usa 'Guardar como' → 'CSV UTF-8'.",
+  },
+  "produtos por importação — divida a planilha.": {
+    es: "productos por importación — divide la planilla.",
+  },
 };
 
 /**

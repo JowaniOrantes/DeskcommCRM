@@ -31,6 +31,7 @@ import { audit } from "@/lib/audit";
 import { requireRole } from "@/lib/auth/require-role";
 import { phoneLookupVariants } from "@/lib/channels/phone-variants";
 import { CSV_MAX_BYTES, CSV_MAX_DATA_ROWS, decodificarCsv } from "@/lib/contacts/csv";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { lerPlanilhaDeLeads, type ErroDaLinha } from "@/lib/leads/planilha";
 import { createLeadHandler } from "@/app/api/v1/leads/_handler";
 import { createClient } from "@/lib/supabase/server";
@@ -51,12 +52,13 @@ export async function POST(req: NextRequest): Promise<Response> {
   const authz = await requireRole("agent", { requestId, resource: "crm_leads" });
   if (!authz.ok) return authz.response;
   const orgId = authz.org.orgId;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
 
   let form: FormData;
   try {
     form = await req.formData();
   } catch {
-    return fail("validation_failed", "Envie o arquivo como multipart/form-data.", 422, {
+    return fail("validation_failed", t("Envie o arquivo como multipart/form-data."), 422, {
       requestId,
     });
   }
@@ -83,7 +85,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     typeof (arquivo as { arrayBuffer?: unknown }).arrayBuffer === "function" &&
     typeof (arquivo as { size?: unknown }).size === "number";
   if (!pareceArquivo) {
-    return fail("validation_failed", "Envie o arquivo no campo 'file'.", 422, { requestId });
+    return fail("validation_failed", t("Envie o arquivo no campo 'file'."), 422, { requestId });
   }
   const enviado = arquivo as unknown as File;
   // ⚠️ O funil e a etapa vêm do FORM, e são conferidos contra a organização
@@ -93,13 +95,13 @@ export async function POST(req: NextRequest): Promise<Response> {
   const pipelineId = String(form.get("pipeline_id") ?? "");
   const stageId = String(form.get("stage_id") ?? "");
   if (!pipelineId || !stageId) {
-    return fail("validation_failed", "Escolha o funil e a etapa de destino.", 422, { requestId });
+    return fail("validation_failed", t("Escolha o funil e a etapa de destino."), 422, { requestId });
   }
 
   if (enviado.size > CSV_MAX_BYTES) {
     return fail(
       "validation_failed",
-      `Arquivo maior que ${Math.floor(CSV_MAX_BYTES / 1024 / 1024)}MB.`,
+      t("Arquivo maior que ") + `${Math.floor(CSV_MAX_BYTES / 1024 / 1024)}MB.`,
       413,
       { requestId },
     );
@@ -110,14 +112,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     return fail("validation_failed", decodificado.erro, 422, { requestId });
   }
 
-  const lido = lerPlanilhaDeLeads(decodificado.texto);
+  const lido = lerPlanilhaDeLeads(decodificado.texto, t);
   if ("erro" in lido) {
     return fail("validation_failed", lido.erro, 422, { requestId });
   }
   if (lido.leads.length > CSV_MAX_DATA_ROWS) {
     return fail(
       "validation_failed",
-      `A planilha tem ${lido.leads.length} linhas; o limite é ${CSV_MAX_DATA_ROWS} por importação.`,
+      `${t("A planilha tem")} ${lido.leads.length} ${t("linhas; o limite é")} ${CSV_MAX_DATA_ROWS} ${t("por importação.")}`,
       422,
       { requestId },
     );
@@ -171,7 +173,7 @@ export async function POST(req: NextRequest): Promise<Response> {
               // vez de reimportar a planilha inteira.
               resumo.erros.push({
                 linha: linha.linha,
-                motivo: "o contato não pôde ser criado — o negócio entrou sem ele",
+                motivo: t("o contato não pôde ser criado — o negócio entrou sem ele"),
               });
             } else {
               contactId = (criado as { id: string }).id;
@@ -207,7 +209,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
       resumo.erros.push({
         linha: linha.linha,
-        motivo: err instanceof Error ? err.message : "linha recusada pelo banco",
+        motivo: err instanceof Error ? err.message : t("linha recusada pelo banco"),
       });
     }
   }
