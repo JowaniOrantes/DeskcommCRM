@@ -52,7 +52,7 @@ export async function POST(
     return fail("not_found", t("Credential não encontrada."), 404, { requestId });
   }
   if (!row.is_active) {
-    return fail("credential_inactive", "Credential desativada.", 409, { requestId });
+    return fail("credential_inactive", t("Credential desativada."), 409, { requestId });
   }
 
   // Leitura direta + decifragem (sem passar pelo gate `validated_at` do
