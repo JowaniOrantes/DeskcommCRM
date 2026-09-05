@@ -5999,6 +5999,9 @@ export const DICIONARIO: Traducoes = {
   "Sessão expirada": { es: "Sesión expirada" },
   "Sessão sem token.": { es: "Sesión sin token." },
   "Skill não encontrada no catálogo de plataforma.": { es: "Skill no encontrada en el catálogo de la plataforma." },
+  "Suba o Docker (docker compose up -d waha) e tente novamente.": {
+    es: "Levanta el Docker (docker compose up -d waha) e intenta de nuevo.",
+  },
   "Skill não está instalada nesta organização.": { es: "La skill no está instalada en esta organización." },
   "Solicitação não encontrada.": { es: "Solicitud no encontrada." },
   "Só manager+ cria template compartilhado.": { es: "Solo manager+ puede crear una plantilla compartida." },
