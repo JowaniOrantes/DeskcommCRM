@@ -6489,6 +6489,7 @@ export const DICIONARIO: Traducoes = {
   "JSON inválido.": { es: "JSON inválido." },
   "Já existe um produto com esse código.": { es: "Ya existe un producto con ese código." },
   "Já existe uma credential com este label e provider.": { es: "Ya existe una credential con este label y provider." },
+  "Já existe uma atualização em andamento.": { es: "Ya hay una actualización en curso." },
   "Lead foi modificado por outro usuário. Recarregue e tente novamente.": { es: "El lead fue modificado por otro usuario. Recarga e intenta de nuevo." },
   "Liberou a conversa de volta para a fila": { es: "Liberó la conversación de vuelta a la cola" },
   "Material não encontrado.": { es: "Material no encontrado." },
