@@ -6426,7 +6426,6 @@ export const DICIONARIO: Traducoes = {
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
 
-<<<<<<< HEAD
   // ─── Tarefas (extraídas do PR #418) ───
   "Tarefas": { es: "Tareas" },
   "O que ficou combinado, com prazo. Tarefa presa a um negócio aparece na linha do tempo dele.": {
@@ -6468,7 +6467,6 @@ export const DICIONARIO: Traducoes = {
   "Média": { es: "Media" },
   "Alta": { es: "Alta" },
   "mais": { es: "más" },
-=======
   // ─── Configurações › Organização — zona de perigo (extraído do PR #556) ───
   "Zona de perigo": { es: "Zona de peligro" },
   "Apaga de vez as mensagens, conversas, negócios, contatos, agendamentos e pedidos desta organização. Serve para recomeçar os testes do zero antes de atender de verdade.":
@@ -6513,7 +6511,6 @@ export const DICIONARIO: Traducoes = {
     es: "Confirme el código de su aplicación de dos pasos e inténtelo de nuevo.",
   },
 
->>>>>>> origin/main
   // ─── Importar leads de planilha (extraído do PR #418) ───
   "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
   "Um arquivo CSV com uma linha por lead. Os leads entram na primeira etapa do funil escolhido.": {
