@@ -110,7 +110,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { id: "crm", label: "CRM", hub: { href: "/app/crm", label: "Ver tudo em CRM" } },
   { id: "ia", label: "Agente de IA", hub: { href: "/app/ai", label: "Ver tudo em IA" } },
   { id: "canais", label: "Canais" },
-  { id: "analise", label: "Análise" },
+  { id: "analise", label: "Análise", hub: { href: "/app/analise", label: "Ver tudo em Análise" } },
   {
     id: "organizacao",
     label: "Organização",
@@ -501,12 +501,31 @@ export const NAV_DESTINATIONS: NavDestination[] = [
   },
 
   // ---- Análise — olhar o sistema funcionando ----
+  //
+  // ── QUEM FICA NO MENU, E POR QUÊ ─────────────────────────────────────────
+  //
+  // A régua é a FREQUÊNCIA de quem opera vendas por WhatsApp, não a importância
+  // da tela. As três de cima entram na rotina — o dono abre Desempenho para
+  // saber como vai o mês, Meta Ads para saber quanto custou trazer quem chegou,
+  // e Atividades para saber se a equipe (e a IA) trabalhou no período. São
+  // perguntas que se refazem toda semana, e um menu é para o que se refaz.
+  //
+  // As duas de baixo são visita DELIBERADA: "Evolução da IA" é revisão do
+  // agente, coisa de quando se senta para ensiná-lo — e quem senta para isso já
+  // vai ao grupo de IA; "Audit Log" é forense, aberto quando algo deu errado e
+  // se precisa saber quem mexeu. Nenhuma das duas se abre de passagem, e é
+  // justamente disso que o hub é feito: quem vai lá vai de propósito.
+  //
+  // Sair do menu não é sair do produto — o hub `/app/analise` é INVENTÁRIO e
+  // lista as cinco (`hubSections`), então as duas continuam a um clique, com a
+  // frase que explica para que servem. O ⌘K também as acha por nome.
   {
     href: "/app/metrics",
     label: "Desempenho",
     description: "Funil e performance por atendente nos últimos 30 dias.",
     icon: ChartBar,
     group: "analise",
+    section: "Os números do período",
     sidebar: true,
   },
   {
@@ -518,10 +537,26 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Quanto custou cada resultado das campanhas que trazem gente para cá.",
     icon: Megaphone,
     group: "analise",
+    section: "Os números do período",
     // `manager`, e não o `viewer` de Desempenho: aqui não há recorte por
     // pessoa — orçamento e criativo são da empresa inteira. Mesmo grau dos
     // outros dois vizinhos do grupo.
     minRole: "manager",
+    sidebar: true,
+  },
+  {
+    // Irmã de "Desempenho", não a mesma coisa: lá é DESFECHO (funil agora,
+    // ganho/perdido por atendente); aqui é o TRABALHO que aconteceu no
+    // período, com quem fez cada coisa. Um mês inteiro atendido pela IA e um
+    // mês inteiro atendido pela equipe têm o mesmo desfecho e histórias
+    // opostas — só esta tela distingue as duas.
+    href: "/app/activities",
+    label: "Atividades",
+    description:
+      "Relatório do que a equipe e os agentes fizeram no período: quanto, quem e de que tipo.",
+    icon: ClockCounterClockwise,
+    group: "analise",
+    section: "Os números do período",
     sidebar: true,
   },
   {
@@ -531,8 +566,8 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Se o agente está melhorando, onde ele erra e o que falta ensinar.",
     icon: ChartLineUp,
     group: "analise",
+    section: "O histórico que se consulta",
     minRole: "manager",
-    sidebar: true,
   },
   {
     href: "/app/audit",
@@ -540,8 +575,8 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Quem fez o quê, quando — o histórico que não se apaga.",
     icon: ClockCounterClockwise,
     group: "analise",
+    section: "O histórico que se consulta",
     minRole: "manager",
-    sidebar: true,
   },
 
   // ---- Organização — conta, empresa, acesso ----
