@@ -2649,6 +2649,19 @@ export const DICIONARIO: Traducoes = {
   "Confirme o segundo fator nesta sessão e tente de novo.": {
     es: "Confirma el segundo factor en esta sesión e intenta de nuevo.",
   },
+  // ─── app/api/v1/marca/logo/route.ts (frontend-traduz via CampoDeLogo.tsx) ───
+  "Campo 'escopo' inválido.": { es: "Campo 'escopo' inválido." },
+  "O logo precisa ter até 512 KB. Arquivo maior vai inteiro para o navegador em toda página.": {
+    es: "El logo debe tener hasta 512 KB. Un archivo más grande va entero al navegador en cada página.",
+  },
+  "SVG não é aceito como logo: ele pode executar código quando aberto direto do endereço da imagem. Exporte o mesmo arquivo em PNG (fundo transparente) ou JPG.": {
+    es: "SVG no se acepta como logo: puede ejecutar código cuando se abre directo desde la dirección de la imagen. Exporta el mismo archivo en PNG (fondo transparente) o JPG.",
+  },
+  "Erro ao gravar o logo.": { es: "Error al guardar el logo." },
+  "O caminho do logo não pertence a esta empresa.": {
+    es: "La ruta del logo no pertenece a esta empresa.",
+  },
+  "O logo não foi gravado.": { es: "El logo no fue guardado." },
   // ─── lib/auth/require-role.ts (gate ÚNICO de autorização — toda rota /api/v1) ───
   "Esta sessão precisa da verificação em duas etapas. Entre novamente com o código do aplicativo.": {
     es: "Esta sesión necesita la verificación en dos pasos. Entra de nuevo con el código de la aplicación.",
