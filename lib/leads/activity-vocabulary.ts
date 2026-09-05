@@ -102,6 +102,20 @@ export type ActivityType =
   | "conversation_released"
   | "conversation_ai_paused"
   /**
+   * A TAREFA COMBINADA, na linha do tempo do negócio (migration 0210).
+   *
+   * "Ligar de volta na terça" só existe por causa de um negócio. Sem estas duas
+   * linhas, quem abre o card vê a conversa parar e não sabe que há um retorno
+   * marcado — e "por que ninguém falou com este cliente?" fica sem resposta
+   * visível, que é o modo de morte que `consent_declined` já documenta aqui.
+   *
+   * São DUAS e não uma pelo mesmo motivo de `appointment_completed`/
+   * `appointment_no_show`: "foi combinado" e "foi feito" são fatos diferentes, e
+   * só o par permite distinguir o que ainda está pendurado do que já fechou.
+   */
+  | "task_created"
+  | "task_completed"
+  /**
    * DOIS CADASTROS DA MESMA PESSOA VIRARAM UM. Emitido por
    * `fn_mesclar_contatos` (migration 0215) em cada negócio que o contato
    * vencedor passou a ter — inclusive nos que ELE não tinha e herdou do
@@ -205,6 +219,8 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   // arquivos e o controle NEGATIVO de `handoff-por-orcamento.test.ts` usa
   // literalmente "Voltar para a IA" como a sabotagem que deve reprovar.
   conversation_ai_paused: "Pausou o automático",
+  task_created: "Tarefa combinada",
+  task_completed: "Tarefa concluída",
   // Rótulo com OBJETO e sem jargão de banco: "Mesclado" sozinho é palavra de
   // engenheiro. O que aconteceu, para quem lê a timeline do negócio, é que dois
   // cadastros da mesma pessoa viraram um — e é por isso que este negócio pode
