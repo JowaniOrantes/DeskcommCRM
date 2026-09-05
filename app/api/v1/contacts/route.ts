@@ -61,6 +61,7 @@ export async function GET(req: NextRequest): Promise<Response> {
         organization_id: orgId ?? "",
         actor: { type: "user", id: user.id },
         requestId,
+        idioma: authUser?.idioma,
       },
       qsParsed.data,
     );
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         organization_id: activeOrg.orgId,
         actor: { type: "user", id: user.id },
         requestId,
+        idioma: user.idioma,
       },
       input as ContactCreate,
     );

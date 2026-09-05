@@ -50,6 +50,7 @@ export async function GET(
         organization_id: activeOrg.orgId,
         actor: { type: "user", id: user.id },
         requestId,
+        idioma: authUser?.idioma,
       },
       { contactId: id, decryptPurpose },
     );
@@ -96,6 +97,7 @@ export async function PATCH(
         organization_id: activeOrg.orgId,
         actor: { type: "user", id: user.id },
         requestId,
+        idioma: user.idioma,
       },
       id,
       input,
@@ -130,6 +132,7 @@ export async function DELETE(
         organization_id: activeOrg.orgId,
         actor: { type: "user", id: user.id },
         requestId,
+        idioma: user.idioma,
       },
       id,
     );

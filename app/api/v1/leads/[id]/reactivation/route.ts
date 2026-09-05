@@ -86,8 +86,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     if (existe) {
       return fail(
         "reactivation_not_pending",
-        `Esta sugestão já foi ${
-          (existe as { status: string }).status === "expired" ? t("encerrada pelo prazo") : "decidida"
+        `${t("Esta sugestão já foi")} ${
+          (existe as { status: string }).status === "expired" ? t("encerrada pelo prazo") : t("decidida")
         }.`,
         409,
         { requestId },
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     // Nomeia a decisão, nunca o conteúdo da proposta nem dado do negócio.
     reason:
       decision === "accept"
-        ? "Retomada de contato aprovada"
+        ? t("Retomada de contato aprovada")
         : t("Retomada de contato descartada — decisão registrada"),
     payload: { proposal_id },
   });

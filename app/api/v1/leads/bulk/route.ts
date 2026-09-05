@@ -50,7 +50,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   if (input.lead_ids.length > MAX_BULK) {
-    return fail("bulk_too_large", `Máximo ${MAX_BULK} leads por bulk.`, 422, { requestId });
+    return fail("bulk_too_large", `${t("Máximo")} ${MAX_BULK} ${t("leads por bulk.")}`, 422, { requestId });
   }
 
   // G3-04: assign é reatribuição de dono em lote → piso ≥manager (spec 04 §6.5,
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       if (!owner.ok || !owner.patch) {
         return fail(
           "validation_failed",
-          "Um lead tem um dono: informe owner_user_id OU owner_agent_id.",
+          t("Um lead tem um dono: informe owner_user_id OU owner_agent_id."),
           422,
           { requestId },
         );

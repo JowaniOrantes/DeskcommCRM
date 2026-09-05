@@ -6524,6 +6524,40 @@ export const DICIONARIO: Traducoes = {
   "pointer_id inválido.": { es: "pointer_id inválido." },
   "priority inválido (0..1000).": { es: "priority inválido (0..1000)." },
   "status inválido.": { es: "status inválido." },
+
+  // ─── Fase B: handlers compartidos REST/MCP (contacts/_handler.ts) ───
+  "Contato anonimizado — edição bloqueada (LGPD).": {
+    es: "Contacto anonimizado — edición bloqueada (LGPD).",
+  },
+  "Nenhum campo para atualizar.": { es: "Ningún campo para actualizar." },
+  "Contato não encontrado após update.": { es: "Contacto no encontrado después del update." },
+  "Não foi possível excluir: o contato ainda tem registros vinculados.": {
+    es: "No fue posible eliminar: el contacto todavía tiene registros vinculados.",
+  },
+
+  // ─── Fase B: handlers compartidos REST/MCP (leads/_handler.ts) ───
+  "Um lead tem um dono: informe owner_user_id OU owner_agent_id.": {
+    es: "Un lead tiene un dueño: informa owner_user_id U owner_agent_id.",
+  },
+  "Falha ao criar lead.": { es: "Falla al crear lead." },
+  "Stage não pertence ao pipeline informado.": {
+    es: "El stage no pertenece al pipeline informado.",
+  },
+  "Move cross-pipeline não é permitido.": { es: "Mover entre pipelines no está permitido." },
+  "Lead foi modificado concorrentemente.": { es: "El lead fue modificado de forma concurrente." },
+  "leads por bulk.": { es: "leads por lote." },
+  "Esta sugestão já foi": { es: "Esta sugerencia ya fue" },
+  "decidida": { es: "decidida" },
+  "Informe o motivo da perda.": { es: "Indica el motivo de la pérdida." },
+  "Pipeline não tem stage de fechamento como ganho.": {
+    es: "El pipeline no tiene stage de cierre como ganado.",
+  },
+  "Pipeline não tem stage de fechamento como perda.": {
+    es: "El pipeline no tiene stage de cierre como perdido.",
+  },
+  "Perdido —": { es: "Perdido —" },
+  "(sem título)": { es: "(sin título)" },
+  "(negócio removido)": { es: "(negocio eliminado)" },
 };
 
 /**
