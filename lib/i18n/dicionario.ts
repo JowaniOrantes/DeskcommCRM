@@ -5293,7 +5293,7 @@ export const DICIONARIO: Traducoes = {
   "Use um dos 10 códigos que você salvou ao configurar a verificação em duas etapas.": {
     es: "Usa uno de los 10 códigos que guardaste al configurar la verificación en dos pasos.",
   },
-  "Validando...": { es: "Validando..." },
+  "Validando…": { es: "Validando…" },
   "Sua conta tem verificação em duas etapas. Digite o código de 6 dígitos do seu app autenticador para concluir.": {
     es: "Tu cuenta tiene verificación en dos pasos. Escribe el código de 6 dígitos de tu app autenticadora para concluir.",
   },
