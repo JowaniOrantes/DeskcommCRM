@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
+import { createClient } from "@/lib/supabase/server";
 import { branding } from "@/lib/branding";
 import { RecoverOrganizationForm } from "@/components/auth/RecoverOrganizationForm";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -26,6 +27,17 @@ export default async function GetStartedPage() {
   // "abra outra empresa" alcançável por quem digitasse a URL.
   if (activeOrg) redirect("/app/inbox");
 
+  // O nome da empresa que a pessoa digitou no cadastro mora no `user_metadata`,
+  // que `AuthUser` não carrega — e alargar `AuthUser` por causa de uma tela de
+  // exceção sairia mais caro que esta leitura, que só acontece aqui. Vale para
+  // quem chega pelo cadastro com confirmação de e-mail desligada: o campo já
+  // vem preenchido em vez de pedir de novo o que ela acabou de informar.
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  const nomeSugerido = (authUser?.user_metadata?.org_name as string | undefined) ?? undefined;
+
   // Fora da árvore de `app/app/layout.tsx`, como as telas públicas: o idioma
   // vem do próprio usuário, e o formulário precisa do provider para o `useT()`.
   const t = (texto: string) => traduzir(texto, user.idioma);
@@ -47,7 +59,7 @@ export default async function GetStartedPage() {
               )}
             </p>
           </div>
-          <RecoverOrganizationForm />
+          <RecoverOrganizationForm nomeSugerido={nomeSugerido} />
           <p className="text-xs leading-relaxed text-muted-foreground">
             {t(
               "Se você recebeu um convite, não crie uma organização nova. Use o link do convite ou peça ao administrador para reenviá-lo.",
