@@ -21,14 +21,19 @@
  *  · Cada linha LEVA ao negócio. Relatório que só lista é decorativo.
  *
  * ─── ⚠️ O que este spec NÃO afirma, e por quê ──────────────────────────────
- * Que o item novo CABE na barra lateral. Ele não cabe: medido em 1280×900,
- * logado como admin, `nav.scrollHeight` = 776 contra `clientHeight` = 763 (13 px
- * de excesso), com "Audit Log" abaixo da dobra. Removendo do DOM só o `<a>` de
- * `/app/activities` a mesma medida devolve 763 contra 763, zero de excesso —
- * ou seja, a barra cabia com margem NENHUMA e este item é o que a estoura.
- * Quem guarda esse invariante é `navegacao.spec.ts` ("nenhum grupo fica fora da
- * dobra, e em 900px o menu não rola"), que fica VERMELHO com este PR. Duplicar
- * a asserção aqui só faria dois vermelhos para o mesmo fato.
+ * Que o item novo CABE na barra lateral. Não cabia: medido em 1280×900, logado
+ * como admin, `nav.scrollHeight` = 776 contra `clientHeight` = 763 — 13 px de
+ * excesso, com "Audit Log" abaixo da dobra. Removendo do DOM só o `<a>` de
+ * `/app/activities` a mesma medida devolvia 763 contra 763: a barra cabia com
+ * margem NENHUMA e este item era o que a estourava.
+ *
+ * O conserto NÃO foi raspar densidade, e sim `/app/analise` — o hub do grupo,
+ * pela mesma regra que o comentário de `Sidebar.tsx` já escrevia (grupo sem hub
+ * que passa de quatro telas ganha um). Evolução da IA e Audit Log saíram do
+ * menu para dentro dele; Atividades ficou, e sobrou 19px de folga. Quem guarda
+ * o invariante da dobra continua sendo `navegacao.spec.ts` ("nenhum grupo fica
+ * fora da dobra, e em 900px o menu não rola") — duplicar a asserção aqui só
+ * faria dois vermelhos para o mesmo fato.
  *
  * Pré-requisitos (banco local do baseline, app buildada):
  *   pnpm e2e:env && pnpm e2e:build

@@ -78,9 +78,21 @@ describe("Sidebar agrupado", () => {
   it("desenterra Audit Log — e Nuvemshop ficou de fora, por escolha", () => {
     comoPapel("admin");
     render(<Sidebar collapsed={false} />);
-    // Audit Log só existia via card em Configurações. Canal oficial não está
-    // aqui de propósito: virou aba de Conexões no PR #105, e Conexões é a porta.
-    expect(screen.getByRole("link", { name: /Audit Log/ })).toBeTruthy();
+    // ⚠️ O CAMINHO MUDOU, A PROPRIEDADE NÃO. O que esta linha sempre prendeu é
+    // que Audit Log deixou de existir só como card enterrado em Configurações.
+    // Quando Atividades (PR #583) virou o quinto destino do grupo Análise e o
+    // menu passou a rolar em 900px, a resposta foi o hub do grupo — como o
+    // comentário de densidade do `Sidebar.tsx` já mandava. Audit Log foi para
+    // dentro dele: a porta agora é "Ver tudo em Análise", nunca Configurações.
+    //
+    // Que a porta desemboca na tela é o e2e `navegacao.spec.ts` que percorre,
+    // clicando; aqui prende-se que ela EXISTE, no grupo certo do sidebar.
+    //
+    // Canal oficial não está aqui de propósito: virou aba de Conexões no PR
+    // #105, e Conexões é a porta.
+    const hubAnalise = screen.getByRole("link", { name: /Ver tudo em Análise/ });
+    expect(hubAnalise).toHaveAttribute("href", "/app/analise");
+    expect(screen.queryByRole("link", { name: /Audit Log/ })).toBeNull();
 
     // NUVEMSHOP SAIU, e esta linha é a reversão explícita de uma decisão que
     // este mesmo teste travava: a integração tinha sido "desenterrada" para o

@@ -153,6 +153,21 @@ export function SidebarContent({
         das treze telas dele moram atrás do "Ver tudo em IA"), e o CRM ainda não
         tem um. Quando o quinto destino de CRM aparecer, é hub que se cria, não
         mais 4px que se raspa.
+
+        ✅ ANÁLISE FOI QUEM CHEGOU AO QUINTO, e a regra valeu igual. Atividades
+        (PR #583) levou o grupo a cinco telas e a dobra estourou de novo —
+        medido em 1280×900, logado como admin: `scrollHeight` 776 contra 763 de
+        altura visível, 13px de excesso, com o link "Audit Log" 13px abaixo da
+        caixa de conteúdo da nav. O conserto foi `/app/analise`, o hub do grupo:
+        Evolução da IA e Audit Log saíram do menu para dentro dele, e NENHUM
+        valor deste arquivo mudou por causa disso. Sobrou 19px de folga — a
+        mesma que existia antes de Atividades chegar.
+
+        A conta é fechada, e vale conferir antes de abrir o PR: cada linha custa
+        32px (28px de altura + 4px de `space-y-1`), e trocar N destinos do menu
+        por um único link de hub devolve (N-1)×32px. Restam sem hub Atendimento
+        (4), CRM (4) e Canais (2) — em qualquer um deles, o quinto destino é que
+        cria o hub, nunca mais densidade raspada.
       */}
       <nav className="flex-1 space-y-2 overflow-y-auto p-2" aria-label={t("Navegação principal")}>
         {grupos.map(({ group, items }) => {
