@@ -17353,6 +17353,80 @@ comment on column public.contacts.ai_authorized_reason is
 
 notify pgrst, 'reload schema';
 
+-- ---- mover em lote sem colidir posição (migration 0209) ----
+--
+-- A barra de ações em lote mandava UM `position_in_stage` para o lote inteiro, e
+-- o handler o gravava em N linhas: trinta cards movidos terminavam com o MESMO
+-- número na etapa de destino. `midpoint(prev, next)` devolve NaN quando os dois
+-- vizinhos são iguais (`lib/kanban/fractional-indexing.ts`) — então o primeiro
+-- arrasto para ENTRE dois cards do lote mandava NaN como posição, e antes disso
+-- a ordem entre eles já era indefinida.
+--
+-- Esta função dá a cada card do lote uma posição DISTINTA (piso da etapa de
+-- destino + 1000 por card, na ordem em que estavam no quadro) num único
+-- `update` — o que também torna o lote atômico: move todos ou nenhum.
+--
+-- `security INVOKER`: a RLS de crm_leads é o piso. `p_organization_id` é o
+-- escopo explícito que a doutrina exige (org do cookie, nunca do body).
+-- Idempotente: `create or replace`, nenhuma coluna, nenhum dado da instalação
+-- tocado.
+
+create or replace function public.fn_mover_leads_em_lote(
+  p_organization_id uuid,
+  p_lead_ids uuid[],
+  p_stage_id uuid
+) returns table (lead_id uuid, from_stage_id uuid, pipeline_id uuid)
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_piso numeric;
+begin
+  -- `coalesce(..., 0)` cobre a etapa vazia; o DEFAULT da coluna é 1000, então
+  -- o primeiro card de um lote para uma etapa vazia cai em 1000, como um card
+  -- criado à mão.
+  select coalesce(max(l.position_in_stage), 0)
+    into v_piso
+    from public.crm_leads l
+   where l.organization_id = p_organization_id
+     and l.stage_id = p_stage_id
+     and not (l.id = any(p_lead_ids));
+
+  return query
+  with alvo as (
+    select l.id,
+           l.stage_id    as from_stage_id,
+           l.pipeline_id as pipeline_id,
+           -- A ordem do lote no destino é a ordem em que ele estava no quadro:
+           -- etapa, depois posição. `id` só desempata para o resultado ser
+           -- determinístico (dois cards podem legitimamente empatar hoje —
+           -- é justamente o estado que esta migration deixa de produzir).
+           row_number() over (order by l.stage_id, l.position_in_stage, l.id) as ordem
+      from public.crm_leads l
+     where l.organization_id = p_organization_id
+       and l.id = any(p_lead_ids)
+  ),
+  movidos as (
+    update public.crm_leads l
+       set stage_id          = p_stage_id,
+           position_in_stage = v_piso + (a.ordem * 1000),
+           updated_at        = now()
+      from alvo a
+     where l.id = a.id
+       and l.organization_id = p_organization_id
+    returning l.id, a.from_stage_id, a.pipeline_id
+  )
+  select m.id, m.from_stage_id, m.pipeline_id from movidos m;
+end;
+$$;
+
+comment on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) is
+  'Move um lote de leads para uma etapa dando a cada um posição DISTINTA (piso da etapa de destino + 1000 por card, na ordem em que estavam no quadro). Existe porque gravar a mesma position_in_stage em N linhas quebra o midpoint() do arrasto seguinte (prev === next → NaN) e deixa a ordem do quadro indefinida. Devolve uma linha por card movido, com a etapa de ORIGEM, para o handler emitir a atividade de timeline de cada um.';
+
+revoke all     on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) from public;
+revoke execute on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid) from anon;
+grant  execute on function public.fn_mover_leads_em_lote(uuid, uuid[], uuid)
+  to authenticated, service_role;
 -- ---- tarefas do CRM (migration 0210) ----
 --
 -- Lembrete de trabalho interno com prazo. O racional inteiro — por que a
@@ -17654,6 +17728,159 @@ grant execute on function public.fn_decrypt_oauth(bytea) to service_role;
 grant execute on function public.fn_encrypt_oauth(text) to service_role;
 grant execute on function public.fn_lgpd_cascade_redact_contact(uuid, uuid, uuid) to service_role;
 grant execute on function public.fn_update_budget_consumption() to service_role;
+-- ---- conversões de anúncio: conexão + livro-razão (migration 0213) ----
+-- Idempotente e auto-curativo, como o kit exige: `update.sh` re-aplica este
+-- arquivo inteiro num banco existente e sem `ON_ERROR_STOP`.
+
+create table if not exists public.ad_platform_connections (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  platform text not null,
+  dataset_id text,
+  access_token_encrypted bytea,
+  test_event_code text,
+  enabled boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  updated_by uuid,
+  constraint ad_platform_connections_platform_conhecida
+    check (platform in ('meta_ads', 'google_ads'))
+);
+
+create unique index if not exists ad_platform_connections_org_platform_uk
+  on public.ad_platform_connections (organization_id, platform);
+
+alter table public.ad_platform_connections enable row level security;
+revoke all on public.ad_platform_connections from anon, authenticated;
+grant select, insert, update, delete on public.ad_platform_connections to service_role;
+
+drop trigger if exists trg_ad_platform_connections_updated_at on public.ad_platform_connections;
+create trigger trg_ad_platform_connections_updated_at
+  before update on public.ad_platform_connections
+  for each row execute function public.fn_set_updated_at();
+
+create table if not exists public.ad_conversion_dispatches (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  lead_id uuid not null references public.crm_leads(id) on delete cascade,
+  platform text not null,
+  event_name text not null,
+  status text not null,
+  reason text,
+  event_id text,
+  value_cents bigint,
+  currency text,
+  detail text,
+  attempted_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Dedup ANTES do índice único (doutrina de migrations §8): num clone que já
+-- tenha rodado uma versão sem o índice, duas linhas para o mesmo par fariam o
+-- `update.sh` quebrar aqui. Mantém a mais recente, que é o estado atual.
+delete from public.ad_conversion_dispatches a
+  using public.ad_conversion_dispatches b
+ where a.organization_id = b.organization_id
+   and a.lead_id = b.lead_id
+   and a.event_name = b.event_name
+   and a.attempted_at < b.attempted_at;
+
+create unique index if not exists ad_conversion_dispatches_lead_event_uk
+  on public.ad_conversion_dispatches (organization_id, lead_id, event_name);
+
+create index if not exists ad_conversion_dispatches_org_status_idx
+  on public.ad_conversion_dispatches (organization_id, status, attempted_at desc);
+
+alter table public.ad_conversion_dispatches enable row level security;
+revoke all on public.ad_conversion_dispatches from anon, authenticated;
+grant select, insert, update, delete on public.ad_conversion_dispatches to service_role;
+
+drop trigger if exists trg_ad_conversion_dispatches_updated_at on public.ad_conversion_dispatches;
+create trigger trg_ad_conversion_dispatches_updated_at
+  before update on public.ad_conversion_dispatches
+  for each row execute function public.fn_set_updated_at();
+
+-- ---- o e-mail do convidado no compromisso (migration 0212) ----
+--
+-- Aditiva e idempotente. Nula = evento sem `attendees`, que é o comportamento de
+-- 100% das linhas existentes: nada a curar antes, nada a migrar depois. Sem
+-- CHECK de formato de propósito — a validação de forma é do Zod na rota, onde a
+-- recusa vira mensagem para quem digitou em vez de erro de constraint.
+--
+-- A coluna gerada `needs_google_push` (migration 0200) continua valendo: editar
+-- o convidado bumpa `updated_at` pelo trigger que já existe, e a linha volta a
+-- ser candidata do worker de push na batida seguinte.
+alter table public.calendar_appointments
+  add column if not exists guest_email text;
+
+comment on column public.calendar_appointments.guest_email is
+  'E-mail de um convidado externo, digitado por quem marca. Quando presente vira `attendees` no evento do Google e o convite sai por e-mail (`sendUpdates=all` na chamada). Nulo = evento sem convidado, que é o comportamento anterior.';
+
+-- ---- credencial de LEITURA da conta de anúncios (migration 0214) ----
+--
+-- Idempotente e auto-curativo, como o kit exige: o `update.sh` re-aplica este
+-- arquivo inteiro num banco existente e SEM `ON_ERROR_STOP`.
+--
+-- Tabela separada de `ad_platform_connections` de propósito — o cabeçalho da
+-- migration 0214 tem as quatro razões; a decisiva é que o índice único da 0213 é
+-- `(organization_id, platform)` e os dois tokens têm escopos DIFERENTES na Meta
+-- (escrita no dataset de conversões vs. `ads_read`). Não são o mesmo segredo.
+--
+-- RLS ligada com ZERO policies e grants revogados de anon/authenticated, o mesmo
+-- desenho de `platform_google_oauth` (0201) e da 0213, pelo mesmo motivo: a anon
+-- key VAI PARA O BROWSER, e tabela com RLS ligada, sem policy nenhuma e sem
+-- grant não é servida pelo PostgREST de jeito nenhum — só o `service_role`, que
+-- vive no servidor. É mais restritivo que uma policy de tenant, não menos:
+-- não há regra para errar. Medido por
+-- `tests/invariants/credencial-de-anuncios-e-server-side.test.ts`.
+create table if not exists public.ad_insights_connections (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations(id) on delete cascade,
+  platform text not null,
+  access_token_encrypted bytea not null,
+  default_account_id text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  updated_by uuid,
+  constraint ad_insights_connections_platform_conhecida
+    check (platform in ('meta_ads', 'google_ads'))
+);
+
+comment on table public.ad_insights_connections is
+  'Credencial de LEITURA da conta de anúncios da organização, para o painel /app/ads/meta. Separada de ad_platform_connections de propósito: escopo de token diferente (ads_read), ciclo de vida diferente e nenhum risco de derrubar o envio de conversões. Server-side only: RLS ligada sem policies e grants revogados de anon/authenticated. O token nunca volta ao browser.';
+comment on column public.ad_insights_connections.access_token_encrypted is
+  'Cifrado por fn_encrypt_oauth (pgp_sym/aes256), a mesma cifra de calendar_connections, channel_sessions e ad_platform_connections. NOT NULL: uma linha sem token não descreve conexão nenhuma.';
+comment on column public.ad_insights_connections.default_account_id is
+  'act_<id> que a tela abre por padrão. Sem FK: o identificador é da Meta e a conta pode sair do alcance do token sem aviso.';
+
+-- Dedup ANTES do índice único (doutrina de migrations §8). A tabela é nova, mas
+-- o `update.sh` roda sem `ON_ERROR_STOP` num banco que pode ter passado por uma
+-- versão intermediária deste apêndice: duas linhas para o mesmo par fariam a
+-- criação do índice falhar e o resto do arquivo seguir pela metade. Mantém a
+-- mais recente, que é o estado que a tela gravou por último.
+delete from public.ad_insights_connections a
+  using public.ad_insights_connections b
+ where a.organization_id = b.organization_id
+   and a.platform = b.platform
+   and a.updated_at < b.updated_at;
+
+create unique index if not exists ad_insights_connections_org_platform_uk
+  on public.ad_insights_connections (organization_id, platform);
+
+alter table public.ad_insights_connections enable row level security;
+revoke all on public.ad_insights_connections from anon, authenticated;
+grant select, insert, update, delete on public.ad_insights_connections to service_role;
+
+drop trigger if exists trg_ad_insights_connections_updated_at on public.ad_insights_connections;
+create trigger trg_ad_insights_connections_updated_at
+  before update on public.ad_insights_connections
+  for each row execute function public.fn_set_updated_at();
+
+-- O PostgREST guarda o schema em cache; sem isto a tabela nova só apareceria no
+-- próximo restart do serviço, e a doutrina de packaging proíbe pedir a quem
+-- opera uma VPS que reinicie nada depois de um `update.sh`.
+notify pgrst, 'reload schema';
 
 -- ---- agent_inbox_items.resolved_at (migration 0216) ----
 -- `pacing/aviso-de-janela.ts` resolve o aviso de "janela de envio fechada"
