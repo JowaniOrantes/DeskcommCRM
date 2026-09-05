@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError } from "@/lib/api/types";
 import type { Actor, HandlerCtx } from "@/lib/api/handlers/types";
 import { audit } from "@/lib/audit";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { CONVERSATION_TERMINAL_STATUSES } from "@/lib/schemas";
 import type {
   ListConversationsQuery,
@@ -196,7 +197,13 @@ export async function listConversationsHandler(
   if (q.cursor) {
     const c = decodeCursor(q.cursor);
     if (!c) {
-      throw new ApiError(400, "invalid_cursor", undefined, ctx.requestId, "Cursor inválido.");
+      throw new ApiError(
+        400,
+        "invalid_cursor",
+        undefined,
+        ctx.requestId,
+        traduzir("Cursor inválido.", ctx.idioma ?? "pt-BR"),
+      );
     }
     const op = asc ? "gt" : "lt";
     if (c.sort) {
@@ -247,7 +254,13 @@ export async function getConversationHandler(
     throw new ApiError(500, "internal_error", undefined, ctx.requestId, error.message);
   }
   if (!data) {
-    throw new ApiError(404, "not_found", undefined, ctx.requestId, "Conversa não encontrada.");
+    throw new ApiError(
+      404,
+      "not_found",
+      undefined,
+      ctx.requestId,
+      traduzir("Conversa não encontrada.", ctx.idioma ?? "pt-BR"),
+    );
   }
   return data as unknown as Conversation;
 }
@@ -318,7 +331,13 @@ export async function patchConversationHandler(
     throw new ApiError(500, "internal_error", undefined, ctx.requestId, error.message);
   }
   if (!data) {
-    throw new ApiError(404, "not_found", undefined, ctx.requestId, "Conversa não encontrada.");
+    throw new ApiError(
+      404,
+      "not_found",
+      undefined,
+      ctx.requestId,
+      traduzir("Conversa não encontrada.", ctx.idioma ?? "pt-BR"),
+    );
   }
 
   const conv = data as unknown as Conversation;
@@ -392,7 +411,13 @@ export async function markConversationReadHandler(
     throw new ApiError(500, "internal_error", undefined, ctx.requestId, error.message);
   }
   if (!data) {
-    throw new ApiError(404, "not_found", undefined, ctx.requestId, "Conversa não encontrada.");
+    throw new ApiError(
+      404,
+      "not_found",
+      undefined,
+      ctx.requestId,
+      traduzir("Conversa não encontrada.", ctx.idioma ?? "pt-BR"),
+    );
   }
   return data as unknown as Conversation;
 }

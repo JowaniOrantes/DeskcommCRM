@@ -86,7 +86,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams): Promise<
 
   if (!result.ok) {
     const [code, message, status] = REASON_TO_RESPONSE[result.reason];
-    return fail(code, message, status, { requestId });
+    return fail(code, t(message), status, { requestId });
   }
   return ok({ draft: result.draft }, { requestId });
 }

@@ -6605,6 +6605,38 @@ export const DICIONARIO: Traducoes = {
   "Uma pessoa levou o negócio para outra etapa, diferente da que o assistente escolheu": {
     es: "Una persona llevó el negocio a otra etapa, distinta de la que el asistente eligió",
   },
+
+  // ─── Conversations + Messages: handlers compartidos REST/MCP ───
+  "Contato bloqueou o atendimento.": { es: "El contacto bloqueó la atención." },
+  "Contato anonimizado não pode ser compartilhado.": {
+    es: "Un contacto anonimizado no puede ser compartido.",
+  },
+  "Contato sem telefone para envio como cartão.": {
+    es: "El contacto no tiene teléfono para enviarlo como tarjeta.",
+  },
+  "Telefone inválido para envio como cartão.": { es: "Teléfono inválido para enviarlo como tarjeta." },
+  "Informe metadata.shared_contact_id ou metadata.shared_contact com telefone.": {
+    es: "Indica metadata.shared_contact_id o metadata.shared_contact con teléfono.",
+  },
+  "A mensagem citada não é desta conversa.": {
+    es: "El mensaje citado no es de esta conversación.",
+  },
+  "Este número foi excluído da Central de Conexões.": {
+    es: "Este número fue eliminado de la Central de Conexiones.",
+  },
+  "Contato sem telefone para envio WhatsApp.": {
+    es: "El contacto no tiene teléfono para el envío por WhatsApp.",
+  },
+  "No active organization.": { es: "No hay organización activa." },
+  "Nenhum agente publicado para sugerir resposta.": {
+    es: "Ningún agente publicado para sugerir respuesta.",
+  },
+  "Contato bloqueado/anonimizado.": { es: "Contacto bloqueado/anonimizado." },
+  "A IA não gerou um rascunho.": { es: "La IA no generó un borrador." },
+  "Erro ao gerar rascunho.": { es: "Error al generar borrador." },
+  "Não é possível rebaixar o último admin do tenant.": {
+    es: "No es posible degradar al último admin del tenant.",
+  },
 };
 
 /**
