@@ -22,9 +22,17 @@ const MENSAGENS: Record<string, string> = {
     "Não foi possível concluir a organização agora. Tente novamente ou contate o administrador da instalação.",
 };
 
-export function RecoverOrganizationForm() {
+/**
+ * `nomeSugerido` é o nome de empresa que a pessoa digitou no CADASTRO e que
+ * viajou até aqui pelo `user_metadata` — o mesmo canal que `/auth/confirm` usa
+ * para provisionar. Ele só semeia o campo: quem valida continua sendo o Zod da
+ * action, e a pessoa pode trocar antes de enviar. Sem isto, quem cai na
+ * recuperação precisa digitar de novo um dado que o sistema já tem, no momento
+ * em que ela está mais propensa a desistir.
+ */
+export function RecoverOrganizationForm({ nomeSugerido }: { nomeSugerido?: string }) {
   const t = useT();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(nomeSugerido ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 

@@ -112,6 +112,24 @@ jobs:
     # do gate sem razão declarada é a dívida voltando pela porta de serviço.
     # ─────────────────────────────────────────────────────────────────────────
     #
+    # ═══ `cadastro-sem-confirmacao-de-email`: A PRECONDIÇÃO É DO PROVEDOR ═══
+    #
+    # Ela mede o cadastro com "Confirm email" DESLIGADO no provedor de auth — o
+    # estado em que `signUp()` já devolve sessão e não existe link nenhum para
+    # clicar. Isso não é dado que a spec possa semear: é `GOTRUE_MAILER_AUTOCONFIRM`,
+    # fixado quando o Supabase local sobe, e o `supabase/config.toml` do repo
+    # declara `enable_confirmations = true` — que é o que `signup-journey` e
+    # `invite-lifecycle` exercitam. Ligar o autoconfirm por causa desta spec
+    # trocaria o provedor da SUÍTE INTEIRA, e as duas de cima passariam a medir
+    # outro fluxo sem que ninguém percebesse.
+    #
+    # O gate de todo dia é o par de testes de unidade, que roda no `verify`:
+    # `app/actions/auth/signUp.test.ts` (a action DIZ que a sessão veio aberta) e
+    # `tests/unit/cadastro-sem-confirmacao-nao-manda-esperar-email.test.tsx` (a
+    # tela AGE sobre isso). A spec é a prova pela tela de que os dois, juntos,
+    # resolvem a jornada — e ela CONFERE a própria precondição em `beforeAll`,
+    # falhando alto em vez de se auto-pular.
+    #
     # ═══ O 429 DE `olhar-telas-do-epico`: RESOLVIDO DUAS VEZES, EM CAMADAS DIFERENTES ═══
     #
     # A spec reprovava com **429** em TODAS as 7 telas, falha PRÉ-EXISTENTE NA MAIN (run
@@ -525,6 +543,7 @@ jobs:
       FORA_DO_CI: >-
         vps-fresh-onboarding.spec.ts
         inbox-tempo-real.spec.ts
+        cadastro-sem-confirmacao-de-email.spec.ts
     steps:
       - uses: actions/checkout@v7
 
