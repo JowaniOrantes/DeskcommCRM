@@ -6544,6 +6544,10 @@ export const DICIONARIO: Traducoes = {
     es: "Ese embudo ya no está en tu lista. Recarga la página e intenta de nuevo.",
   },
   "Não sei ler esse tipo de arquivo. Envie PDF, Markdown (.md) ou texto (.txt).": { es: "No sé leer ese tipo de archivo. Envía PDF, Markdown (.md) o texto (.txt)." },
+  "não consegui extrair texto deste PDF. Se ele for só imagens escaneadas, não há letra nenhuma para ler — envie uma versão com texto selecionável.": {
+    es: "no conseguí extraer texto de este PDF. Si son solo imágenes escaneadas, no hay ninguna letra para leer — envía una versión con texto seleccionable.",
+  },
+  "o arquivo não tem texto nenhum para indexar": { es: "el archivo no tiene ningún texto para indexar" },
   "Não é possível desativar o agent default da organização.": { es: "No es posible desactivar el agent default de la organización." },
   "Não é possível revogar o último admin do tenant.": { es: "No es posible revocar al último admin del tenant." },
   "O WhatsApp (WAHA) não está configurado neste ambiente (faltam WAHA_API_BASE_URL e/ou WAHA_API_KEY) — sem ele o número não pode ser desconectado do aparelho.": { es: "El WhatsApp (WAHA) no está configurado en este ambiente (faltan WAHA_API_BASE_URL y/o WAHA_API_KEY) — sin él el número no puede ser desconectado del aparato." },

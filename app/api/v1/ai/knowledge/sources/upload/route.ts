@@ -152,7 +152,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   } catch (err) {
     await admin.storage.from(BUCKET_DE_CONHECIMENTO).remove([blobPath]);
     if (err instanceof ErroDeExtracao) {
-      return fail("unprocessable_entity", err.message, 422, { requestId });
+      return fail("unprocessable_entity", t(err.message), 422, { requestId });
     }
     console.error("[conhecimento-upload] extração falhou:", err);
     return fail("internal_error", "Erro ao ler o arquivo.", 500, { requestId });
