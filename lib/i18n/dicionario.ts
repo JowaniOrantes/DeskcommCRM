@@ -5815,6 +5815,9 @@ export const DICIONARIO: Traducoes = {
   "Dê um nome à etapa — é o que aparece no topo da coluna.": {
     es: "Ponle un nombre a la etapa — es lo que aparece arriba de la columna.",
   },
+  "Dê um nome ao funil — é o que aparece na lista e no topo do quadro.": {
+    es: "Ponle un nombre al embudo — es lo que aparece en la lista y arriba del tablero.",
+  },
   "Dê um nome ao funil — é o que aparece na lista.": { es: "Ponle un nombre al embudo — es lo que aparece en la lista." },
   "Duas intenções não podem ter o mesmo nome no router.": {
     es: "Dos intenciones no pueden tener el mismo nombre en el router.",
@@ -5822,6 +5825,9 @@ export const DICIONARIO: Traducoes = {
   "Enrollment já está encerrado.": { es: "El enrollment ya está cerrado." },
   "Enrollment não encontrado.": { es: "Enrollment no encontrado." },
   "Entrada de memória não encontrada nesta organização.": { es: "Entrada de memoria no encontrada en esta organización." },
+  "Envie o mapeamento completo dos sete passos do atendimento.": {
+    es: "Envía el mapeo completo de los siete pasos de la atención.",
+  },
   "Envie o arquivo como multipart/form-data no campo 'file'.": {
     es: "Envía el archivo como multipart/form-data en el campo 'file'.",
   },
@@ -6494,6 +6500,9 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível guardar o segredo do webhook com segurança: a chave de cifra desta instalação não está ativa. Quem administra o servidor resolve rodando o update.sh, que gera e ativa a chave.": { es: "No fue posible guardar el secreto del webhook con seguridad: la clave de cifrado de esta instalación no está activa. Quien administra el servidor lo resuelve ejecutando el update.sh, que genera y activa la clave." },
   "Não foi possível guardar o segredo do webhook com segurança: a chave de cifra desta instalação não está ativa. Quem administra o servidor resolve rodando o update.sh, que gera e ativa a chave. Enquanto isso, você pode criar a ação sem segredo.": { es: "No fue posible guardar el secreto del webhook con seguridad: la clave de cifrado de esta instalación no está activa. Quien administra el servidor lo resuelve ejecutando el update.sh, que genera y activa la clave. Mientras tanto, puedes crear la acción sin secreto." },
   "Não foi possível validar o responsável agora. Tente novamente em instantes.": { es: "No fue posible validar al responsable ahora. Intenta de nuevo en unos instantes." },
+  "Esse funil não está mais na sua lista. Recarregue a página e tente de novo.": {
+    es: "Ese embudo ya no está en tu lista. Recarga la página e intenta de nuevo.",
+  },
   "Não sei ler esse tipo de arquivo. Envie PDF, Markdown (.md) ou texto (.txt).": { es: "No sé leer ese tipo de archivo. Envía PDF, Markdown (.md) o texto (.txt)." },
   "Não é possível desativar o agent default da organização.": { es: "No es posible desactivar el agent default de la organización." },
   "Não é possível revogar o último admin do tenant.": { es: "No es posible revocar al último admin del tenant." },

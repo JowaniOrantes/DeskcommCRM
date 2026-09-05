@@ -189,7 +189,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   if (!parsed.success) {
     return fail(
       "validation_failed",
-      "Envie o mapeamento completo dos sete passos do atendimento.",
+      t("Envie o mapeamento completo dos sete passos do atendimento."),
       422,
       { requestId, details: parsed.error.flatten() },
     );
