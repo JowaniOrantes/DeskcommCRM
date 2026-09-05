@@ -406,6 +406,70 @@ git log --format='%an <%ae>' origin/main..HEAD | sort | uniq -c
 
 ---
 
+## 8-ter. Resolver conflito: o delimitador que os dois lados compartilhavam
+
+A resolução mais comum desta casa é **"os dois lados ficam"** — apêndice contra apêndice no
+`baseline.sql`, lista contra lista no `e2e.yml`, entrada contra entrada num dicionário ou num
+union type. Ela é quase sempre certa, e tem uma armadilha que me pegou **três vezes numa fila só**:
+
+> **Concatenar `ours + theirs` PERDE a linha que os dois lados compartilhavam** — a chave que
+> fechava o bloco, o `/**` que abria o comentário seguinte, o `}` do objeto. Essa linha fica
+> FORA do bloco de conflito (é contexto comum), e o `git` a coloca depois do `>>>>>>>`.
+
+Medido, nesta ordem:
+
+- `lib/database.types.ts` — o `}` que fechava `fn_mesclar_contatos` era comum; concatenar deixou
+  o objeto aberto → `TS1131: Property or signature expected` na linha 7818.
+- `lib/leads/activity-vocabulary.ts` — o `/**` que abria o comentário do bloco de baixo era comum;
+  concatenar fechou o union cedo (o `;` de `task_completed`) e deixou um comentário órfão →
+  `TS1434` + `TS1003` + `TS1161`.
+
+**Nenhuma das duas apareceu na leitura do diff.** As duas apareceram no `pnpm typecheck`, e é por
+isso que ele roda ANTES do commit e não depois do push.
+
+E há uma guarda anterior a essa, mais barata, que também já falhou aqui: **o bloco que resolve e
+commita na mesma tacada commita os marcadores quando o conflito estava em outro arquivo.** Um
+script que resolvia `baseline.sql` e terminava com `git add -u` empurrou
+`<<<<<<< / ======= / >>>>>>>` dentro de `lib/i18n/dicionario.ts` para o remoto — o conflito era
+lá, não no baseline, e o `add -u` não pergunta.
+
+A receita, e as três guardas são baratas:
+
+```bash
+# 1. resolva (ordem importa: no baseline, o bloco que JÁ estava na main vem primeiro)
+# 2. GUARDA A — nenhum marcador sobrou, em arquivo NENHUM
+grep -rn -E "^<<<<<<< |^>>>>>>> " --include="*.ts" --include="*.tsx" --include="*.sql" \
+     --include="*.yml" --include="*.md" . | grep -v node_modules   # vazio é o esperado
+# 3. GUARDA B — o delimitador compartilhado sobreviveu
+pnpm typecheck; echo "exit=$?"                                      # 0 é o esperado
+# 4. GUARDA C — chave/entrada duplicada entre os lados NÃO pode existir
+#    (num objeto TS, a segunda vence em silêncio; num apêndice SQL, duplica o bloco)
+# só então: git add <arquivos> && git commit
+```
+
+A guarda C tem caso próprio medido: no `baseline.sql` do #553, o lado da branch trazia de volta o
+bloco da migration 0205 que a `main` já tinha — 2 ocorrências contra 1. "Aceitar os dois lados"
+teria duplicado um apêndice inteiro no arquivo que o `install.sh` do cliente aplica. **Compare os
+rótulos dos dois lados antes de concatenar**; se algum se repetir, pare e escolha.
+
+---
+
+## 8-quater. Os hooks reprovam o MERGE, e isso não é o defeito que eles descrevem
+
+Dois hooks locais desta casa disparam em merge da `main` sem que você tenha editado nada:
+
+| hook | por que dispara num merge | como confirmar antes de escapar |
+|---|---|---|
+| invariantes congelados | o merge traz a versão da `main` de um arquivo de `tests/invariants/` | `git diff --quiet origin/main -- <arquivo>` → **exit 0** quer dizer que ficou IDÊNTICO ao da main: foi o merge, não você |
+| tripla da migration | ele examina só arquivo com status `A`, e um `git mv` entra como `R096` — então ele **passa de graça** na renumeração | conferir à mão contra `git log --all --name-only`, os PRs abertos e as outras branches |
+
+O escape existe (`DESKCOMM_GOV_INVARIANTS_EDIT=1`, `DESKCOMM_GOV_MIGRATION_EDIT=1`) e é legítimo
+nesses dois casos — mas **a razão vai escrita no corpo do commit, com a medição**, nunca implícita
+no uso da variável. A linha do segundo caso é a mais importante: o hook da migration **não é rede
+para renumeração**, e quem lê a mensagem dele achando que é vai renumerar contra uma régua cega.
+
+---
+
 ## 9. Veredito com proveniência
 
 ```
