@@ -11,6 +11,7 @@ import { z } from "zod";
 import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,14 @@ export async function GET(req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "agent_inbox_items" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { org } = authz;
 
   const parsed = querySchema.safeParse(
     Object.fromEntries(new URL(req.url).searchParams.entries()),
   );
   if (!parsed.success) {
-    return fail("validation_failed", "Query inválida.", 422, {
+    return fail("validation_failed", t("Query inválida."), 422, {
       requestId,
       details: parsed.error.flatten(),
     });
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
   const { data, error } = await query;
   if (error) {
-    return fail("internal_error", "Falha ao carregar os avisos.", 500, { requestId });
+    return fail("internal_error", t("Falha ao carregar os avisos."), 500, { requestId });
   }
 
   const { count: openCount } = await admin

@@ -30,6 +30,7 @@ import { isChannelStatus } from "@/lib/schemas/channels";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getWahaClient, wahaFriendlyError } from "@/lib/waha/client";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -286,6 +287,7 @@ export async function DELETE(
     allowPlatformAdmin: true,
   });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org: activeOrg } = authz;
 
   const supabase = await createClient();
@@ -295,7 +297,7 @@ export async function DELETE(
     .eq("organization_id", activeOrg.orgId)
     .eq("id", id)
     .maybeSingle();
-  if (!session) return fail("not_found", "Canal não encontrado.", 404, { requestId });
+  if (!session) return fail("not_found", t("Canal não encontrado."), 404, { requestId });
 
   const impact = await loadDeletionImpact(activeOrg.orgId, id);
   const arquivar = impact.outcome === "archive";
@@ -312,7 +314,7 @@ export async function DELETE(
     if (!waha) {
       return fail(
         "waha_not_configured",
-        "O WhatsApp (WAHA) não está configurado neste ambiente (faltam WAHA_API_BASE_URL e/ou WAHA_API_KEY) — sem ele o número não pode ser desconectado do aparelho.",
+        t("O WhatsApp (WAHA) não está configurado neste ambiente (faltam WAHA_API_BASE_URL e/ou WAHA_API_KEY) — sem ele o número não pode ser desconectado do aparelho."),
         503,
         { requestId },
       );

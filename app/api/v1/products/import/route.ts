@@ -242,6 +242,7 @@ export async function GET(): Promise<Response> {
   const requestId = randomUUID();
   const authz = await requireRole("manager", { requestId, resource: "catalog_products" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
 
   const modelo = [
     "codigo,nome,marca,categoria,preco,custo,estoque",

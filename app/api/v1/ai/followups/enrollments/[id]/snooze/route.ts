@@ -19,6 +19,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 import { validaIdDaRota } from "../_id";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -34,17 +35,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
 
   const authz = await requireRole("manager", { requestId, resource: "followup_enrollments" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org } = authz;
 
   let raw: unknown;
   try {
     raw = await req.json();
   } catch {
-    return fail("invalid_request", "Body JSON inválido.", 400, { requestId });
+    return fail("invalid_request", t("Body JSON inválido."), 400, { requestId });
   }
   const parsed = bodySchema.safeParse(raw);
   if (!parsed.success) {
-    return fail("validation_failed", "Informe o novo horário.", 422, {
+    return fail("validation_failed", t("Informe o novo horário."), 422, {
       requestId,
       details: parsed.error.flatten(),
     });

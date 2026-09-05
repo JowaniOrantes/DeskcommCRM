@@ -13,6 +13,7 @@ import { updateWebhookSourceSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptWebhookSecret } from "@/lib/webhooks/secrets";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
   const { id } = await ctx.params;
   const authz = await requireRole("manager", { requestId, resource: "webhook_sources" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org: activeOrg } = authz;
 
   let raw: unknown = {};
@@ -35,7 +37,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
   }
   const parsed = updateWebhookSourceSchema.safeParse(raw);
   if (!parsed.success) {
-    return fail("invalid_request", "Dados inválidos.", 400, {
+    return fail("invalid_request", t("Dados inválidos."), 400, {
       requestId,
       details: parsed.error.flatten(),
     });
@@ -49,7 +51,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
     .eq("organization_id", activeOrg.orgId)
     .maybeSingle();
   if (fetchErr) return fail("internal_error", fetchErr.message, 500, { requestId });
-  if (!existing) return fail("not_found", "Fonte não encontrada.", 404, { requestId });
+  if (!existing) return fail("not_found", t("Fonte não encontrada."), 404, { requestId });
 
   // secret plaintext do input vira secret_encrypted (migration 0041); a coluna
   // em claro não existe mais. `secret: null` remove o segredo da fonte.
@@ -70,7 +72,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx): Promise<Response> 
       if (enc === null) {
         return fail(
           "encryption_unavailable",
-          "Não foi possível guardar o segredo com segurança: a chave de cifra desta instalação não está ativa. Quem administra o servidor resolve rodando o update.sh, que gera e ativa a chave.",
+          t("Não foi possível guardar o segredo com segurança: a chave de cifra desta instalação não está ativa. Quem administra o servidor resolve rodando o update.sh, que gera e ativa a chave."),
           422,
           { requestId },
         );
@@ -107,6 +109,7 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx): Promise<Response
   const { id } = await ctx.params;
   const authz = await requireRole("manager", { requestId, resource: "webhook_sources" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org: activeOrg } = authz;
 
   const supabase = await createClient();
@@ -117,7 +120,7 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx): Promise<Response
     .eq("organization_id", activeOrg.orgId)
     .maybeSingle();
   if (fetchErr) return fail("internal_error", fetchErr.message, 500, { requestId });
-  if (!existing) return fail("not_found", "Fonte não encontrada.", 404, { requestId });
+  if (!existing) return fail("not_found", t("Fonte não encontrada."), 404, { requestId });
 
   const { error: delErr } = await supabase.from("webhook_sources").delete().eq("id", id);
   if (delErr) return fail("internal_error", delErr.message, 500, { requestId });

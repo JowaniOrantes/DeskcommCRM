@@ -14,6 +14,7 @@ import { validateOutboundMedia } from "@/lib/messaging/media/upload-validation";
 import { transcodificarNotaDeVoz } from "@/lib/messaging/media/voice-transcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   // claim/route.ts:35 é o modelo literal.
   const authz = await requireRole("agent", { requestId, resource: "conversation_media" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const user = authz.user;
   const authUser = await loadAuthUser();
   const activeOrg = authUser ? await resolveActiveOrg(authUser) : null;
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     .eq("organization_id", activeOrg.orgId)
     .maybeSingle();
   if (convErr) return fail("internal_error", "Erro ao validar conversa.", 500, { requestId });
-  if (!conv) return fail("not_found", "Conversa não encontrada.", 404, { requestId });
+  if (!conv) return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
 
   // Guard de DoS: rejeita pelo Content-Length declarado ANTES de bufferizar
   // o corpo inteiro. 1MB de slack pro overhead de multipart; o check
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) {
-    return fail("validation_failed", "Campo 'file' (multipart) obrigatório.", 422, { requestId });
+    return fail("validation_failed", t("Campo 'file' (multipart) obrigatório."), 422, { requestId });
   }
 
   const mime = file.type || "application/octet-stream";

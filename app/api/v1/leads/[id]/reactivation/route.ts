@@ -24,6 +24,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { emitLeadActivity } from "@/lib/leads/activity-emitter";
 import { registraFalhaDeAtividade } from "@/lib/leads/activity-write-failure";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +44,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
 
   const guard = await requireRole("agent", { requestId });
   if (!guard.ok) return guard.response;
+  const t = (texto: string) => traduzir(texto, guard.user.idioma);
   const orgId = guard.org.orgId;
   const userId = guard.user.id;
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return fail("invalid_body", "decision e proposal_id são obrigatórios.", 400, { requestId });
+    return fail("invalid_body", t("decision e proposal_id são obrigatórios."), 400, { requestId });
   }
   const { decision, proposal_id } = parsed.data;
 
@@ -85,13 +87,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
       return fail(
         "reactivation_not_pending",
         `Esta sugestão já foi ${
-          (existe as { status: string }).status === "expired" ? "encerrada pelo prazo" : "decidida"
+          (existe as { status: string }).status === "expired" ? t("encerrada pelo prazo") : "decidida"
         }.`,
         409,
         { requestId },
       );
     }
-    return fail("not_found", "Sugestão não encontrada.", 404, { requestId });
+    return fail("not_found", t("Sugestão não encontrada."), 404, { requestId });
   }
 
   const { data: lead } = await supabase
@@ -159,7 +161,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     reason:
       decision === "accept"
         ? "Retomada de contato aprovada"
-        : "Retomada de contato descartada — decisão registrada",
+        : t("Retomada de contato descartada — decisão registrada"),
     payload: { proposal_id },
   });
   if (!atividade.ok) {
@@ -176,7 +178,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     });
     return fail(
       "activity_write_failed",
-      "A decisão não pôde ser registrada. Nada foi enviado ao cliente.",
+      t("A decisão não pôde ser registrada. Nada foi enviado ao cliente."),
       500,
       { requestId },
     );

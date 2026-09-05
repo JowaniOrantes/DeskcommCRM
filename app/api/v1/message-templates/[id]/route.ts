@@ -14,6 +14,7 @@ import { fail, ok, noContent } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { updateTemplateSchema } from "@/lib/schemas/templates";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 const COLS = "id, organization_id, owner_user_id, title, body, shortcut, created_by_user_id, created_at, updated_at";
@@ -26,13 +27,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams): Promise<
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "message_templates" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org } = authz;
   const { id } = await params;
 
   const raw = await req.json().catch(() => null);
   const parsed = updateTemplateSchema.safeParse(raw);
   if (!parsed.success) {
-    return fail("validation_failed", "Dados inválidos.", 422, {
+    return fail("validation_failed", t("Dados inválidos."), 422, {
       requestId,
       details: parsed.error.flatten().fieldErrors as Record<string, unknown>,
     });
@@ -46,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams): Promise<
     .eq("organization_id", org.orgId)
     .select(COLS)
     .single();
-  if (error || !data) return fail("not_found", "Template não encontrado.", 404, { requestId });
+  if (error || !data) return fail("not_found", t("Template não encontrado."), 404, { requestId });
 
   void audit({
     action: "template.updated",
@@ -64,6 +66,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams): Promis
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "message_templates" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org } = authz;
   const { id } = await params;
 
@@ -79,7 +82,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams): Promis
     .select("id")
     .maybeSingle();
   if (error) return fail("internal_error", "Erro ao excluir template.", 500, { requestId });
-  if (!deleted) return fail("not_found", "Template não encontrado.", 404, { requestId });
+  if (!deleted) return fail("not_found", t("Template não encontrado."), 404, { requestId });
 
   void audit({
     action: "template.deleted",

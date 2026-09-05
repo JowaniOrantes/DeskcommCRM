@@ -31,6 +31,7 @@ type AgendamentoDaResposta = AgendamentoListado & { origem?: "google_sync" };
 import { ApiError } from "@/lib/api/types";
 import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 import {
   alterarAgendamentoHandler,
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   // `viewer`: olhar a agenda é o menor privilégio desta feature.
   const authz = await requireRole("viewer", { requestId, resource: "agenda" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { org: activeOrg } = authz;
 
   const url = new URL(req.url);
@@ -123,7 +125,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     limite: url.searchParams.get("limite") ?? undefined,
   });
   if (!parsed.success) {
-    return fail("validation_failed", "Consulta inválida.", 422, {
+    return fail("validation_failed", t("Consulta inválida."), 422, {
       details: parsed.error.flatten().fieldErrors as Record<string, unknown>,
       requestId,
     });
@@ -250,11 +252,12 @@ async function despachar<T>(
 
   const authz = await requireRole("agent", { requestId, resource: "agenda" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { org: activeOrg, user } = authz;
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return fail("validation_failed", "Dados inválidos.", 422, {
+    return fail("validation_failed", t("Dados inválidos."), 422, {
       details: (parsed.error as z.ZodError).flatten().fieldErrors as Record<string, unknown>,
       requestId,
     });

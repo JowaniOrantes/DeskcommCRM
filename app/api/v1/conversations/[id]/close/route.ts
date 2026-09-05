@@ -12,6 +12,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { Conversation } from "@/lib/types/messaging";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
   // spec 13 §4: escrita é agent+ (viewer é read-only).
   const authz = await requireRole("agent", { requestId, resource: "conversations" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const user = authz.user;
 
   const now = new Date().toISOString();
@@ -73,7 +75,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
     return fail("internal_error", error.message, 500, { requestId });
   }
   if (!data) {
-    return fail("not_found", "Conversa não encontrada.", 404, { requestId });
+    return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
   }
 
   const conv = data as unknown as Conversation;

@@ -24,6 +24,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { claimConversationSchema, validateRequest } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import type { Conversation } from "@/lib/types/messaging";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   // spec 13 §4: escrita é agent+ (viewer é read-only).
   const authz = await requireRole("agent", { requestId, resource: "conversations" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const user = authz.user;
 
   let input;
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
   }
   const row = data?.[0];
   if (!row) {
-    return fail("state_conflict", "Outro atendente já assumiu.", 409, { requestId });
+    return fail("state_conflict", t("Outro atendente já assumiu."), 409, { requestId });
   }
 
   const conv = row as unknown as Conversation;
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     contactId: conv.contact_id,
     tipo: "conversation_claimed",
     actor: { type: "user", id: user.id, role: authz.org.role },
-    motivo: "Assumiu o atendimento desta conversa",
+    motivo: t("Assumiu o atendimento desta conversa"),
   });
 
   return ok(conv, { requestId });

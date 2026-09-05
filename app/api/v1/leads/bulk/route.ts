@@ -20,6 +20,7 @@ import { registraFalhaDeAtividade } from "@/lib/leads/activity-write-failure";
 import { bulkLeadActionSchema, validateRequest } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // spec 13 §4: escrita é agent+ (viewer é read-only).
   const authz = await requireRole("agent", { requestId, resource: "crm_leads" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const user = authz.user;
 
   let input;
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       if (!isServiceRoleConfigured()) {
         return fail(
           "owner_validation_unavailable",
-          "Não foi possível validar o responsável agora. Tente novamente em instantes.",
+          t("Não foi possível validar o responsável agora. Tente novamente em instantes."),
           422,
           { requestId },
         );
@@ -88,7 +90,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       if (!member || member.role === "viewer") {
         return fail(
           "invalid_owner",
-          "Responsável não é um atendente ativo desta organização.",
+          t("Responsável não é um atendente ativo desta organização."),
           422,
           { requestId },
         );
@@ -112,7 +114,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!first) {
     return fail(
       "not_found",
-      "Nenhum lead acessível na operação.",
+      t("Nenhum lead acessível na operação."),
       404,
       { requestId },
     );

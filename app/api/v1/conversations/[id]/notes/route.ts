@@ -15,6 +15,7 @@ import { mencaoAtingeUsuario, tokensDeMencao } from "@/lib/notifications/mention
 import { createNoteSchema } from "@/lib/schemas/notes";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 const COLS = "id, conversation_id, body, created_by_user_id, created_by_name, created_at";
@@ -27,6 +28,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "conversation_notes" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { org } = authz;
   const { id } = await params;
 
@@ -37,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
     .eq("id", id)
     .eq("organization_id", org.orgId)
     .maybeSingle();
-  if (!conversation) return fail("not_found", "Conversa não encontrada.", 404, { requestId });
+  if (!conversation) return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
 
   const { data, error } = await supabase
     .from("conversation_notes")
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<R
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "conversation_notes" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { user, org } = authz;
   const { id } = await params;
 
@@ -63,12 +66,12 @@ export async function POST(req: NextRequest, { params }: RouteParams): Promise<R
     .eq("id", id)
     .eq("organization_id", org.orgId)
     .maybeSingle();
-  if (!conversation) return fail("not_found", "Conversa não encontrada.", 404, { requestId });
+  if (!conversation) return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
 
   const raw = await req.json().catch(() => null);
   const parsed = createNoteSchema.safeParse(raw);
   if (!parsed.success) {
-    return fail("validation_failed", "Dados inválidos.", 422, {
+    return fail("validation_failed", t("Dados inválidos."), 422, {
       requestId,
       details: parsed.error.flatten().fieldErrors as Record<string, unknown>,
     });

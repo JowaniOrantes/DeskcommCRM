@@ -20,6 +20,7 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams): Promise<
   const requestId = randomUUID();
   const authz = await requireRole("agent", { requestId, resource: "conversations" });
   if (!authz.ok) return authz.response;
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
   const { org } = authz;
   const { id } = await params;
 
@@ -51,16 +53,16 @@ export async function POST(_req: NextRequest, { params }: RouteParams): Promise<
     .eq("id", id)
     .eq("organization_id", org.orgId)
     .maybeSingle();
-  if (!conv) return fail("not_found", "Conversa não encontrada.", 404, { requestId });
+  if (!conv) return fail("not_found", t("Conversa não encontrada."), 404, { requestId });
   if (!conv.contact_id || !conv.channel_session_id) {
-    return fail("unprocessable", "Conversa sem contato/canal.", 422, { requestId });
+    return fail("unprocessable", t("Conversa sem contato/canal."), 422, { requestId });
   }
 
   let pool;
   try {
     pool = getRequestPool();
   } catch {
-    return fail("unavailable", "Rascunho da IA indisponível (config).", 503, { requestId });
+    return fail("unavailable", t("Rascunho da IA indisponível (config)."), 503, { requestId });
   }
 
   // Falha controlada (getLeadContext ok:false) volta como reason:'error' e vira
