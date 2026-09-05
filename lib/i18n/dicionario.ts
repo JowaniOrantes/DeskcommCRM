@@ -6508,6 +6508,7 @@ export const DICIONARIO: Traducoes = {
   "Não é possível revogar o último admin do tenant.": { es: "No es posible revocar al último admin del tenant." },
   "O WhatsApp (WAHA) não está configurado neste ambiente (faltam WAHA_API_BASE_URL e/ou WAHA_API_KEY) — sem ele o número não pode ser desconectado do aparelho.": { es: "El WhatsApp (WAHA) no está configurado en este ambiente (faltan WAHA_API_BASE_URL y/o WAHA_API_KEY) — sin él el número no puede ser desconectado del aparato." },
   "O WhatsApp (WAHA) não está configurado neste ambiente: faltam WAHA_API_BASE_URL e/ou WAHA_API_KEY. Configure-as e tente de novo.": { es: "El WhatsApp (WAHA) no está configurado en este ambiente: faltan WAHA_API_BASE_URL y/o WAHA_API_KEY. Configúralas e intenta de nuevo." },
+  "O cabeçalho aceita imagem JPG ou PNG.": { es: "El encabezado acepta imagen JPG o PNG." },
   "O caso não está aguardando resposta do atendente (awaiting_human).": { es: "El caso no está esperando respuesta del agente (awaiting_human)." },
   "O funil que você escolheu como vizinho não está mais na lista. Recarregue a página.": { es: "El embudo que elegiste como vecino ya no está en la lista. Recarga la página." },
   "O modelo em uso não sabe usar as ferramentas do CRM — o agente conversa, mas não registra nada no funil.": { es: "El modelo en uso no sabe usar las herramientas del CRM — el agente conversa, pero no registra nada en el embudo." },
