@@ -2649,6 +2649,10 @@ export const DICIONARIO: Traducoes = {
   "Confirme o segundo fator nesta sessão e tente de novo.": {
     es: "Confirma el segundo factor en esta sesión e intenta de nuevo.",
   },
+  // ─── lib/auth/require-role.ts (gate ÚNICO de autorização — toda rota /api/v1) ───
+  "Esta sessão precisa da verificação em duas etapas. Entre novamente com o código do aplicativo.": {
+    es: "Esta sesión necesita la verificación en dos pasos. Entra de nuevo con el código de la aplicación.",
+  },
   "Muitas trocas seguidas. Tente de novo em alguns minutos.": {
     es: "Demasiados cambios seguidos. Intenta de nuevo en unos minutos.",
   },
