@@ -5180,12 +5180,23 @@ export const DICIONARIO: Traducoes = {
   "selecionados": { es: "seleccionados" },
   "Mover para…": { es: "Mover a…" },
   "Atribuir a…": { es: "Asignar a…" },
+  "Responsável…": { es: "Responsable…" },
   "Eu": { es: "Yo" },
   "Remover responsável": { es: "Quitar responsable" },
   "nova tag": { es: "nueva etiqueta" },
   "Esta ação remove os leads selecionados. Não pode ser desfeita.": {
     es: "Esta acción elimina los leads seleccionados. No se puede deshacer.",
   },
+  // Seleção em lote no quadro (migration 0209). A frase perdeu o substantivo
+  // "leads" de propósito: o funil renomeia o que está nos cards
+  // (`crm_pipelines.vocabulary`), e uma frase que crava "leads" contradiz a
+  // própria tela em quem chamou de Cliente ou Pedido.
+  "Esta ação remove o que está selecionado. Não pode ser desfeita.": {
+    es: "Esta acción elimina lo que está seleccionado. No se puede deshacer.",
+  },
+  "Selecionar": { es: "Seleccionar" },
+  "Selecionar todos em": { es: "Seleccionar todos en" },
+  "Desmarcar todos em": { es: "Desmarcar todos en" },
   "Abrir esta conversa no Inbox": { es: "Abrir esta conversación en la Bandeja" },
   "conversa sem mensagens": { es: "conversación sin mensajes" },
   "Valor inválido": { es: "Valor inválido" },
@@ -6448,6 +6459,177 @@ export const DICIONARIO: Traducoes = {
   "Salvar produto": { es: "Guardar producto" },
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
+  // ─── Análise → Meta Ads e Configurações → Meta Ads (0214) ───
+  //
+  // ⚠️ Boa parte deste bloco o teste `i18n-espanhol-cobre-a-tela` NÃO cobre, e
+  // isso é uma propriedade dele, não uma falha: ele varre o AST atrás de
+  // `t("literal")`, e aqui metade das strings chega por variável — `t(rotulo)`,
+  // `t(ESTADO_LEGIVEL[valor])`, `t(MENSAGEM_POR_CODIGO[code])`. São justamente
+  // as que preenchem a tabela e as que explicam a falha. Esquecê-las deixaria a
+  // tela em espanhol com cabeçalho traduzido e conteúdo em português, com o CI
+  // verde. Ao mexer nos mapas daqueles arquivos, volte aqui.
+  "Meta Ads": { es: "Meta Ads" },
+  "O desempenho das campanhas que estão trazendo gente para cá. Os números vêm da plataforma no momento em que você clica em Atualizar — nada fica guardado aqui.":
+    { es: "El rendimiento de las campañas que están trayendo gente hasta aquí. Los números vienen de la plataforma en el momento en que haces clic en Actualizar — nada queda guardado aquí." },
+  "Nenhuma conta de anúncios conectada.": { es: "Ninguna cuenta publicitaria conectada." },
+  "Conecte um token de acesso com permissão de leitura de anúncios para ver as campanhas aqui.":
+    { es: "Conecta un token de acceso con permiso de lectura de anuncios para ver las campañas aquí." },
+  "Peça a quem administra a organização para conectar a conta de anúncios em Configurações.":
+    { es: "Pide a quien administra la organización que conecte la cuenta publicitaria en Configuración." },
+  "Conectar conta de anúncios": { es: "Conectar cuenta publicitaria" },
+
+  // Seletores e rodapé da tela
+  "Conta de anúncios": { es: "Cuenta publicitaria" },
+  "Últimos 14 dias": { es: "Últimos 14 días" },
+  "Carregando campanhas…": { es: "Cargando campañas…" },
+  "lido em": { es: "leído el" },
+  a: { es: "a" },
+  // `Código` NÃO se repete aqui: o bloco do catálogo de produtos já o traz,
+  // com o mesmo valor. Chave repetida num literal de objeto é erro de tipo.
+  Requisição: { es: "Solicitud" },
+  "Não consegui carregar os dados agora.": { es: "No pude cargar los datos ahora." },
+
+  // Colunas da tabela
+  Campanha: { es: "Campaña" },
+  Veiculação: { es: "Entrega" },
+  "Custo por Resultado": { es: "Costo por Resultado" },
+  "Valor Gasto": { es: "Importe Gastado" },
+  Impressões: { es: "Impresiones" },
+  Alcance: { es: "Alcance" },
+  CPM: { es: "CPM" },
+  CTR: { es: "CTR" },
+  Frequência: { es: "Frecuencia" },
+  CPC: { es: "CPC" },
+  "Hook Rate": { es: "Hook Rate" },
+  "(reproduções)": { es: "(reproducciones)" },
+  "Reproduções de vídeo ÷ impressões": { es: "Reproducciones de video ÷ impresiones" },
+  ThruPlays: { es: "ThruPlays" },
+  "Nenhuma campanha neste período. Ou a conta ainda não tem campanhas, ou elas foram criadas depois da data escolhida.":
+    { es: "Ninguna campaña en este período. O la cuenta aún no tiene campañas, o fueron creadas después de la fecha elegida." },
+
+  // `effective_status` da campanha — chega por variável (ESTADO_LEGIVEL)
+  Excluída: { es: "Eliminada" },
+  "Em processamento": { es: "En procesamiento" },
+  "Com problemas": { es: "Con problemas" },
+  "Campanha pausada": { es: "Campaña pausada" },
+  "Conjunto pausado": { es: "Conjunto pausado" },
+  Reprovada: { es: "Rechazada" },
+  "Em análise": { es: "En revisión" },
+  "Pré-aprovada": { es: "Preaprobada" },
+  "Aguardando dados de cobrança": { es: "Esperando datos de facturación" },
+
+  // `account_status` da conta — chega por variável (STATUS_DA_CONTA)
+  desativada: { es: "desactivada" },
+  "pendência de cobrança": { es: "pendiente de pago" },
+  "em análise de risco": { es: "en revisión de riesgo" },
+  "aguardando pagamento": { es: "esperando pago" },
+  "em período de carência": { es: "en período de gracia" },
+  "encerramento pendente": { es: "cierre pendiente" },
+  encerrada: { es: "cerrada" },
+
+  // Rótulos de "Resultado" — chegam por variável (ROTULO_POR_INDICADOR)
+  "Conversas iniciadas": { es: "Conversaciones iniciadas" },
+  "Primeiras respostas": { es: "Primeras respuestas" },
+  Cadastros: { es: "Registros" },
+  Compras: { es: "Compras" },
+  "Registros concluídos": { es: "Registros completados" },
+  "Adições ao carrinho": { es: "Añadidos al carrito" },
+  "Checkouts iniciados": { es: "Pagos iniciados" },
+  "Cadastros de formulário": { es: "Registros de formulario" },
+  "Cliques no link": { es: "Clics en el enlace" },
+  "Visualizações da página": { es: "Visualizaciones de la página" },
+  Engajamentos: { es: "Interacciones" },
+  "Engajamentos da página": { es: "Interacciones de la página" },
+  "Visualizações de vídeo": { es: "Reproducciones de video" },
+  "Instalações do app": { es: "Instalaciones de la app" },
+
+  // Falhas da plataforma — chegam por variável (MENSAGEM_POR_CODIGO)
+  "A plataforma recusou o token de acesso — ele expirou ou foi revogado. Gere um novo em Configurações › Meta Ads.":
+    { es: "La plataforma rechazó el token de acceso — expiró o fue revocado. Genera uno nuevo en Configuración › Meta Ads." },
+  "O token não tem permissão de leitura de anúncios (ads_read), ou não alcança esta conta. Refaça o token no Meta for Developers marcando essa permissão.":
+    { es: "El token no tiene permiso de lectura de anuncios (ads_read), o no alcanza esta cuenta. Vuelve a generarlo en Meta for Developers marcando ese permiso." },
+  "A plataforma limitou as chamadas por excesso de consultas. Espere alguns minutos antes de atualizar de novo.":
+    { es: "La plataforma limitó las llamadas por exceso de consultas. Espera unos minutos antes de actualizar de nuevo." },
+  "A plataforma recusou um campo desta consulta. Isso é um problema do sistema, não da sua conta — avise quem mantém a instalação.":
+    { es: "La plataforma rechazó un campo de esta consulta. Es un problema del sistema, no de tu cuenta — avisa a quien mantiene la instalación." },
+  "A chave de criptografia da instalação não está disponível, então o token guardado não pode ser lido. Isso é configuração do servidor.":
+    { es: "La clave de cifrado de la instalación no está disponible, así que el token guardado no se puede leer. Es configuración del servidor." },
+  "Não consegui falar com a plataforma agora. Tente atualizar em instantes.":
+    { es: "No pude comunicarme con la plataforma ahora. Intenta actualizar en unos instantes." },
+  "Seu papel não permite ver os dados de anúncios.":
+    { es: "Tu rol no permite ver los datos de anuncios." },
+
+  // Configurações → Meta Ads
+  "Conecte um token de acesso para o sistema ler o desempenho das suas campanhas e mostrá-lo em Análise › Meta Ads. É uma conexão só de leitura: nada é criado, pausado ou alterado na sua conta de anúncios.":
+    { es: "Conecta un token de acceso para que el sistema lea el rendimiento de tus campañas y lo muestre en Análisis › Meta Ads. Es una conexión solo de lectura: nada se crea, pausa ni modifica en tu cuenta publicitaria." },
+  "O token precisa da permissão ads_read. Gere-o no Meta for Developers, na sua conta de aplicativo, e cole abaixo — ele fica guardado criptografado e nunca é mostrado de volta.":
+    { es: "El token necesita el permiso ads_read. Génralo en Meta for Developers, en tu cuenta de aplicación, y pégalo abajo — se guarda cifrado y nunca se muestra de vuelta." },
+  "Para trocar apenas a conta padrão, deixe o campo do token em branco — o token guardado é mantido.":
+    { es: "Para cambiar solo la cuenta predeterminada, deja el campo del token en blanco — el token guardado se mantiene." },
+  "Guardado — preencha só para trocar": { es: "Guardado — completa solo para cambiarlo" },
+  "Já existe um token guardado. Deixe em branco para mantê-lo, ou cole um novo para substituir.":
+    { es: "Ya existe un token guardado. Déjalo en blanco para mantenerlo, o pega uno nuevo para reemplazarlo." },
+  "Precisa da permissão ads_read.": { es: "Necesita el permiso ads_read." },
+  "Conta padrão (opcional)": { es: "Cuenta predeterminada (opcional)" },
+  "A conta que a tela de Meta Ads abre por padrão. Em branco, ela abre a primeira conta ativa que o token alcançar.":
+    { es: "La cuenta que la pantalla de Meta Ads abre por defecto. En blanco, abre la primera cuenta activa que el token alcance." },
+  "Cole o token para poder salvar.": { es: "Pega el token para poder guardar." },
+  "Conta desconectada.": { es: "Cuenta desconectada." },
+  "Desconectar apaga o token guardado. A tela de Meta Ads volta a pedir uma conexão, e nenhum dado histórico é perdido — nada é armazenado aqui.":
+    { es: "Desconectar borra el token guardado. La pantalla de Meta Ads vuelve a pedir una conexión, y no se pierde ningún dato histórico — aquí no se almacena nada." },
+  "Não consegui desconectar agora.": { es: "No pude desconectar ahora." },
+
+  // ─── Configurações → Conversões (0213) e o convidado da agenda (0212) ───
+  //
+  // Estas duas telas entraram na mesma leva do painel de Meta Ads e ficaram sem
+  // espanhol: o `i18n-espanhol-cobre-a-tela` as pegou com 27 chamadas caindo no
+  // português. Ao acrescentar campo em qualquer uma delas, volte aqui.
+  //
+  // ⚠️ `Conversões` também é o rótulo no menu lateral (`lib/navigation/registry.ts`),
+  // e é a MESMA chave: mudar a tradução aqui muda os dois lugares.
+  "Conversões": { es: "Conversiones" },
+  "Quando um negócio que veio de anúncio é marcado como ganho, o valor da venda volta para a plataforma que trouxe o cliente. É esse retorno que ensina o anúncio a procurar mais gente parecida com quem comprou.":
+    { es: "Cuando un negocio que vino de un anuncio se marca como ganado, el valor de la venta vuelve a la plataforma que trajo al cliente. Es ese retorno el que le enseña al anuncio a buscar más gente parecida a quien compró." },
+  "O envio está pausado. As vendas continuam sendo registradas aqui, mas não vão para a plataforma enquanto isto estiver desligado.":
+    { es: "El envío está pausado. Las ventas se siguen registrando aquí, pero no van a la plataforma mientras esto esté apagado." },
+  "Modo de teste ligado: as vendas vão marcadas como teste e não contam para a otimização. Apague o código de teste quando terminar de conferir.":
+    { es: "Modo de prueba encendido: las ventas van marcadas como prueba y no cuentan para la optimización. Borra el código de prueba cuando termines de revisar." },
+  "Vendas que não foram reportadas": { es: "Ventas que no fueron reportadas" },
+  "reportadas com sucesso": { es: "reportadas con éxito" },
+  "Nenhuma pendência. Ou tudo que veio de anúncio foi reportado, ou ainda não fechou nenhuma venda com origem em anúncio.":
+    { es: "Ninguna pendencia. O todo lo que vino de anuncios fue reportado, o todavía no se cerró ninguna venta con origen en anuncios." },
+  "Negócio": { es: "Negocio" },
+  "O que houve": { es: "Qué pasó" },
+  "(sem título)": { es: "(sin título)" },
+
+  // Formulário da conexão de conversões
+  "Conexão salva.": { es: "Conexión guardada." },
+  "Identificador do destino de conversões": { es: "Identificador del destino de conversiones" },
+  "Só números. Você encontra no gerenciador de anúncios, na fonte de dados que recebe as conversões.":
+    { es: "Solo números. Lo encuentras en el administrador de anuncios, en la fuente de datos que recibe las conversiones." },
+  "Gravado. Deixe em branco para manter.": { es: "Guardado. Déjalo en blanco para mantenerlo." },
+  "Cole o token gerado na plataforma": { es: "Pega el token generado en la plataforma" },
+  "Guardado criptografado. Ele nunca volta para esta tela depois de salvo.":
+    { es: "Guardado cifrado. Nunca vuelve a esta pantalla después de guardarlo." },
+  "Código de teste (opcional)": { es: "Código de prueba (opcional)" },
+  "Enquanto preenchido, as vendas vão marcadas como teste e não contam para a otimização. Apague quando terminar de conferir.":
+    { es: "Mientras esté completo, las ventas van marcadas como prueba y no cuentan para la optimización. Bórralo cuando termines de revisar." },
+  "Reportar vendas automaticamente": { es: "Reportar ventas automáticamente" },
+  "Desligar pausa o envio e mantém a credencial gravada.":
+    { es: "Apagarlo pausa el envío y mantiene la credencial guardada." },
+  "Salvar conexão": { es: "Guardar conexión" },
+  "Preencha o identificador e o token para poder salvar.":
+    { es: "Completa el identificador y el token para poder guardar." },
+
+  // Convidado do compromisso (agenda)
+  "E-mail do convidado": { es: "Correo del invitado" },
+  "opcional": { es: "opcional" },
+  "cliente@empresa.com": { es: "cliente@empresa.com" },
+  "Endereço inválido — confira antes de marcar.":
+    { es: "Dirección inválida — revísala antes de agendar." },
+  "Preenchido, o Google envia o convite por e-mail para esta pessoa.":
+    { es: "Si se completa, Google envía la invitación por correo a esta persona." },
+
 
   // ─── Configurações › Organização — zona de perigo (extraído do PR #556) ───
   "Zona de perigo": { es: "Zona de peligro" },
