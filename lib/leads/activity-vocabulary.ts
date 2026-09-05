@@ -114,7 +114,22 @@ export type ActivityType =
    * só o par permite distinguir o que ainda está pendurado do que já fechou.
    */
   | "task_created"
-  | "task_completed";
+  | "task_completed"
+  /**
+   * DOIS CADASTROS DA MESMA PESSOA VIRARAM UM. Emitido por
+   * `fn_mesclar_contatos` (migration 0215) em cada negócio que o contato
+   * vencedor passou a ter — inclusive nos que ELE não tinha e herdou do
+   * perdedor, que é justamente onde a linha explica por que o negócio mudou de
+   * dono sem ninguém o ter movido.
+   *
+   * ⚠️ O emissor é SQL, e é a única linha deste vocabulário que o compilador
+   * não amarra ao escritor: a função grava o literal `'contacts_merged'`. Se
+   * alguém renomear a constante daqui, renomeie no corpo da função também — a
+   * coluna `crm_lead_activities.type` é de vocabulário ABERTO (sem CHECK, por
+   * doutrina de migrations), então o banco aceitaria a divergência calado e a
+   * timeline cairia no fallback.
+   */
+  | "contacts_merged";
 
 export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   lead_created: "Entrou pelo WhatsApp",
@@ -206,6 +221,11 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   conversation_ai_paused: "Pausou o automático",
   task_created: "Tarefa combinada",
   task_completed: "Tarefa concluída",
+  // Rótulo com OBJETO e sem jargão de banco: "Mesclado" sozinho é palavra de
+  // engenheiro. O que aconteceu, para quem lê a timeline do negócio, é que dois
+  // cadastros da mesma pessoa viraram um — e é por isso que este negócio pode
+  // ter mudado de contato sem ninguém tê-lo movido.
+  contacts_merged: "Contatos duplicados juntados",
 };
 
 /** Quando o tipo é legado/desconhecido, a linha ainda é honesta — sem jargão. */

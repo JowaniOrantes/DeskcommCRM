@@ -7261,6 +7261,14 @@ export type Database = {
         Args: { p_org: string; p_user: string }
         Returns: string
       }
+      fn_mesclar_contatos: {
+        Args: {
+          p_contato_principal: string
+          p_contatos_secundarios: string[]
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       fn_mover_leads_em_lote: {
         Args: { p_lead_ids: string[]; p_organization_id: string; p_stage_id: string }
         Returns: {
