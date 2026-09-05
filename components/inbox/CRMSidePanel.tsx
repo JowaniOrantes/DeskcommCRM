@@ -462,7 +462,7 @@ export function CRMSidePanel({ conversation }: Props) {
   const recarregar = useCallback(() => setTentativa((n) => n + 1), []);
 
   const tags = contact?.tags ?? [];
-  const displayName = rotuloDoContato(contact);
+  const displayName = rotuloDoContato(contact, t);
 
   // `erro` PRIMEIRO, e não é detalhe: as três listas voltam a `null` quando a
   // leitura falha, e este derivado lê `null` como "ainda não chegou". Sem esta
@@ -697,7 +697,7 @@ export function CRMSidePanel({ conversation }: Props) {
                   />
                   {t(activityLabel(a.type))}
                 </div>
-                {a.reason && <div className="mt-0.5 truncate text-muted-foreground">{a.reason}</div>}
+                {a.reason && <div className="mt-0.5 truncate text-muted-foreground">{t(a.reason)}</div>}
                 <div className="text-muted-foreground">
                   {a.performed_by_name ?? t(actorLabel(a.actor_kind))} · {shortDate(a.performed_at, localeDaData)}
                 </div>

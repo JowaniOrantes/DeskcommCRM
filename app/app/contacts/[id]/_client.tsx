@@ -61,7 +61,7 @@ export function ContactDetailClient({ contactId }: Props) {
   // Uma decisão, um lugar (lib/contacts/rotulo-do-contato.ts). Esta tela era
   // uma das DUAS que ignoravam o telefone: contato com número e sem nome
   // aparecia como "Sem nome" aqui e com o número no inbox.
-  const displayName = rotuloDoContato(contact);
+  const displayName = rotuloDoContato(contact, t);
 
   return (
     <div className="space-y-4 p-6">

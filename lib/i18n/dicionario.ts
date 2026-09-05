@@ -6558,6 +6558,53 @@ export const DICIONARIO: Traducoes = {
   "Perdido —": { es: "Perdido —" },
   "(sem título)": { es: "(sin título)" },
   "(negócio removido)": { es: "(negocio eliminado)" },
+
+  // ─── Fase B: vocabulario de dominio persistido (reason de crm_lead_activities) ───
+  //
+  // Estas frases nunca chegam por t() estático — o backend as gera como
+  // `reason` de atividade, o valor é PERSISTIDO no banco, e o frontend
+  // (LeadTimeline.tsx, TimelineView.tsx, CRMSidePanel.tsx) as traduz na
+  // LEITURA com `t(item.reason)`. A chave aqui tem de bater byte a byte com
+  // o texto que o backend grava — nunca traduza só um pedaço.
+  "Não enviei: o contato pediu para parar de receber mensagens": {
+    es: "No envié: el contacto pidió dejar de recibir mensajes",
+  },
+  "Não enviei: fora da janela de horário permitida": {
+    es: "No envié: fuera de la ventana de horario permitida",
+  },
+  "Não enviei: limite de ritmo de envio atingido": {
+    es: "No envié: límite de ritmo de envío alcanzado",
+  },
+  "Não enviei: orçamento de IA esgotado": { es: "No envié: presupuesto de IA agotado" },
+  "Não enviei: número ainda em aquecimento": { es: "No envié: número todavía en calentamiento" },
+  "Não enviei: a mensagem prometia algo que não posso garantir": {
+    es: "No envié: el mensaje prometía algo que no puedo garantizar",
+  },
+  "Não enviei: a mensagem usava termos internos do sistema que o cliente não deve ler": {
+    es: "No envié: el mensaje usaba términos internos del sistema que el cliente no debe leer",
+  },
+  "A sugestão de retomar contato venceu sem decisão": {
+    es: "La sugerencia de retomar contacto venció sin decisión",
+  },
+  "primeiro checkpoint sem compromisso, objeção ou próxima ação": {
+    es: "primer checkpoint sin compromiso, objeción o próxima acción",
+  },
+  "só reescreveu o resumo — não muda o que fazer a seguir": {
+    es: "solo reescribió el resumen — no cambia lo que hacer a continuación",
+  },
+  "Sem resposta além do prazo deste estágio": { es: "Sin respuesta más allá del plazo de esta etapa" },
+  "Parado há muito tempo — sem resposta": { es: "Detenido hace mucho tiempo — sin respuesta" },
+  "Voltou a ter movimento": { es: "Volvió a tener movimiento" },
+  "Essa etapa não faz parte deste funil. Recarregue a página e tente de novo.": {
+    es: "Esa etapa no forma parte de este embudo. Recarga la página e intenta de nuevo.",
+  },
+  "Etapa não encontrada.": { es: "Etapa no encontrada." },
+  "Uma pessoa devolveu o negócio para onde ele estava antes do assistente": {
+    es: "Una persona devolvió el negocio a donde estaba antes del asistente",
+  },
+  "Uma pessoa levou o negócio para outra etapa, diferente da que o assistente escolheu": {
+    es: "Una persona llevó el negocio a otra etapa, distinta de la que el asistente eligió",
+  },
 };
 
 /**
