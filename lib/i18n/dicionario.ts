@@ -1111,6 +1111,35 @@ export const DICIONARIO: Traducoes = {
   "Este passo tem mais de um caminho no fluxo. Escolher por você seria decidir o rumo do atendimento sem perguntar.": {
     es: "Este paso tiene más de un camino en el flujo. Elegir por ti sería decidir el rumbo de la atención sin preguntar.",
   },
+  // ─── lib/followup/intervencao.ts (respostaDaFalha) ───
+  "O automático está executando este follow-up agora. Nada foi alterado — tente de novo em alguns instantes.": {
+    es: "El automático está ejecutando este seguimiento ahora. Nada fue alterado — intenta de nuevo en unos instantes.",
+  },
+  "Este follow-up mudou de estado enquanto você decidia. Nada foi alterado — recarregue e confira.": {
+    es: "Este seguimiento cambió de estado mientras decidías. Nada fue alterado — recarga y confirma.",
+  },
+  "Só dá para pausar um follow-up que está andando (ativo ou aguardando resposta).": {
+    es: "Solo se puede pausar un seguimiento que está en curso (activo o esperando respuesta).",
+  },
+  "Este follow-up não está pausado por uma pessoa.": {
+    es: "Este seguimiento no está pausado por una persona.",
+  },
+  "Data inválida.": { es: "Fecha inválida." },
+  "Escolha um horário no futuro.": { es: "Elige un horario en el futuro." },
+  "O adiamento máximo é de 90 dias.": { es: "El aplazamiento máximo es de 90 días." },
+  "Só dá para adiar um follow-up que está andando (ativo ou aguardando resposta).": {
+    es: "Solo se puede aplazar un seguimiento que está en curso (activo o esperando respuesta).",
+  },
+  "Só dá para pular o passo de um follow-up que está andando (ativo ou aguardando resposta).": {
+    es: "Solo se puede saltar el paso de un seguimiento que está en curso (activo o esperando respuesta).",
+  },
+  "Este passo não tem saída no fluxo — não há para onde pular.": {
+    es: "Este paso no tiene salida en el flujo — no hay adónde saltar.",
+  },
+  "O caminho escolhido não sai deste passo.": { es: "El camino elegido no sale de este paso." },
+  "Este passo tem mais de um caminho. Escolha por onde seguir.": {
+    es: "Este paso tiene más de un camino. Elige por dónde seguir.",
+  },
   "O tempo que o agente escolheu": { es: "El tiempo que eligió el agente" },
   Decidido: { es: "Decidido" },
   "no início do follow-up": { es: "al inicio del seguimiento" },
@@ -6651,6 +6680,7 @@ export const DICIONARIO: Traducoes = {
   "Não é possível rebaixar o último admin do tenant.": {
     es: "No es posible degradar al último admin del tenant.",
   },
+  "Já é membro desta organização.": { es: "Ya es miembro de esta organización." },
 };
 
 /**
