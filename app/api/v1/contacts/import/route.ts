@@ -104,7 +104,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Os BYTES, não `file.text()` — ver `decodificarCsv` (#483).
   const decodificado = decodificarCsv(await file.arrayBuffer());
   if ("erro" in decodificado) {
-    return fail("validation_failed", decodificado.erro, 422, { requestId });
+    return fail("validation_failed", t(decodificado.erro), 422, { requestId });
   }
   const text = decodificado.texto;
   const rows = parseCsv(text);

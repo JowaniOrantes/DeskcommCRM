@@ -109,7 +109,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const decodificado = decodificarCsv(await enviado.arrayBuffer());
   if ("erro" in decodificado) {
-    return fail("validation_failed", decodificado.erro, 422, { requestId });
+    return fail("validation_failed", t(decodificado.erro), 422, { requestId });
   }
 
   const lido = lerPlanilhaDeLeads(decodificado.texto, t);

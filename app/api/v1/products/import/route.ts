@@ -95,7 +95,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // catálogo sem um erro sequer, e é ele que o agente lê para o cliente (#483).
   const decodificado = decodificarCsv(await arquivo.arrayBuffer());
   if ("erro" in decodificado) {
-    return fail("validation_failed", decodificado.erro, 422, { requestId });
+    return fail("validation_failed", t(decodificado.erro), 422, { requestId });
   }
   const lido = lerPlanilha(decodificado.texto, t);
   // Problema do ARQUIVO (falta a coluna de preço) é 422 com a frase inteira —
