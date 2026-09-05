@@ -93,11 +93,11 @@ function InboxRow({
         {t(SEVERITY_LABEL[item.severity])}
       </Badge>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{item.title}</p>
+        <p className="text-sm font-medium">{t(item.title)}</p>
         <p className="text-xs text-muted-foreground">
           {kindLabel(item.kind, t)} · {when}
         </p>
-        {item.body ? <p className="mt-1 text-xs text-muted-foreground">{item.body}</p> : null}
+        {item.body ? <p className="mt-1 text-xs text-muted-foreground">{t(item.body)}</p> : null}
       </div>
       {canResolve ? (
         item.status === "resolved" ? (

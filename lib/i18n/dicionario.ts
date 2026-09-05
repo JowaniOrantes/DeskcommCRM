@@ -6176,6 +6176,19 @@ export const DICIONARIO: Traducoes = {
   "Aviso do assistente": { es: "Aviso del asistente" },
   // `informativo` e `crítico` saem iguais nos dois idiomas — sem linha, por isso.
   "atenção": { es: "atención" },
+  // ─── lib/ai/agent-inbox-copy.ts (copyDaPromessaSemDono) ───
+  "O assistente prometeu algo ao cliente e ninguém ficou responsável": {
+    es: "El asistente prometió algo al cliente y nadie se hizo responsable",
+  },
+  "Nesta conversa o assistente combinou algo com o cliente. Ele ainda não tem nenhuma capacidade marcada para registrar isso no sistema, então nada foi agendado nem anotado. Abra a conversa para ver o que foi combinado — e, na tela do assistente, marque o que ele pode fazer.": {
+    es: "En esta conversación el asistente acordó algo con el cliente. Todavía no tiene ninguna capacidad marcada para registrar esto en el sistema, así que nada fue agendado ni anotado. Abre la conversación para ver qué se acordó — y, en la pantalla del asistente, marca lo que puede hacer.",
+  },
+  "Nesta conversa o assistente combinou algo com o cliente e não registrou nenhum próximo passo para isso — não há retorno agendado. Abra a conversa, veja o que foi combinado e decida quem faz.": {
+    es: "En esta conversación el asistente acordó algo con el cliente y no registró ningún próximo paso para esto — no hay retorno agendado. Abre la conversación, mira qué se acordó y decide quién lo hace.",
+  },
+  "Nesta conversa o assistente combinou algo com o cliente, e a parte que organiza o sistema não rodou neste atendimento. Nada foi agendado. Abra a conversa para ver o que foi combinado e decida quem faz.": {
+    es: "En esta conversación el asistente acordó algo con el cliente, y la parte que organiza el sistema no corrió en esta atención. Nada fue agendado. Abre la conversación para ver qué se acordó y decide quién lo hace.",
+  },
 
   // ─── Estado do material do acervo (components/ai/SourceStatusBadge.tsx) ───
   //
