@@ -128,7 +128,8 @@ export function lerPlanilha(
       // O valor cru entra na mensagem: quem vai corrigir precisa achar a célula.
       erros.push({
         linha: numeroNaPlanilha,
-        motivo: _t("preço não reconhecido (") + `"${valor("preco")}"` + _t(") — escreva assim: 5.499,00"),
+        motivo:
+          _t("preço não reconhecido (") + `"${valor("preco")}"` + ")" + _t(" — escreva assim: 5.499,00"),
       });
       continue;
     }
