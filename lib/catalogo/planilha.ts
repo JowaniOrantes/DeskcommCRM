@@ -75,9 +75,13 @@ export interface ResultadoDaLeitura {
   colunasIgnoradas: string[];
 }
 
-export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: string } {
+export function lerPlanilha(
+  conteudo: string,
+  t?: (text: string) => string,
+): ResultadoDaLeitura | { erro: string } {
+  const _t = t || ((x) => x);
   const linhas = parseCsv(conteudo).filter((l) => l.some((c) => c.trim() !== ""));
-  if (linhas.length === 0) return { erro: "A planilha está vazia." };
+  if (linhas.length === 0) return { erro: _t("A planilha está vazia.") };
 
   const cabecalho = linhas[0]!;
   const mapa = new Map<number, string>();
@@ -95,8 +99,9 @@ export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: stri
   if (faltando.length > 0) {
     return {
       erro:
-        `A planilha precisa de uma coluna de ${faltando.map((f) => (f === "preco" ? "preço" : f)).join(" e de ")}. ` +
-        `Encontrei: ${cabecalho.filter((c) => c.trim()).join(", ") || "nenhuma coluna"}.`,
+        _t("A planilha precisa de uma coluna de nome e de preço. Encontrei: ") +
+        (cabecalho.filter((c) => c.trim()).join(", ") || _t("nenhuma coluna")) +
+        ".",
     };
   }
 
@@ -114,7 +119,7 @@ export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: stri
 
     const nome = valor("nome").replace(/\s+/g, " ");
     if (nome === "") {
-      erros.push({ linha: numeroNaPlanilha, motivo: "sem nome do produto" });
+      erros.push({ linha: numeroNaPlanilha, motivo: _t("sem nome do produto") });
       continue;
     }
 
@@ -123,7 +128,7 @@ export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: stri
       // O valor cru entra na mensagem: quem vai corrigir precisa achar a célula.
       erros.push({
         linha: numeroNaPlanilha,
-        motivo: `preço não reconhecido ("${valor("preco")}") — escreva assim: 5.499,00`,
+        motivo: _t("preço não reconhecido (") + `"${valor("preco")}"` + _t(") — escreva assim: 5.499,00"),
       });
       continue;
     }
@@ -131,7 +136,10 @@ export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: stri
     const custoTexto = valor("custo");
     const custo_cents = custoTexto === "" ? null : precoParaCentavos(custoTexto);
     if (custoTexto !== "" && custo_cents === null) {
-      erros.push({ linha: numeroNaPlanilha, motivo: `custo não reconhecido ("${custoTexto}")` });
+      erros.push({
+        linha: numeroNaPlanilha,
+        motivo: _t("custo não reconhecido (") + `"${custoTexto}"` + ")",
+      });
       continue;
     }
 
@@ -140,7 +148,10 @@ export function lerPlanilha(conteudo: string): ResultadoDaLeitura | { erro: stri
     // loja quando o preço muda.
     const codigo = (valor("codigo") || nome).slice(0, 60).replace(/\s+/g, " ");
     if (codigosVistos.has(codigo.toLowerCase())) {
-      erros.push({ linha: numeroNaPlanilha, motivo: `código repetido na planilha ("${codigo}")` });
+      erros.push({
+        linha: numeroNaPlanilha,
+        motivo: _t("código repetido na planilha (") + `"${codigo}"` + ")",
+      });
       continue;
     }
     codigosVistos.add(codigo.toLowerCase());

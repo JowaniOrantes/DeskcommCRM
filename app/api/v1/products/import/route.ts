@@ -24,6 +24,7 @@ import { fail, ok } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { moedaDaOrganizacao } from "@/lib/catalogo/moeda-da-org";
 import { lerPlanilha, type ErroDaLinha } from "@/lib/catalogo/planilha";
+import { traduzir } from "@/lib/i18n/dicionario";
 import { CSV_MAX_BYTES, CSV_MAX_DATA_ROWS, decodificarCsv } from "@/lib/contacts/csv";
 import { COLUNAS_DO_PRODUTO } from "@/lib/schemas/produtos";
 import { createClient } from "@/lib/supabase/server";
@@ -95,7 +96,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   if ("erro" in decodificado) {
     return fail("validation_failed", decodificado.erro, 422, { requestId });
   }
-  const lido = lerPlanilha(decodificado.texto);
+  const t = (texto: string) => traduzir(texto, authz.user.idioma);
+  const lido = lerPlanilha(decodificado.texto, t);
   // Problema do ARQUIVO (falta a coluna de preço) é 422 com a frase inteira —
   // e não um relatório com 300 erros idênticos.
   if ("erro" in lido) return fail("validation_failed", lido.erro, 422, { requestId });

@@ -6374,6 +6374,17 @@ export const DICIONARIO: Traducoes = {
   "Salvar produto": { es: "Guardar producto" },
   "em estoque": { es: "en stock" },
   "sem controle de estoque": { es: "sin control de stock" },
+  // Mensajes de error de importación de planilha (lib/catalogo/planilha.ts)
+  "A planilha está vazia.": { es: "La planilla está vacía." },
+  "A planilha precisa de uma coluna de nome e de preço. Encontrei: ": {
+    es: "La planilla necesita una columna de nombre y de precio. Encontré: ",
+  },
+  "sem nome do produto": { es: "sin nombre del producto" },
+  "preço não reconhecido (": { es: "precio no reconocido (" },
+  " — escreva assim: 5.499,00": { es: " — escríbalo así: 5.499,00" },
+  "custo não reconhecido (": { es: "costo no reconocido (" },
+  "código repetido na planilha (": { es: "código repetido en la planilla (" },
+  "nenhuma coluna": { es: "ninguna columna" },
 
   // ─── Importar leads de planilha (extraído do PR #418) ───
   "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
