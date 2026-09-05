@@ -4655,6 +4655,8 @@ export const DICIONARIO: Traducoes = {
   "Sugestão de retomada venceu sem decisão": { es: "La sugerencia de retomada venció sin decisión" },
   "Retorno agendado": { es: "Retorno agendado" },
   "Retorno cancelado": { es: "Retorno cancelado" },
+  "Desmarcado por uma pessoa da equipe": { es: "Desmarcado por una persona del equipo" },
+  "Sem motivo informado": { es: "Sin motivo informado" },
   "Follow-up pausado": { es: "Follow-up pausado" },
   "Follow-up retomado": { es: "Follow-up retomado" },
   "Follow-up adiado": { es: "Follow-up pospuesto" },
