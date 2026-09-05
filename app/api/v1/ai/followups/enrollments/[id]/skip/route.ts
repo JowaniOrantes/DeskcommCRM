@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     id,
     parsed.data.edge_id ?? null,
   );
-  if (!resultado.ok) return respostaDaFalha(resultado, requestId);
+  if (!resultado.ok) return respostaDaFalha(resultado, requestId, t);
 
   void audit({
     action: "followup_enrollment.step_skipped",

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     id,
     parsed.data.next_eval_at,
   );
-  if (!resultado.ok) return respostaDaFalha(resultado, requestId);
+  if (!resultado.ok) return respostaDaFalha(resultado, requestId, t);
 
   void audit({
     action: "followup_enrollment.snoozed",
