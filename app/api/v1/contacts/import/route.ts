@@ -24,6 +24,7 @@ import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
 import { audit } from "@/lib/audit";
 import { encryptCpfSql, hashCpf } from "@/lib/contacts/cpf";
+import { traduzir } from "@/lib/i18n/dicionario";
 import {
   CSV_MAX_BYTES,
   CSV_MAX_DATA_ROWS,
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!authz.ok) return authz.response;
   const user = authz.user;
   const orgId = authz.org.orgId;
+  const t = (texto: string) => traduzir(texto, user.idioma);
 
   let file: File;
   try {
@@ -68,9 +70,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (!(f instanceof File)) throw new Error("sem arquivo");
     file = f;
   } catch {
-    return fail("validation_failed", "Envie o arquivo como multipart/form-data no campo 'file'.", 422, {
-      requestId,
-    });
+    return fail(
+      "validation_failed",
+      t("Envie o arquivo como multipart/form-data no campo 'file'."),
+      422,
+      { requestId },
+    );
   }
 
   const nome = file.name ?? "";
@@ -81,15 +86,18 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!tipoOk) {
     return fail(
       "validation_failed",
-      "Formato não suportado — envie um arquivo .csv. No Excel use 'Salvar como' → 'CSV UTF-8'.",
+      t("Formato não suportado — envie um arquivo .csv. No Excel use 'Salvar como' → 'CSV UTF-8'."),
       422,
       { requestId },
     );
   }
   if (file.size > CSV_MAX_BYTES) {
-    return fail("validation_failed", `Arquivo maior que ${Math.floor(CSV_MAX_BYTES / 1024 / 1024)}MB.`, 413, {
-      requestId,
-    });
+    return fail(
+      "validation_failed",
+      t("Arquivo maior que ") + `${Math.floor(CSV_MAX_BYTES / 1024 / 1024)}MB.`,
+      413,
+      { requestId },
+    );
   }
 
   // ─── Parse + validação de linhas (puro; nada tocou no banco ainda) ───────
@@ -101,12 +109,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   const text = decodificado.texto;
   const rows = parseCsv(text);
   if (rows.length < 2) {
-    return fail("validation_failed", "CSV vazio ou sem linhas de dados.", 422, { requestId });
+    return fail("validation_failed", t("CSV vazio ou sem linhas de dados."), 422, { requestId });
   }
   const header = rows[0]!;
-  const mapeado = mapHeader(header);
+  const mapeado = mapHeader(header, t);
   if (mapeado.motivo !== null) {
-    return fail("validation_failed", `Cabeçalho inválido: ${mapeado.motivo}.`, 422, {
+    return fail("validation_failed", `${t("Cabeçalho inválido:")} ${mapeado.motivo}.`, 422, {
       details: { header: header.join(", ") },
       requestId,
     });
@@ -117,7 +125,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (dataRows.length > CSV_MAX_DATA_ROWS) {
     return fail(
       "validation_failed",
-      `Máximo de ${CSV_MAX_DATA_ROWS} linhas por importação — divida a planilha.`,
+      `${t("Máximo de")} ${CSV_MAX_DATA_ROWS} ${t("linhas por importação — divida a planilha.")}`,
       422,
       { requestId },
     );
@@ -129,13 +137,13 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   for (let i = 0; i < dataRows.length; i++) {
     const linha = i + 2; // 1-based contando o cabeçalho — bate com o editor de planilhas.
-    const { contato, motivo } = mapLinha(dataRows[i]!, indices);
+    const { contato, motivo } = mapLinha(dataRows[i]!, indices, t);
     if (motivo !== null) {
       errors.push({ linha, motivo });
       continue;
     }
     if (contato.cpf && !isValidCpf(contato.cpf)) {
-      errors.push({ linha, motivo: `CPF inválido: "${contato.cpf}"` });
+      errors.push({ linha, motivo: t("CPF inválido: ") + `"${contato.cpf}"` });
       continue;
     }
     const chave = contato.phone_number ?? `email:${(contato.email as string).toLowerCase()}`;
@@ -147,7 +155,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const parsed = contactCreateSchema.safeParse({ ...contato, source: SOURCE_IMPORT_CSV });
     if (!parsed.success) {
       const primeiro = parsed.error.issues[0];
-      errors.push({ linha, motivo: primeiro?.message ?? "dados inválidos" });
+      errors.push({ linha, motivo: primeiro?.message ?? t("dados inválidos") });
       continue;
     }
     candidatos.push({ linha, contato: parsed.data as Record<string, unknown> });

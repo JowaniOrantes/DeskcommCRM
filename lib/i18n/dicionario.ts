@@ -6425,6 +6425,22 @@ export const DICIONARIO: Traducoes = {
   "produtos por importação — divida a planilha.": {
     es: "productos por importación — divide la planilla.",
   },
+  // Mensagens de erro de lib/contacts/csv.ts e app/api/v1/contacts/import/route.ts
+  "cabeçalho sem coluna de telefone nem e-mail": {
+    es: "cabecera sin columna de teléfono ni e-mail",
+  },
+  "e-mail inválido: ": { es: "e-mail inválido: " },
+  "telefone inválido: ": { es: "teléfono inválido: " },
+  " (use DDI+DDD+número, ex.: +5511999998888)": {
+    es: " (usa código de país+código de área+número, ej.: +5511999998888)",
+  },
+  "linha sem telefone nem e-mail": { es: "línea sin teléfono ni e-mail" },
+  "Cabeçalho inválido:": { es: "Cabecera inválida:" },
+  "linhas por importação — divida a planilha.": {
+    es: "líneas por importación — divide la planilla.",
+  },
+  "CPF inválido: ": { es: "CPF inválido: " },
+  "dados inválidos": { es: "datos inválidos" },
 };
 
 /**
