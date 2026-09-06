@@ -3580,6 +3580,12 @@ export const DICIONARIO: Traducoes = {
     es: "Detalles técnicos (útil si vas a pedir ayuda)",
   },
   "Atualização do sistema": { es: "Actualización del sistema" },
+  "Guardando uma cópia de segurança dos seus dados": {
+    es: "Guardando una copia de seguridad de tus datos",
+  },
+  "Baixando a versão nova": { es: "Descargando la versión nueva" },
+  "Atualizando o banco de dados": { es: "Actualizando la base de datos" },
+  "Reiniciando o sistema": { es: "Reiniciando el sistema" },
   "Reiniciando…": { es: "Reiniciando…" },
   "O sistema está voltando. Esta página se atualiza sozinha em alguns instantes.": {
     es: "El sistema está volviendo. Esta página se actualiza sola en unos instantes.",
@@ -3636,6 +3642,7 @@ export const DICIONARIO: Traducoes = {
   "Preferências de notificação em breve. Por enquanto, alertas críticos são enviados por email.": {
     es: "Preferencias de notificación próximamente. Por ahora, las alertas críticas se envían por correo.",
   },
+  "Nova mensagem": { es: "Mensaje nuevo" },
   "Lead atribuído a você": { es: "Lead asignado a ti" },
   "Lead ganho": { es: "Lead ganado" },
   "Lead perdido": { es: "Lead perdido" },
@@ -3666,6 +3673,23 @@ export const DICIONARIO: Traducoes = {
   },
   "Verificação desligada.": { es: "Verificación desactivada." },
   "Desligando…": { es: "Desactivando…" },
+
+  // ─── app/actions/auth/politicaDeMfa.ts (erros do painel de Segurança/MFA) ───
+  "Sua sessão expirou. Entre de novo.": { es: "Tu sesión expiró. Entra de nuevo." },
+  "Nenhuma empresa ativa.": { es: "Ninguna empresa activa." },
+  "Só um administrador pode mudar essa regra.": {
+    es: "Solo un administrador puede cambiar esta regla.",
+  },
+  "Não consegui ler a configuração agora.": { es: "No pude leer la configuración ahora." },
+  "Não consegui salvar essa mudança agora.": { es: "No pude guardar ese cambio ahora." },
+  "A verificação em duas etapas é obrigatória para administradores desta empresa. Desligue a regra antes.":
+    {
+      es: "La verificación en dos pasos es obligatoria para administradores de esta empresa. Desactiva la regla antes.",
+    },
+  "Entre de novo e informe o código de 6 dígitos antes de desligar a verificação.": {
+    es: "Entra de nuevo e ingresa el código de 6 dígitos antes de desactivar la verificación.",
+  },
+  "Não consegui remover a verificação agora.": { es: "No pude quitar la verificación ahora." },
   Ativar: { es: "Activar" },
   "Exigir de quem administra": { es: "Exigir a quien administra" },
   "Agora os administradores precisam da verificação.": {
@@ -6631,6 +6655,11 @@ export const DICIONARIO: Traducoes = {
   "Reunião": { es: "Reunión" },
   "Demonstração": { es: "Demostración" },
   "Outro": { es: "Otro" },
+  "Consulta": { es: "Consulta" },
+  "Visita": { es: "Visita" },
+  "Call": { es: "Call" },
+  "Presencial": { es: "Presencial" },
+  "Link de vídeo": { es: "Enlace de video" },
   "Mostrar todos (agora só": { es: "Mostrar todos (ahora solo" },
   "Ver só a agenda de": { es: "Ver solo la agenda de" },
   "com": { es: "con" },
@@ -6981,6 +7010,13 @@ export const DICIONARIO: Traducoes = {
   "Confirme o código do seu aplicativo de duas etapas e tente de novo.": {
     es: "Confirme el código de su aplicación de dos pasos e inténtelo de nuevo.",
   },
+  "Só quem administra esta empresa pode mudar a marca.": {
+    es: "Solo quien administra esta empresa puede cambiar la marca.",
+  },
+  "A alteração não chegou ao banco — nada foi mudado. Tente de novo.": {
+    es: "El cambio no llegó a la base de datos — no se modificó nada. Inténtalo de nuevo.",
+  },
+  "Não consegui salvar a marca agora.": { es: "No pude guardar la marca ahora." },
 
   // ─── Importar leads de planilha (extraído do PR #418) ───
   "Importar leads de uma planilha": { es: "Importar leads desde una planilla" },
