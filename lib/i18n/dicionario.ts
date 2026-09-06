@@ -4965,6 +4965,23 @@ export const DICIONARIO: Traducoes = {
   "Contatos juntados. {n} registro(s) continuaram no cadastro antigo — veja a auditoria.": {
     es: "Contactos juntados. {n} registro(s) siguieron en la ficha antigua — revisa la auditoría.",
   },
+
+  // ─── app/api/v1/contacts/merge/route.ts (DESFECHOS que chegam à tela via showApiError) ───
+  "Seleção inválida: escolha um contato principal e ao menos um a ser absorvido.": {
+    es: "Selección inválida: elige un contacto principal y al menos uno para absorber.",
+  },
+  "O mesmo contato aparece duas vezes na seleção.": {
+    es: "El mismo contacto aparece dos veces en la selección.",
+  },
+  "O contato principal não está disponível — ele pode ter sido anonimizado ou já mesclado em outro.":
+    {
+      es: "El contacto principal no está disponible — puede haber sido anonimizado o ya fusionado en otro.",
+    },
+  "Um dos contatos selecionados não está disponível — ele pode ter sido anonimizado ou já mesclado em outro.":
+    {
+      es: "Uno de los contactos seleccionados no está disponible — puede haber sido anonimizado o ya fusionado en otro.",
+    },
+  "Organização ativa não resolvida.": { es: "No se resolvió la organización activa." },
   "Mostrando os duplicados entre os contatos mais antigos. Junte estes e reabra para ver os próximos.": {
     es: "Mostrando los duplicados entre los contactos más antiguos. Junta estos y vuelve a abrir para ver los siguientes.",
   },
@@ -6911,6 +6928,24 @@ export const DICIONARIO: Traducoes = {
     { es: "Desconectar borra el token guardado. La pantalla de Meta Ads vuelve a pedir una conexión, y no se pierde ningún dato histórico — aquí no se almacena nada." },
   "Não consegui desconectar agora.": { es: "No pude desconectar ahora." },
 
+  // ─── ERRO_EM_PORTUGUES compartida por meta-ads/_form.tsx e conversoes/_form.tsx ───
+  "Você não está em nenhuma organização ativa.": {
+    es: "No estás en ninguna organización activa.",
+  },
+  "Só um administrador da organização pode mudar esta conexão.": {
+    es: "Solo un administrador de la organización puede cambiar esta conexión.",
+  },
+  "Confirme o segundo fator para salvar esta mudança.": {
+    es: "Confirma el segundo factor para guardar este cambio.",
+  },
+  "Esta instalação está sem a chave mestra de criptografia, e o token não foi gravado. Quem instalou o sistema precisa configurá-la — refazer o cadastro aqui não resolve.":
+    {
+      es: "Esta instalación no tiene la clave maestra de cifrado, y el token no se guardó. Quien instaló el sistema necesita configurarla — repetir el registro aquí no resuelve.",
+    },
+  "Não consegui gravar agora. Tente de novo em instantes.": {
+    es: "No pude guardar ahora. Inténtalo de nuevo en unos instantes.",
+  },
+
   // ─── Configurações → Conversões (0213) e o convidado da agenda (0212) ───
   //
   // Estas duas telas entraram na mesma leva do painel de Meta Ads e ficaram sem
@@ -7000,6 +7035,16 @@ export const DICIONARIO: Traducoes = {
   "Em andamento": { es: "En curso" },
   "Escreva um título para a tarefa.": { es: "Escribe un título para la tarea." },
   "Não foi possível salvar a tarefa.": { es: "No se pudo guardar la tarea." },
+
+  // ─── app/api/v1/tasks/**/route.ts (mensagens que chegam cruas ao formulário — sem showApiError) ───
+  "Tarefa não encontrada.": { es: "Tarea no encontrada." },
+  "O negócio ou contato vinculado não existe.": {
+    es: "El negocio o contacto vinculado no existe.",
+  },
+  "Erro ao salvar a tarefa.": { es: "Error al guardar la tarea." },
+  "Erro ao listar as tarefas.": { es: "Error al listar las tareas." },
+  "Erro ao apagar a tarefa.": { es: "Error al borrar la tarea." },
+
   "Baixa": { es: "Baja" },
   "Média": { es: "Media" },
   "Alta": { es: "Alta" },
@@ -7021,7 +7066,7 @@ export const DICIONARIO: Traducoes = {
       es: "Esta acción es irreversible. Mensajes, conversaciones, negocios, contactos, citas y pedidos de",
     },
   "serão apagados de vez.": { es: "serán borrados definitivamente." },
-  Digite: { es: "Escriba" },
+  Digite: { es: "Escribe" },
   "para confirmar": { es: "para confirmar" },
   "Apagando…": { es: "Borrando…" },
   "Apagar de vez": { es: "Borrar definitivamente" },
@@ -7035,17 +7080,17 @@ export const DICIONARIO: Traducoes = {
     es: "El nombre escrito no coincide con el nombre de la organización.",
   },
   "Digite o nome da organização para confirmar.": {
-    es: "Escriba el nombre de la organización para confirmar.",
+    es: "Escribe el nombre de la organización para confirmar.",
   },
   "Não consegui apagar os dados agora.": { es: "No pude borrar los datos ahora." },
   "Sua sessão expirou. Entre de novo para continuar.": {
-    es: "Su sesión expiró. Entre de nuevo para continuar.",
+    es: "Tu sesión expiró. Entra de nuevo para continuar.",
   },
   "Não consegui identificar sua empresa. Recarregue a página.": {
-    es: "No pude identificar su empresa. Recargue la página.",
+    es: "No pude identificar tu empresa. Recarga la página.",
   },
   "Confirme o código do seu aplicativo de duas etapas e tente de novo.": {
-    es: "Confirme el código de su aplicación de dos pasos e inténtelo de nuevo.",
+    es: "Confirma el código de tu aplicación de dos pasos e inténtalo de nuevo.",
   },
   "Só quem administra esta empresa pode mudar a marca.": {
     es: "Solo quien administra esta empresa puede cambiar la marca.",
