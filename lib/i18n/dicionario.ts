@@ -1365,6 +1365,37 @@ export const DICIONARIO: Traducoes = {
   "Escreva sua resposta para a IA...": { es: "Escribe tu respuesta para la IA..." },
   "Escolha uma das opções acima para enviar.": { es: "Elige una de las opciones de arriba para enviar." },
   "Enviando...": { es: "Enviando..." },
+  // ─── lib/ai/case-copy.ts (status, ações e timeline dos casos humanos) ───
+  "Aguardando você": { es: "Esperándote" },
+  "Virou atendimento humano": { es: "Se convirtió en atención humana" },
+  "Aguardando o cliente responder — a IA avisa você quando tiver a informação.": {
+    es: "Esperando que el cliente responda — la IA te avisa cuando tenga la información.",
+  },
+  "Este caso já foi concluído.": { es: "Este caso ya fue concluido." },
+  "Este caso virou atendimento humano — não precisa mais de resposta aqui.": {
+    es: "Este caso se convirtió en atención humana — ya no necesita respuesta aquí.",
+  },
+  "Este caso foi cancelado.": { es: "Este caso fue cancelado." },
+  "Concluí": { es: "Concluí" },
+  "A IA avisa o cliente e encerra o assunto.": { es: "La IA avisa al cliente y cierra el asunto." },
+  "Preciso de info do cliente": { es: "Necesito info del cliente" },
+  "A IA pergunta ao cliente e o caso volta pra você quando ele responder.": {
+    es: "La IA le pregunta al cliente y el caso vuelve a ti cuando responda.",
+  },
+  "Não consigo — passar pra humano": { es: "No puedo — pasar a humano" },
+  "Sai da IA: a conversa vira um atendimento humano de verdade.": {
+    es: "Sale de la IA: la conversación se convierte en una atención humana de verdad.",
+  },
+  "A IA abriu o caso": { es: "La IA abrió el caso" },
+  "Você respondeu": { es: "Tú respondiste" },
+  "A IA perguntou ao cliente": { es: "La IA le preguntó al cliente" },
+  "O cliente respondeu": { es: "El cliente respondió" },
+  "O cliente não respondeu a tempo": { es: "El cliente no respondió a tiempo" },
+  "Você concluiu o caso": { es: "Tú concluiste el caso" },
+  "Você pediu uma informação ao cliente": { es: "Tú le pediste una información al cliente" },
+  "Você decidiu passar para atendimento humano": { es: "Tú decidiste pasar a atención humana" },
+  "O sistema abriu o caso automaticamente": { es: "El sistema abrió el caso automáticamente" },
+  "Atualização do caso": { es: "Actualización del caso" },
   "Um roteador entende o que o cliente quer e entrega a conversa para o agente certo — plugado em um número de WhatsApp.":
     {
       es: "Un enrutador entiende lo que el cliente quiere y entrega la conversación al agente correcto — conectado a un número de WhatsApp.",
