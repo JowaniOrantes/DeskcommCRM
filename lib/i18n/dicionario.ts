@@ -117,6 +117,7 @@ export const DICIONARIO: Traducoes = {
     es: "Automático pausado para este cliente",
   },
   "Automático volta em instantes": { es: "El automático vuelve en instantes" },
+  "Cliente pediu para não receber mensagens": { es: "El cliente pidió no recibir mensajes" },
   "Pausar o automático": { es: "Pausar el automático" },
   "Ver contato": { es: "Ver contacto" },
 
