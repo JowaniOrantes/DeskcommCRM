@@ -327,7 +327,7 @@ function CamposDoFunil({
   async function salvar() {
     try {
       await edit.mutateAsync({ leadId, patch: { custom_fields: customFields } });
-      toast.success("Campos atualizados");
+      toast.success(t("Campos atualizados"));
       onSalvo();
     } catch {
       // toast already shown

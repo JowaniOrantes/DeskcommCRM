@@ -144,10 +144,10 @@ export function FormularioDoGoogle({
                   ...(clientSecret.trim() ? { client_secret: clientSecret.trim() } : {}),
                 });
                 if (!r.ok) {
-                  toast.error(r.error);
+                  toast.error(t(r.error));
                   return;
                 }
-                toast.success("Credenciais do Google salvas.");
+                toast.success(t("Credenciais do Google salvas."));
                 setClientSecret("");
                 router.refresh();
               })

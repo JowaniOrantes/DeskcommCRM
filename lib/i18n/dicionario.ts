@@ -5685,6 +5685,10 @@ export const DICIONARIO: Traducoes = {
   "Ao trocar uma credencial já em uso:": { es: "Al cambiar una credencial ya en uso:" },
   "quem já conectou a agenda vai precisar conectar de novo. O Google invalida as autorizações antigas quando o aplicativo muda — não há como evitar, e ninguém perde compromisso por isso.": { es: "quien ya conectó su agenda tendrá que conectarla otra vez. Google invalida las autorizaciones anteriores cuando la aplicación cambia — no hay forma de evitarlo, y nadie pierde ninguna cita por eso." },
   "Nunca configurado por aqui.": { es: "Nunca configurado por aquí." },
+  "Credenciais do Google salvas.": { es: "Credenciales de Google guardadas." },
+  "cifra indisponível nesta instalação (GUC app.nuvemshop_oauth_key ausente) — o segredo não foi gravado": {
+    es: "cifrado no disponible en esta instalación (GUC app.nuvemshop_oauth_key ausente) — el secreto no fue guardado",
+  },
   "Falta cadastrar o aplicativo do Google desta instalação. Leva um minuto e você faz por aqui mesmo.": { es: "Falta registrar la aplicación de Google de esta instalación. Toma un minuto y lo haces aquí mismo." },
   "O que ele consulta antes de responder": { es: "Qué consulta antes de responder" },
   "Marque o material do seu negócio que este assistente pode ler. Ele procura ali antes de responder, em vez de improvisar — e cita de onde tirou.": { es: "Marca el material de tu negocio que este asistente puede leer. Busca ahí antes de responder, en vez de improvisar — y cita de dónde lo sacó." },
@@ -5780,6 +5784,7 @@ export const DICIONARIO: Traducoes = {
   "Mostrando os primeiros trechos de": { es: "Mostrando los primeros fragmentos de" },
   ". Uma tela não folheia mil pedaços — o restante está no acervo e o agente alcança todos.": { es: ". Una pantalla no hojea mil pedazos — el resto está en el acervo y el agente los alcanza todos." },
   "Este funil não tem campos extras.": { es: "Este embudo no tiene campos extra." },
+  "Campos atualizados": { es: "Campos actualizados" },
 
   // ─── Tabela de Contatos ───
   //
