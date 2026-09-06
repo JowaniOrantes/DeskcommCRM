@@ -24,7 +24,7 @@
     "test:journeys": "playwright test -c tests/journeys/playwright.config.ts",
     "test:unit": "vitest run",
     "test:db": "bash scripts/test-db.sh",
-    "test:shell": "bash tests/shell/update-guard.test.sh && bash tests/shell/dono-do-projeto.test.sh && bash tests/shell/scheduler-entrypoint.test.sh && bash hostgator-setup-kit/test-validators.sh",
+    "test:shell": "bash tests/shell/update-guard.test.sh && bash tests/shell/dono-do-projeto.test.sh && bash tests/shell/scheduler-entrypoint.test.sh && bash tests/shell/owner-id-por-email.test.sh && bash hostgator-setup-kit/test-validators.sh",
     "test:invariants": "bash scripts/test-db.sh",
     "lint:channels": "tsx scripts/lint-channels.ts",
     "lint:role-rank": "tsx scripts/lint-role-rank.ts",
@@ -130,7 +130,10 @@
       "hono": "^4.12.34",
       "js-yaml": "^4.3.1",
       "brace-expansion@1": "^1.1.18",
-      "path-to-regexp@6": "^6.3.0"
+      "path-to-regexp@6": "^6.3.0",
+      "fast-uri": "^3.1.7",
+      "qs": "^6.16.0",
+      "browserslist": "^4.28.8"
     }
   }
 }

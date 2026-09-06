@@ -1322,6 +1322,32 @@ isso não está escrito em lugar nenhum, e quem adota o helper sem subir o teto 
 dois testes alheios estourarem sem call log de locator. Se você for adotar o
 helper numa spec nova: `test.describe.configure({ timeout: 120_000 })`.
 
+## O menu inteiro cabe na dobra de um notebook? (2026-09-04)
+
+Origem: PR #546 pôs a tela de **Tarefas** no grupo CRM e o menu passou a rolar.
+Medido pela tela, 1280×900, logado como admin: `nav.scrollHeight` **776** contra
+**763** de altura útil — **13px** de excesso, 19 links, 5 grupos. Nenhum título
+de grupo caía fora da dobra; o que quebrava era o `rola`.
+
+A resposta NÃO foi raspar densidade: o comentário de `components/shell/Sidebar.tsx`
+já dizia, desde a vez em que Produtos estourou a dobra por uma linha, que "quando
+o quinto destino de CRM aparecer, é hub que se cria, não mais 4px que se raspa".
+Tarefas foi o quinto. Criou-se `/app/crm` — o mesmo mecanismo (`group.hub`) que o
+grupo IA já usava.
+
+| caso | prioridade | estado |
+|---|---|---|
+| Em 1280×900 o menu inteiro cabe sem rolar | `[P1]` | **PASS**, medido por ferramenta em `tests/e2e/navegacao.spec.ts`: `scrollHeight` **763** = altura **763**, excesso **0**, 18 links. A folga real — distância entre o fim do último grupo e o fim da caixa de conteúdo da `<nav>`, que o `scrollHeight` grampeado NÃO revela — é **19px** |
+| Etapas do funil continua alcançável pelo CRM, não por Configurações | `[P1]` | **PASS**, e o caminho é percorrido inteiro: sidebar → "Ver tudo em CRM" → `/app/crm` → card → `settings/tenant/pipelines`. Evidência em `.superpowers/evidence/nav-hub-crm.png` |
+| Produtos, que saiu do menu, continua tendo porta (DoD 14) | `[P1]` | **PASS**, caso próprio na mesma spec: o link não existe no sidebar (`toHaveCount(0)`) e existe no hub |
+| A folga de 19px é real | — | **PROVADO POR SABOTAGEM.** Um sexto destino de CRM com `sidebar: true` devolve o excesso a exatamente **+13px** e reprova o mesmo caso — previsto antes de rodar, e batido |
+| 19px é menos de uma linha (28px + 4px de intervalo = 32px) | — | **ACEITO, com a saída declarada.** O próximo item de sidebar volta a estourar. Só que CRM, IA e Organização têm hub: tela nova em qualquer um dos três não pressiona mais o menu. Quem ainda pressiona é grupo SEM hub — Atendimento (4), Canais (3), Análise (3) —, e para eles a resposta escrita é a mesma: cria-se o hub |
+
+**O que a medição do `scrollHeight` NÃO responde:** quando o conteúdo cabe, ele é
+grampeado no `clientHeight`, então "excesso 0" e "sobra 200px" dão o MESMO número.
+Quem quiser saber quanta folga restou tem de medir o `bottom` do último filho
+contra a caixa de conteúdo da `<nav>` — foi assim que os 19px saíram.
+
 ## O inbox em tempo real — o defeito que veio de fora (2026-08-24)
 
 **Sintoma relatado pelo dono:** *"Recebemos mensagem e só reflete no inbox (na
@@ -1695,6 +1721,39 @@ autofocado — ele casa `focus-visible:border-accent-500` e devolve a cor do
 foco. A sonda só mede elemento real, e pula elemento em foco e elemento que já
 traga classe de cor própria.
 
+---
+
+## O campo que oferecia hoje e o servidor recusava (2026-09-03)
+
+Achado de varredura adversarial contra o PR #496, no SHA `f700f3e1`. Mesma tela
+do #496 — **Conexões › Proteção de envio** —, campo ao lado do que ele acabara
+de consertar, e o mesmo desfecho para quem opera: a ficha inteira deixa de
+salvar.
+
+`<input type="date">` fala em dia LOCAL; `AntiBanSheet` encaixa o dia escolhido
+às 12h UTC (meia-noite viraria o dia anterior a oeste); e a guarda do schema
+comparava esse encaixe com `Date.now()` — um DIA contra um RELÓGIO.
+
+| régua | recusa começa | recusa para | quem sente |
+|---|---|---|---|
+| dia que a tela mostra (`America/Sao_Paulo`, UTC−3) | 03:00 UTC | 12:00 UTC | 00:00 às 09:00 no relógio de quem opera |
+| dia UTC (o que o `max` do campo oferecia, vindo de `toISOString()`) | 00:00 UTC | 12:00 UTC | as primeiras 12 horas UTC do dia |
+
+Medido varrendo as 48 meias-horas do dia com relógio falso, chamando o schema
+real com a carga exata que a tela monta — não pela tela: **NÃO MEDIDO** pelo
+browser num ambiente fresco estilo VPS. O que a varredura de horas prova é a
+fronteira; o que ela não prova é o que o operador vê quando ela dispara.
+
+**A lição, e ela não é sobre fusos.** O produto oferece o dia num campo e o
+recusa no servidor: a mesma classe do controle decorativo, ao contrário — não é
+o controle que não faz nada, é o limite do campo que promete o que a outra ponta
+nega. Toda validação de data merece a pergunta *"as duas pontas falam do mesmo
+dia, ou uma delas fala de instante?"*.
+
+**Onde mais essa pergunta cabe** (levantado, **não medido**, e fora do escopo do
+conserto): `lib/kanban/filters.ts` e `lib/automation/throttle.ts` derivam "hoje"
+de `toISOString().slice(0, 10)`, que é o dia UTC. Se algum deles compara com dia
+local, é a mesma classe.
 ## J21 — Uma loja no México escolhe sua moeda `[P0]` (2026-09-04)
 
 Migration 0208 dá a `organizations` uma coluna `currency`; o resto do frente
