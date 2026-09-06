@@ -3244,6 +3244,43 @@ export const DICIONARIO: Traducoes = {
   "Este número não tem conversa, mensagem nem configuração ligada a ele.": {
     es: "Este número no tiene conversación, mensaje ni configuración ligada a él.",
   },
+  "conversa": { es: "conversación" },
+  "mensagem": { es: "mensaje" },
+  "versão de agente": { es: "versión de agente" },
+  "versões de agente": { es: "versiones de agente" },
+  "roteador de IA": { es: "enrutador de IA" },
+  "roteadores de IA": { es: "enrutadores de IA" },
+  "ajuste de proteção de envio": { es: "ajuste de protección de envío" },
+  "ajustes de proteção de envio": { es: "ajustes de protección de envío" },
+  "conversa continua": { es: "conversación continúa" },
+  "conversas continuam": { es: "conversaciones continúan" },
+
+  // ─── lib/channels/meta/template-contract.ts (preview de template do WhatsApp) ───
+  "cabeçalho": { es: "encabezado" },
+  "corpo": { es: "cuerpo" },
+
+  // ─── lib/channels/zernio/avisos.ts (avisos de número/conta na Central) ───
+  "Número ativado.": { es: "Número activado." },
+  "Número reativado.": { es: "Número reactivado." },
+  "Documentação enviada para verificação.": { es: "Documentación enviada para verificación." },
+  "A plataforma pede verificação deste número.": {
+    es: "La plataforma pide verificación de este número.",
+  },
+  "A plataforma pede uma ação neste número.": {
+    es: "La plataforma pide una acción en este número.",
+  },
+  "Número recusado pela plataforma.": { es: "Número rechazado por la plataforma." },
+  "Número SUSPENSO — não é possível enviar.": {
+    es: "Número SUSPENDIDO — no se puede enviar.",
+  },
+  "Número liberado e não utilizável (terminal).": {
+    es: "Número liberado y no utilizable (terminal).",
+  },
+  "A conta do canal foi desconectada.": { es: "La cuenta del canal fue desconectada." },
+  "Conta do canal conectada.": { es: "Cuenta del canal conectada." },
+  "Verificação recusada.": { es: "Verificación rechazada." },
+  "Verificação aprovada.": { es: "Verificación aprobada." },
+
   "Continua no inbox:": { es: "Sigue en el inbox:" },
   "Fica salvo, mas sem número — para de atender:": {
     es: "Queda guardado, pero sin número — deja de atender:",
