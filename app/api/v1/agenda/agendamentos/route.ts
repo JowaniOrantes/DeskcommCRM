@@ -146,7 +146,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (!resultado.ok) {
     return fail(
       resultado.codigo === "sem_alvo" ? "agenda_listagem_sem_recorte" : "internal_error",
-      resultado.motivoParaOperador,
+      t(resultado.motivoParaOperador),
       resultado.codigo === "sem_alvo" ? 422 : 500,
       { requestId },
     );
@@ -280,7 +280,7 @@ async function despachar<T>(
     return ok(resultado, { requestId, status });
   } catch (err) {
     if (err instanceof ApiError) {
-      return fail(err.code, err.message, err.status, {
+      return fail(err.code, t(err.message), err.status, {
         details: err.details as Record<string, unknown> | undefined,
         requestId,
       });

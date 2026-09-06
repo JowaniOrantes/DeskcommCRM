@@ -84,7 +84,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     });
   }
   if (ate.getTime() - de.getTime() > MAXIMO_DE_DIAS * 86_400_000) {
-    return fail("validation_failed", `O período não pode passar de ${MAXIMO_DE_DIAS} dias.`, 422, {
+    return fail("validation_failed", t(`O período não pode passar de ${MAXIMO_DE_DIAS} dias.`), 422, {
       requestId,
     });
   }
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       erro_interno: { codigo: "internal_error", http: 500 },
     };
     const { codigo, http } = status[consulta.codigo];
-    return fail(codigo, consulta.motivoParaOperador, http, { requestId });
+    return fail(codigo, t(consulta.motivoParaOperador), http, { requestId });
   }
 
   return ok(

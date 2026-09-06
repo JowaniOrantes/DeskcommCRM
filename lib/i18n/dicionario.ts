@@ -6215,6 +6215,25 @@ export const DICIONARIO: Traducoes = {
   "Telefone inválido.": { es: "Teléfono inválido." },
   "Template não encontrado.": { es: "Plantilla no encontrada." },
   "Tipo de agendamento não encontrado.": { es: "Tipo de agendamiento no encontrado." },
+  // ─── app/api/v1/agenda/agendamentos/_handler.ts + lib/agenda/consulta.ts ───
+  "O tipo deste agendamento não existe mais.": { es: "El tipo de este agendamiento ya no existe." },
+  "Agendamento não encontrado.": { es: "Agendamiento no encontrado." },
+  "Este agendamento foi cancelado. Marque um novo em vez de reabrir este.": {
+    es: "Este agendamiento fue cancelado. Agenda uno nuevo en vez de reabrir este.",
+  },
+  "Este compromisso ainda não começou — não dá para registrar se a pessoa veio ou faltou. Se ela avisou que não vem, desmarque em vez de registrar falta.": {
+    es: "Este compromiso todavía no empezó — no se puede registrar si la persona vino o faltó. Si avisó que no viene, cancela en vez de registrar falta.",
+  },
+  "Este responsável ainda não publicou horários de atendimento.": {
+    es: "Este responsable todavía no publicó horarios de atención.",
+  },
+  "Este horário não está disponível. Consulte os horários livres e escolha outro.": {
+    es: "Este horario no está disponible. Consulta los horarios libres y elige otro.",
+  },
+  "listagem sem recorte: informe contato, lead, dia, período (de+ate) ou responsável.": {
+    es: "listado sin recorte: indica contacto, lead, día, período (de+ate) o responsable.",
+  },
+  "O período não pode passar de 62 dias.": { es: "El período no puede pasar de 62 días." },
   "title e body são obrigatórios.": { es: "title y body son obligatorios." },
   "Token não encontrado.": { es: "Token no encontrado." },
   "tool_ids contém ids inexistentes no catálogo MCP.": { es: "tool_ids contiene ids inexistentes en el catálogo MCP." },
