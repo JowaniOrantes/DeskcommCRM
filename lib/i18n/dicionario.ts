@@ -6883,6 +6883,350 @@ export const DICIONARIO: Traducoes = {
     es: "No es posible degradar al último admin del tenant.",
   },
   "Já é membro desta organização.": { es: "Ya es miembro de esta organización." },
+
+  // ─── lib/mcp/tools/pacotes.ts (níveis de risco de uma capacidade) ───
+  "Só consulta": { es: "Solo consulta" },
+  "Altera dados": { es: "Modifica datos" },
+  "Efeito que não dá para desfazer": { es: "Efecto que no se puede deshacer" },
+  "O agente apenas lê a informação. Nada muda no sistema.": {
+    es: "El agente solo lee la información. Nada cambia en el sistema.",
+  },
+  "O agente muda alguma coisa no sistema. Você consegue ver o que mudou e desfazer pela tela.": {
+    es: "El agente cambia algo en el sistema. Puedes ver qué cambió y deshacerlo desde la pantalla.",
+  },
+  "O agente faz algo que sai do sistema ou não volta atrás — como falar com o cliente de verdade. Precisa ser ligado por você, uma a uma.": {
+    es: "El agente hace algo que sale del sistema o no tiene vuelta atrás — como hablar con el cliente de verdad. Tiene que ser activado por ti, una por una.",
+  },
+
+  // ─── lib/mcp/tools/catalogo/*.ts (capacidades do agente — rotulo/explicacao/oQueToca) ───
+  "Abre a ficha completa de um cliente: dados de contato, histórico e por onde ele chegou até a empresa.": {
+    es: "Abre la ficha completa de un cliente: datos de contacto, historial y por dónde llegó hasta la empresa.",
+  },
+  "Abre os detalhes de uma conversa: quem está atendendo, marcadores aplicados e há quanto tempo o cliente espera.": {
+    es: "Abre los detalles de una conversación: quién está atendiendo, etiquetas aplicadas y hace cuánto tiempo espera el cliente.",
+  },
+  "Abre os detalhes de uma oportunidade de venda: etapa atual, responsável, marcadores e valor do negócio.": {
+    es: "Abre los detalles de una oportunidad de venta: etapa actual, responsable, etiquetas y valor del negocio.",
+  },
+  "Abre um chamado e mostra tudo que aconteceu nele, inclusive a decisão que a pessoa tomou e o texto que ela escreveu ao decidir.": {
+    es: "Abre un caso y muestra todo lo que pasó en él, incluida la decisión que la persona tomó y el texto que escribió al decidir.",
+  },
+  "Abre um endereço novo para o site da empresa mandar contatos direto para um funil. A partir daí ele passa a receber gente de fora sozinho.": {
+    es: "Abre una dirección nueva para que el sitio de la empresa mande contactos directo a un embudo. A partir de ahí empieza a recibir gente de afuera solo.",
+  },
+  "Acrescenta uma coluna nova no fim do funil, quando o jeito de trabalhar da empresa tem um passo que ainda não está no quadro.": {
+    es: "Agrega una columna nueva al final del embudo, cuando la forma de trabajar de la empresa tiene un paso que todavía no está en el tablero.",
+  },
+  "Adiciona ou remove marcadores numa conversa, cliente ou oportunidade, para organizar e filtrar a operação depois.": {
+    es: "Agrega o quita etiquetas en una conversación, cliente u oportunidad, para organizar y filtrar la operación después.",
+  },
+  "Agenda da equipe": { es: "Agenda del equipo" },
+  "Agendar um retorno para o cliente": { es: "Agendar un retorno para el cliente" },
+  "Altera dados de uma oportunidade de venda: valor do negócio, responsável e informações colhidas na conversa.": {
+    es: "Modifica datos de una oportunidad de venta: valor del negocio, responsable e información recogida en la conversación.",
+  },
+  "Anota o que aconteceu num horário que já passou: a pessoa foi atendida, ou não apareceu.": {
+    es: "Anota lo que pasó en un horario que ya pasó: la persona fue atendida, o no se presentó.",
+  },
+  "Anotar uma regra aprendida": { es: "Anotar una regla aprendida" },
+  "Aplicar marcadores": { es: "Aplicar etiquetas" },
+  "Aprendizado do assistente": { es: "Aprendizaje del asistente" },
+  "Arquivar uma etapa do funil": { es: "Archivar una etapa del embudo" },
+  "Base de conhecimento": { es: "Base de conocimiento" },
+  "Cadastro de clientes": { es: "Registro de clientes" },
+  "Cancelar um retorno agendado": { es: "Cancelar un retorno agendado" },
+  "Catálogo da loja": { es: "Catálogo de la tienda" },
+  "Chamados para uma pessoa": { es: "Casos para una persona" },
+  "Chamar um atendente humano": { es: "Llamar a un agente humano" },
+  "Compras do cliente": { es: "Compras del cliente" },
+  "Confirma o horário que estava esperando a resposta da pessoa, para a equipe saber que ela vem mesmo.": {
+    es: "Confirma el horario que estaba esperando la respuesta de la persona, para que el equipo sepa que va a venir de verdad.",
+  },
+  "Confirmar um horário combinado": { es: "Confirmar un horario acordado" },
+  "Consultar as regras da empresa": { es: "Consultar las reglas de la empresa" },
+  "Consultar o que a empresa já sabe": { es: "Consultar lo que la empresa ya sabe" },
+  "Cria uma sugestão de retomar o contato com um cliente que esfriou, para uma pessoa aprovar antes de qualquer envio.": {
+    es: "Crea una sugerencia de retomar el contacto con un cliente que se enfrió, para que una persona la apruebe antes de cualquier envío.",
+  },
+  "Criar etapa no funil": { es: "Crear etapa en el embudo" },
+  "Criar uma entrada automática de contatos": { es: "Crear una entrada automática de contactos" },
+  "Deixa escrito no chamado o que mudou desde que ele foi aberto, para a pessoa que for atender não precisar começar do zero.": {
+    es: "Deja escrito en el caso lo que cambió desde que se abrió, para que la persona que lo atienda no tenga que empezar de cero.",
+  },
+  "Desmarca um horário combinado e devolve esse horário para outra pessoa poder pegar, o que não dá para desfazer.": {
+    es: "Cancela un horario acordado y devuelve ese horario para que otra persona pueda tomarlo — esto no se puede deshacer.",
+  },
+  "Desmarca um retorno que ainda não aconteceu, para o agente não insistir com quem já respondeu.": {
+    es: "Cancela un retorno que todavía no pasó, para que el agente no insista con quien ya respondió.",
+  },
+  "Desmarcar um compromisso": { es: "Cancelar un compromiso" },
+  "Devolve a conversa para o atendimento automático depois que uma pessoa atendeu, levando junto o que ficou combinado com o cliente. Só uma pessoa pode acionar.": {
+    es: "Devuelve la conversación a la atención automática después de que una persona atendió, llevando lo que quedó acordado con el cliente. Solo una persona puede activarlo.",
+  },
+  "Direcionar conversa para alguém": { es: "Dirigir conversación a alguien" },
+  "Encerrar o negócio como ganho ou perdido": { es: "Cerrar el negocio como ganado o perdido" },
+  "Encerrar um chamado com o desfecho": { es: "Cerrar un caso con el desenlace" },
+  "Encontra um cliente pelo nome, telefone ou e-mail, para o agente saber com quem está falando antes de responder.": {
+    es: "Encuentra un cliente por el nombre, teléfono o email, para que el agente sepa con quién está hablando antes de responder.",
+  },
+  "Entrada automática de contatos": { es: "Entrada automática de contactos" },
+  "Envia uma mensagem de WhatsApp para o cliente. Ele recebe de verdade, no celular dele, e não dá para desfazer.": {
+    es: "Envía un mensaje de WhatsApp al cliente. Lo recibe de verdad, en su celular, y no se puede deshacer.",
+  },
+  "Equipe de atendimento": { es: "Equipo de atención" },
+  "Faz uma origem voltar a receber contatos, ou parar. Desligada, o formulário do seu site continua no ar e ninguém do outro lado é avisado.": {
+    es: "Hace que una fuente vuelva a recibir contactos, o que se detenga. Apagada, el formulario de tu sitio sigue en línea y nadie del otro lado es avisado.",
+  },
+  "Faz uma regra passar a rodar sozinha, sempre que o gatilho dela acontecer, ou parar de rodar. Ligada, ela pode falar com clientes de verdade.": {
+    es: "Hace que una regla empiece a correr sola, cada vez que su gatillo ocurra, o que deje de correr. Encendida, puede hablar con clientes de verdad.",
+  },
+  "Fecha a oportunidade dizendo se ela foi ganha ou perdida e por quê, para o que já acabou parar de ser cobrado.": {
+    es: "Cierra la oportunidad diciendo si fue ganada o perdida y por qué, para que lo que ya terminó deje de aparecer pendiente.",
+  },
+  "Fecha um chamado deixando registrado como ele terminou, para ele parar de ocupar a fila de quem atende. Não dá para reabrir por aqui.": {
+    es: "Cierra un caso dejando registrado cómo terminó, para que deje de ocupar la fila de quien atiende. No se puede reabrir por aquí.",
+  },
+  "Funil de vendas": { es: "Embudo de ventas" },
+  "Guarda um aprendizado que vale para todos os atendimentos, marcado como escrito pelo assistente para você distinguir do que anotou.": {
+    es: "Guarda un aprendizaje que vale para todas las atenciones, marcado como escrito por el asistente para que distingas de lo que tú anotaste.",
+  },
+  "Interrompe o atendimento automático e chama uma pessoa, entregando um resumo do que já aconteceu na conversa.": {
+    es: "Interrumpe la atención automática y llama a una persona, entregando un resumen de lo que ya pasó en la conversación.",
+  },
+  "Ler o histórico da conversa": { es: "Leer el historial de la conversación" },
+  "Ler um chamado e o que a pessoa decidiu": { es: "Leer un caso y lo que la persona decidió" },
+  "Ligar ou desligar uma entrada de contatos": { es: "Activar o desactivar una entrada de contactos" },
+  "Ligar ou desligar uma regra automática": { es: "Activar o desactivar una regla automática" },
+  "Lista as oportunidades abertas que passaram do prazo sem movimento, das mais críticas para as menos urgentes — e, junto, as pessoas que estão esperando sem que nada esteja marcado para acontecer.": {
+    es: "Lista las oportunidades abiertas que pasaron el plazo sin movimiento, de las más críticas a las menos urgentes — y, junto, las personas que están esperando sin que nada esté marcado para pasar.",
+  },
+  "Lista as oportunidades de venda de um funil, com a etapa em que cada uma está e quem é o responsável por ela.": {
+    es: "Lista las oportunidades de venta de un embudo, con la etapa en la que está cada una y quién es el responsable de ella.",
+  },
+  "Lista as pessoas do time e o que cada uma pode fazer aqui dentro, para o agente saber para quem passar um atendimento.": {
+    es: "Lista a las personas del equipo y lo que cada una puede hacer aquí dentro, para que el agente sepa a quién pasarle una atención.",
+  },
+  "Lista os assuntos que já foram passados para uma pessoa resolver, com o estado de cada um, para o agente não pedir duas vezes a mesma coisa.": {
+    es: "Lista los asuntos que ya fueron pasados a una persona para resolver, con el estado de cada uno, para que el agente no pida dos veces la misma cosa.",
+  },
+  "Lista os compromissos com hora marcada de um cliente ou de um dia, com a situação de cada um: marcado, realizado ou desmarcado.": {
+    es: "Lista los compromisos con hora marcada de un cliente o de un día, con la situación de cada uno: marcado, realizado o cancelado.",
+  },
+  "Lista os textos que a empresa já escreveu para responder as situações de sempre, com o atalho de cada um.": {
+    es: "Lista los textos que la empresa ya escribió para responder a las situaciones de siempre, con el atajo de cada uno.",
+  },
+  "Listar conversas": { es: "Listar conversaciones" },
+  "Lê as mensagens já trocadas com o cliente, para o agente responder sem pedir que ele repita o que já contou.": {
+    es: "Lee los mensajes ya intercambiados con el cliente, para que el agente responda sin pedirle que repita lo que ya contó.",
+  },
+  "Lê as políticas e combinados que valem para todo atendimento, para o assistente seguir a regra da casa em vez de inventar uma.": {
+    es: "Lee las políticas y acuerdos que valen para toda atención, para que el asistente siga la regla de la casa en vez de inventar una.",
+  },
+  "Marca um horário para o agente voltar a falar com o cliente, para que a conversa não morra sem resposta.": {
+    es: "Marca un horario para que el agente vuelva a hablar con el cliente, para que la conversación no muera sin respuesta.",
+  },
+  "Marcar consulta ou sessão": { es: "Marcar consulta o sesión" },
+  "Mostra as colunas de um funil na ordem em que aparecem no quadro, para o agente saber onde pode colocar cada negócio.": {
+    es: "Muestra las columnas de un embudo en el orden en que aparecen en el tablero, para que el agente sepa dónde puede poner cada negocio.",
+  },
+  "Mostra as conversas em andamento, quem está cuidando de cada uma e a posição de cada cliente na fila de espera.": {
+    es: "Muestra las conversaciones en curso, quién está a cargo de cada una y la posición de cada cliente en la fila de espera.",
+  },
+  "Mostra as melhorias que o sistema sugeriu a partir dos atendimentos, com o motivo de cada uma. Aprovar continua sendo decisão sua.": {
+    es: "Muestra las mejoras que el sistema sugirió a partir de las atenciones, con el motivo de cada una. Aprobar sigue siendo decisión tuya.",
+  },
+  "Mostra o que a empresa deixou configurado para acontecer sozinho, o que dispara cada regra e se ela está ligada.": {
+    es: "Muestra lo que la empresa dejó configurado para pasar solo, qué dispara cada regla y si está activada.",
+  },
+  "Mostra o que este cliente já comprou, quanto pagou e como está a entrega, para o assistente não prometer prazo no escuro nem repetir uma oferta já aceita.": {
+    es: "Muestra lo que este cliente ya compró, cuánto pagó y cómo va la entrega, para que el asistente no prometa un plazo a ciegas ni repita una oferta ya aceptada.",
+  },
+  "Mostra o que rodou sozinho nos últimos tempos e o que deu errado, para descobrir o que parou de funcionar sem ninguém perceber.": {
+    es: "Muestra lo que corrió solo en los últimos tiempos y lo que salió mal, para descubrir qué dejó de funcionar sin que nadie lo notara.",
+  },
+  "Mostra os funis de venda existentes e suas etapas, para o agente saber onde pode colocar uma oportunidade.": {
+    es: "Muestra los embudos de venta existentes y sus etapas, para que el agente sepa dónde puede poner una oportunidad.",
+  },
+  "Mostra os horários em que um atendente pode receber, já descontando as folgas dele, o que ele tem marcado e os compromissos da agenda pessoal.": {
+    es: "Muestra los horarios en que un agente puede recibir, ya descontando sus días libres, lo que tiene marcado y los compromisos de la agenda personal.",
+  },
+  "Mostra os retornos combinados com o cliente: o que está marcado, o que já aconteceu e o que foi desmarcado.": {
+    es: "Muestra los retornos acordados con el cliente: lo que está marcado, lo que ya pasó y lo que fue cancelado.",
+  },
+  "Mostra os tipos de atendimento que dá para marcar, quanto cada um dura e como é feito, para o atendente de IA falar do que existe de verdade.": {
+    es: "Muestra los tipos de atención que se pueden marcar, cuánto dura cada uno y cómo se hace, para que el agente de IA hable de lo que existe de verdad.",
+  },
+  "Mostra os últimos contatos que entraram por uma origem e quais informações vieram, para descobrir por que algo não chegou como devia.": {
+    es: "Muestra los últimos contactos que entraron por una fuente y qué información llegó, para descubrir por qué algo no llegó como debía.",
+  },
+  "Mostra por onde chegam sozinhos os contatos vindos do site ou de outro sistema, se cada uma está ligada e quando recebeu pela última vez.": {
+    es: "Muestra por dónde llegan solos los contactos que vienen del sitio o de otro sistema, si cada una está activada y cuándo recibió por última vez.",
+  },
+  "Mostra quais marcadores a empresa já usa e em quantas conversas, para o agente reaproveitar em vez de inventar outro parecido.": {
+    es: "Muestra qué etiquetas usa la empresa y en cuántas conversaciones, para que el agente las reutilice en vez de inventar otra parecida.",
+  },
+  "Mostra quais materiais estão no acervo da empresa e se foram processados, para saber se faltou conteúdo ou se algo falhou.": {
+    es: "Muestra qué materiales están en el acervo de la empresa y si fueron procesados, para saber si faltó contenido o si algo falló.",
+  },
+  "Mostra quais pessoas da equipe estão em atendimento neste momento, quantas conversas cada uma já tem e quem ainda tem espaço para receber mais uma.": {
+    es: "Muestra qué personas del equipo están en atención en este momento, cuántas conversaciones tiene cada una y quién todavía tiene espacio para recibir una más.",
+  },
+  "Mostra quantas pessoas estão esperando atendimento agora e há quanto tempo, para priorizar quem espera mais.": {
+    es: "Muestra cuántas personas están esperando atención ahora y hace cuánto tiempo, para priorizar a quien espera más.",
+  },
+  "Mostra quem pediu para exportar ou apagar os próprios dados e qual o prazo, para o assistente parar de insistir com quem pediu para sair.": {
+    es: "Muestra quién pidió exportar o borrar sus propios datos y cuál es el plazo, para que el asistente deje de insistir con quien pidió salir.",
+  },
+  "Move a oportunidade para outra etapa do funil, registrando o avanço da negociação ou a perda do negócio.": {
+    es: "Mueve la oportunidad a otra etapa del embudo, registrando el avance de la negociación o la pérdida del negocio.",
+  },
+  "Move um compromisso já marcado para outro horário, mantendo o mesmo cliente e o mesmo tipo de atendimento.": {
+    es: "Mueve un compromiso ya marcado a otro horario, manteniendo el mismo cliente y el mismo tipo de atención.",
+  },
+  "Organização da operação": { es: "Organización de la operación" },
+  "Passa a conversa para um atendente, transfere para outra pessoa ou devolve o cliente para a fila de espera.": {
+    es: "Pasa la conversación a un agente, la transfiere a otra persona o devuelve al cliente a la fila de espera.",
+  },
+  "Pega uma resposta pronta e troca as lacunas pelos dados do cliente, avisando se sobrou alguma sem preencher. Não envia nada.": {
+    es: "Toma una respuesta lista y cambia los espacios en blanco por los datos del cliente, avisando si quedó alguno sin llenar. No envía nada.",
+  },
+  "Preencher uma resposta pronta": { es: "Completar una respuesta lista" },
+  "Privacidade e dados do cliente": { es: "Privacidad y datos del cliente" },
+  "Procura a resposta nos materiais que você cadastrou, para o assistente responder com a informação da sua empresa em vez de inventar.": {
+    es: "Busca la respuesta en los materiales que registraste, para que el asistente responda con la información de tu empresa en vez de inventar.",
+  },
+  "Procura um produto no catálogo da loja e devolve o preço exato e o que está disponível, para o assistente responder com o valor cadastrado em vez de estimar.": {
+    es: "Busca un producto en el catálogo de la tienda y devuelve el precio exacto y lo que está disponible, para que el asistente responda con el valor registrado en vez de estimar.",
+  },
+  "Quando o cliente diz o e-mail, o nome ou o telefone dele na conversa, guarda essa informação para uma pessoa conferir antes de entrar na ficha.": {
+    es: "Cuando el cliente dice su email, nombre o teléfono en la conversación, guarda esa información para que una persona la confirme antes de que entre en la ficha.",
+  },
+  "Registra uma nova oportunidade de venda no funil, para que o interesse demonstrado pelo cliente não se perca.": {
+    es: "Registra una nueva oportunidad de venta en el embudo, para que el interés demostrado por el cliente no se pierda.",
+  },
+  "Registrar o que aconteceu num chamado": { es: "Registrar lo que pasó en un caso" },
+  "Registrar se a pessoa veio ou faltou": { es: "Registrar si la persona vino o faltó" },
+  "Regras automáticas": { es: "Reglas automáticas" },
+  "Regras da empresa": { es: "Reglas de la empresa" },
+  "Remarcar um compromisso": { es: "Reprogramar un compromiso" },
+  "Renomear ou reordenar uma etapa": { es: "Renombrar o reordenar una etapa" },
+  "Reserva um horário do atendente para receber o cliente. A pessoa passa a contar com esse horário, então não é um registro interno.": {
+    es: "Reserva un horario del agente para recibir al cliente. La persona pasa a contar con ese horario, así que no es un registro interno.",
+  },
+  "Respostas prontas": { es: "Respuestas listas" },
+  "Retomar o atendimento automático": { es: "Retomar la atención automática" },
+  "Retornos e acompanhamento": { es: "Retornos y seguimiento" },
+  "Sugerir retomar contato com quem sumiu": { es: "Sugerir retomar contacto con quien desapareció" },
+  "Time de atendimento": { es: "Equipo de atención" },
+  "Tira uma coluna do quadro e leva os negócios que estavam nela para outra coluna que você escolher. O histórico continua guardado.": {
+    es: "Saca una columna del tablero y lleva los negocios que estaban en ella a otra columna que elijas. El historial se sigue guardando.",
+  },
+  "Troca o nome de uma coluna do funil, muda o lugar dela na ordem ou define em qual delas o negócio é dado como fechado ou perdido.": {
+    es: "Cambia el nombre de una columna del embudo, cambia su lugar en el orden o define en cuál de ellas el negocio se da como cerrado o perdido.",
+  },
+  "Ver a fila de atendimento": { es: "Ver la fila de atención" },
+  "Ver as entradas automáticas de contatos": { es: "Ver las entradas automáticas de contactos" },
+  "Ver as regras automáticas": { es: "Ver las reglas automáticas" },
+  "Ver as respostas prontas": { es: "Ver las respuestas listas" },
+  "Ver horários livres na agenda": { es: "Ver horarios libres en la agenda" },
+  "Ver o que a empresa atende": { es: "Ver lo que la empresa atiende" },
+  "Ver o que as regras dispararam": { es: "Ver lo que las reglas dispararon" },
+  "Ver o que chegou por uma entrada": { es: "Ver lo que llegó por una entrada" },
+  "Ver os chamados em aberto": { es: "Ver los casos abiertos" },
+  "Ver os compromissos marcados": { es: "Ver los compromisos marcados" },
+  "Ver os marcadores em uso": { es: "Ver las etiquetas en uso" },
+  "Ver os materiais cadastrados": { es: "Ver los materiales registrados" },
+  "Ver os retornos de um cliente": { es: "Ver los retornos de un cliente" },
+  "Ver pedidos de privacidade": { es: "Ver pedidos de privacidad" },
+  "Ver quem esfriou e quem ficou sem próximo passo": { es: "Ver quién se enfrió y quién se quedó sin próximo paso" },
+  "Ver quem pode assumir agora": { es: "Ver quién puede asumir ahora" },
+  "Ver quem trabalha na empresa": { es: "Ver quién trabaja en la empresa" },
+  "Ver uma conversa": { es: "Ver una conversación" },
+
+  // ─── lib/ai/agents/uso-de-capacidades.ts (painel "Uso das capacidades") ───
+  "Capacidade removida do sistema": { es: "Capacidad eliminada del sistema" },
+  "Ligada há pouco tempo. Ainda não houve atendimento em que ela fosse útil — volte aqui depois de alguns dias.": {
+    es: "Activada hace poco tiempo. Todavía no hubo una atención en la que fuera útil — vuelve aquí dentro de unos días.",
+  },
+  "O agente usou esta capacidade sem ela estar ligada nesta configuração. Ou ela foi desligada depois de já ter sido usada, ou é o pedido de ajuda humana — esse o sistema oferece sozinho quando o repasse para uma pessoa está ativado.": {
+    es: "El agente usó esta capacidad sin que estuviera activada en esta configuración. O fue desactivada después de haber sido usada, o es el pedido de ayuda humana — ese el sistema lo ofrece solo cuando el traspaso a una persona está activado.",
+  },
+  "Só foi usada nos seus testes. Nenhum atendimento real precisou dela ainda.": {
+    es: "Solo fue usada en tus pruebas. Ninguna atención real la necesitó todavía.",
+  },
+
+  // ─── lib/ai/guardrails/lista-de-conferencia.ts (Painel de Segurança) ───
+  "Não prometer checar a agenda sem checar de verdade": {
+    es: "No prometer revisar la agenda sin revisarla de verdad",
+  },
+  "Se a pessoa respondeu STOP, SAIR ou pediu para não receber mais, nada é enviado a ela.": {
+    es: "Si la persona respondió STOP, SALIR o pidió no recibir más, no se le envía nada.",
+  },
+  "Contato anonimizado a pedido não recebe mensagem, e prospecção sem base legal não sai.": {
+    es: "Un contacto anonimizado a pedido no recibe mensajes, y la prospección sin base legal no sale.",
+  },
+  "Espaça as mensagens para o seu número não parecer robô e ser bloqueado pelo WhatsApp.": {
+    es: "Espacia los mensajes para que tu número no parezca un robot y sea bloqueado por WhatsApp.",
+  },
+  "Fora da janela de 24 horas, só modelo aprovado sai — é o que o próprio WhatsApp permite.": {
+    es: "Fuera de la ventana de 24 horas, solo sale una plantilla aprobada — es lo que el propio WhatsApp permite.",
+  },
+  "Evita mandar a mesma frase idêntica para muita gente, que é o padrão que denuncia disparo em massa.": {
+    es: "Evita mandar la misma frase idéntica a mucha gente, que es el patrón que delata el envío masivo.",
+  },
+  "Barra a mensagem em que o assistente inventa desconto, valor ou data de entrega.": {
+    es: "Bloquea el mensaje en el que el asistente inventa un descuento, un valor o una fecha de entrega.",
+  },
+  "Uma segunda leitura, feita por um modelo, para pegar a promessa escrita de um jeito que a regra fixa não reconhece.": {
+    es: "Una segunda lectura, hecha por un modelo, para detectar la promesa escrita de una forma que la regla fija no reconoce.",
+  },
+  "Impede o \"vou pedir para o responsável te ligar\" quando nenhum chamado foi aberto de verdade.": {
+    es: "Impide el \"le voy a pedir al responsable que te llame\" cuando ningún caso fue abierto de verdad.",
+  },
+  "Barra nome de ferramenta, nome de tabela e código de erro na mensagem que o cliente lê.": {
+    es: "Bloquea nombre de herramienta, nombre de tabla y código de error en el mensaje que lee el cliente.",
+  },
+  "Barra o \"vou verificar/confirmar o horário\" quando o assistente ainda não chamou a ferramenta de agenda nesta resposta — a promessa só sai depois de checar de verdade.": {
+    es: "Bloquea el \"voy a verificar/confirmar el horario\" cuando el asistente todavía no llamó a la herramienta de agenda en esta respuesta — la promesa solo sale después de revisar de verdad.",
+  },
+  "Se o cliente pergunta se está falando com um robô, a resposta não pode enganar.": {
+    es: "Si el cliente pregunta si está hablando con un robot, la respuesta no puede engañar.",
+  },
+  "Lê a mensagem que chega e reconhece quem está tentando fazer o assistente ignorar as suas instruções.": {
+    es: "Lee el mensaje que llega y reconoce a quien está intentando hacer que el asistente ignore sus instrucciones.",
+  },
+  "Quem pediu para parar tem o direito de ser deixado em paz — e insistir é infração, não estratégia.": {
+    es: "Quien pidió parar tiene el derecho de que lo dejen en paz — e insistir es infracción, no estrategia.",
+  },
+  "É obrigação legal. Apagar dados é irreversível por desenho, e escrever para quem foi apagado desfaria isso.": {
+    es: "Es obligación legal. Borrar datos es irreversible por diseño, y escribirle a quien fue borrado deshacería eso.",
+  },
+  "É o que impede seu número de ser bloqueado — e o número é o seu negócio.": {
+    es: "Es lo que impide que tu número sea bloqueado — y el número es tu negocio.",
+  },
+  "Quem impõe é o WhatsApp, não nós. Desligar aqui não libera nada: a mensagem seria recusada lá, ou cobrada.": {
+    es: "Quien lo impone es WhatsApp, no nosotros. Desactivar esto aquí no libera nada: el mensaje sería rechazado allá, o cobrado.",
+  },
+  "Texto idêntico em massa é o gatilho de spam do WhatsApp — mesmo risco do ritmo de envio.": {
+    es: "El texto idéntico en masa es el gatillo de spam de WhatsApp — mismo riesgo que el ritmo de envío.",
+  },
+  "Uma promessa escrita obriga o seu negócio. A conferência é uma regra fixa, não custa nada e não tem troca a oferecer.": {
+    es: "Una promesa escrita obliga a tu negocio. La verificación es una regla fija, no cuesta nada y no tiene nada que ofrecer a cambio.",
+  },
+  "É promessa que só você pode cumprir, e o cliente fica esperando. Regra fixa, sem custo.": {
+    es: "Es una promesa que solo tú puedes cumplir, y el cliente se queda esperando. Regla fija, sin costo.",
+  },
+  "É a conferência que derrubou o vazamento medido de 30% para zero. Desligar reabre exatamente o defeito que ela existe para fechar.": {
+    es: "Es la verificación que bajó la fuga medida del 30% a cero. Desactivarla reabre exactamente el defecto que existe para cerrar.",
+  },
+  "É a mesma promessa vazia do 'vou pedir pro responsável', só que sobre agenda: o cliente fica esperando uma confirmação que nunca foi checada. Regra fixa, sem custo.": {
+    es: "Es la misma promesa vacía del 'le voy a pedir al responsable', solo que sobre la agenda: el cliente se queda esperando una confirmación que nunca fue revisada. Regla fija, sin costo.",
+  },
+  "Esconder que é um assistente é enganar o cliente.": {
+    es: "Ocultar que es un asistente es engañar al cliente.",
+  },
+  "+1 consulta ao modelo por mensagem enviada": { es: "+1 consulta al modelo por mensaje enviado" },
+  "+1 consulta ao modelo por mensagem recebida": { es: "+1 consulta al modelo por mensaje recibido" },
 };
 
 /**
