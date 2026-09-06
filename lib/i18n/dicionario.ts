@@ -2944,6 +2944,31 @@ export const DICIONARIO: Traducoes = {
   "A mensagem está na fila e sai assim que o canal aceitar.": {
     es: "El mensaje está en la cola y sale en cuanto el canal lo acepte.",
   },
+  // ─── lib/channels/frases-de-falha.ts (texto de tela por código do adapter) ───
+  "O número escolhido não está conectado no momento. Reconecte em Conexões — a mensagem sai sozinha quando ele voltar.": {
+    es: "El número elegido no está conectado en este momento. Reconéctalo en Conexiones — el mensaje sale solo cuando vuelva.",
+  },
+  "A conexão de WhatsApp ainda não foi configurada nesta instalação.": {
+    es: "La conexión de WhatsApp todavía no fue configurada en esta instalación.",
+  },
+  "Esse número foi excluído da Central de Conexões. Escolha outro número nesta automação.": {
+    es: "Ese número fue eliminado de la Central de Conexiones. Elige otro número en esta automatización.",
+  },
+  "O contato não tem telefone para receber a mensagem.": {
+    es: "El contacto no tiene teléfono para recibir el mensaje.",
+  },
+  "Não conseguimos falar com o serviço de WhatsApp. Confira se ele está no ar.": {
+    es: "No pudimos comunicarnos con el servicio de WhatsApp. Verifica que esté funcionando.",
+  },
+  "O WhatsApp Oficial recusou o envio. Confira a conexão em Conexões.": {
+    es: "El WhatsApp Oficial rechazó el envío. Verifica la conexión en Conexiones.",
+  },
+  "O canal recusou o envio. Confira a conexão em Conexões.": {
+    es: "El canal rechazó el envío. Verifica la conexión en Conexiones.",
+  },
+  "Não conseguimos preparar o arquivo para envio.": {
+    es: "No pudimos preparar el archivo para el envío.",
+  },
   "O agente escolhido não tem versão publicada. Publique-o em Agentes de IA para a automação poder usá-lo.": {
     es: "El agente elegido no tiene versión publicada. Publícalo en Agentes de IA para que la automatización pueda usarlo.",
   },
