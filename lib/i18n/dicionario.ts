@@ -7617,6 +7617,11 @@ export const DICIONARIO: Traducoes = {
   "A lista mostra só os mais recentes.": { es: "La lista muestra solo los más recientes." },
   "No período houve": { es: "En el período hubo" },
   "acontecimentos.": { es: "sucesos." },
+
+  // ─── lib/ai/pontos/resolver.ts (avisos do painel de Provedores de IA) ───
+  "Este ponto usa o modelo definido na versão publicada do agente; a escolha do painel não se aplica.": {
+    es: "Este punto usa el modelo definido en la versión publicada del agente; la elección del panel no se aplica.",
+  },
 };
 
 /**
