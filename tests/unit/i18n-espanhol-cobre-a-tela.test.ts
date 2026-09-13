@@ -320,7 +320,53 @@ function textoCruDasTelas(): Achado[] {
   return achados;
 }
 
-/** Toda chave literal passada a `t()` / `traduzir()` em código de produção. */
+/**
+ * Tabelas de rótulo `const X = {...}` / `const X = [...]` declaradas no TOPO
+ * do módulo — o padrão que vira `t(X[chave])` ou `t(X.chave)` quando o rótulo
+ * depende de um enum (status, severidade, tipo).
+ *
+ * Resolve só o caso ESTÁTICO: literal de objeto/array, no mesmo arquivo, sem
+ * `require`/import remontando o valor. Isso alcança a maioria dos casos reais
+ * (issue #651) sem virar um type-checker — cross-module e wrapper (`const t =
+ * (texto) => traduzir(texto, idioma)`, ~200 ocorrências) ficam de fora de
+ * propósito: resolver esses exigiria inferência de tipo completa, e a issue
+ * #603 (proibir `t(<variável>)` na origem) é o caminho para o resto.
+ */
+function tabelasDeModulo(fonte: ts.SourceFile): Map<string, ts.Expression> {
+  const tabelas = new Map<string, ts.Expression>();
+  for (const stmt of fonte.statements) {
+    if (!ts.isVariableStatement(stmt)) continue;
+    if ((stmt.declarationList.flags & ts.NodeFlags.Const) === 0) continue;
+    for (const decl of stmt.declarationList.declarations) {
+      if (!ts.isIdentifier(decl.name) || !decl.initializer) continue;
+      let init = decl.initializer;
+      // `as const satisfies Record<...>` é o padrão de tabela fechada do
+      // projeto (ex.: SCORE_BAND_LABELS) — as duas camadas precisam cair para
+      // o literal aparecer.
+      while (ts.isAsExpression(init) || ts.isSatisfiesExpression(init)) init = init.expression;
+      if (ts.isObjectLiteralExpression(init) || ts.isArrayLiteralExpression(init)) {
+        tabelas.set(decl.name.text, init);
+      }
+    }
+  }
+  return tabelas;
+}
+
+/** Todo literal string dentro de uma tabela de rótulo — cada um é um rótulo possível. */
+function valoresDaTabela(tabela: ts.Expression): ts.StringLiteralLike[] {
+  const valores: ts.StringLiteralLike[] = [];
+  const coleta = (no: ts.Expression) => {
+    if (ts.isStringLiteral(no) || ts.isNoSubstitutionTemplateLiteral(no)) valores.push(no);
+  };
+  if (ts.isObjectLiteralExpression(tabela)) {
+    for (const prop of tabela.properties) if (ts.isPropertyAssignment(prop)) coleta(prop.initializer);
+  } else if (ts.isArrayLiteralExpression(tabela)) {
+    for (const el of tabela.elements) coleta(el);
+  }
+  return valores;
+}
+
+/** Toda chave literal — ou vinda de tabela de módulo resolvível — passada a `t()` / `traduzir()`. */
 function chavesUsadas(): Map<string, string[]> {
   const usadas = new Map<string, string[]>();
   const areas = ["app", "components", "hooks", "lib"];
@@ -341,6 +387,11 @@ function chavesUsadas(): Map<string, string[]> {
       const src = readFileSync(arq, "utf8");
       if (!/\bt\(|\btraduzir\(/.test(src)) continue;
       const fonte = ts.createSourceFile(arq, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+      const tabelas = tabelasDeModulo(fonte);
+      const registra = (texto: string, no: ts.Node) => {
+        const linha = fonte.getLineAndCharacterOfPosition(no.getStart()).line + 1;
+        usadas.set(texto, [...(usadas.get(texto) ?? []), `${rel}:${linha}`]);
+      };
       const visita = (no: ts.Node): void => {
         if (ts.isCallExpression(no) && no.arguments.length > 0) {
           const alvo = no.expression;
@@ -352,8 +403,13 @@ function chavesUsadas(): Map<string, string[]> {
           if (nome === "t" || nome === "traduzir") {
             const a = no.arguments[0];
             if (a && (ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a))) {
-              const linha = fonte.getLineAndCharacterOfPosition(a.getStart()).line + 1;
-              usadas.set(a.text, [...(usadas.get(a.text) ?? []), `${rel}:${linha}`]);
+              registra(a.text, a);
+            } else if (a && ts.isElementAccessExpression(a) && ts.isIdentifier(a.expression)) {
+              const tabela = tabelas.get(a.expression.text);
+              if (tabela) for (const v of valoresDaTabela(tabela)) registra(v.text, a);
+            } else if (a && ts.isPropertyAccessExpression(a) && ts.isIdentifier(a.expression)) {
+              const tabela = tabelas.get(a.expression.text);
+              if (tabela) for (const v of valoresDaTabela(tabela)) registra(v.text, a);
             }
           }
         }

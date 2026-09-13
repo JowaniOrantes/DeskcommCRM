@@ -8353,6 +8353,29 @@ export const DICIONARIO: Traducoes = {
   },
   "Convite reenviado.": { es: "Invitación reenviada." },
   "Convite revogado.": { es: "Invitación revocada." },
+
+  // ─── issue #651 — tabelas de rótulo que só o guarda ampliado alcança ───
+  //
+  // `chavesUsadas()` passou a resolver `t(X[k])`/`t(X.k)` quando `X` é tabela
+  // `const` de módulo. Estas 8 chaves saíam em português com o guarda antigo
+  // verde — medido rodando o guarda ampliado contra `main` antes de adicionar
+  // qualquer entrada aqui: as 8 abaixo, e só elas, reprovavam.
+  // ─── app/app/lgpd/requests/RequestsTable.tsx (SLA_LABELS) ───
+  "OK": { es: "OK" },
+  // ─── lib/kanban/score-band.ts (SCORE_BAND_LABELS) ───
+  "Frio": { es: "Frío" },
+  "Morno": { es: "Tibio" },
+  "Quente": { es: "Caliente" },
+  // ─── components/ai/GuardrailsEditor.tsx (KIND_LABELS) ───
+  //
+  // As 4 chaves abaixo já nascem em INGLÊS, não em português — bug à parte de
+  // #651: a convenção do projeto é "a chave é o texto em português", e aqui
+  // não é. Fora do escopo deste PR (é a fonte que precisa mudar, não a
+  // tradução), sinalizado no PR para abrir issue própria.
+  "Regex output block": { es: "Bloqueo de salida por regex" },
+  "RAG must hit": { es: "RAG debe coincidir" },
+  "Regex input block": { es: "Bloqueo de entrada por regex" },
+  "Contact flag": { es: "Marca de contacto" },
 };
 
 /**
