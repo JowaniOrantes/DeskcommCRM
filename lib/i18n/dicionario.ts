@@ -88,7 +88,7 @@ export const DICIONARIO: Traducoes = {
   "Agente selecionado": { es: "Agente seleccionado" },
   "Configurar assistente de voz": { es: "Configurar asistente de voz" },
   "Agente pronto. Escolha o ritmo abaixo e inicie quando estiver preparado.": { es: "Agente listo. Elige el ritmo abajo e inicia cuando esté listo." },
-  "Resposta interrompida. Sua mensagem foi mantida para tentar novamente.": { es: "Se interrumpió la respuesta. Tu mensaje se conservó para que vuelva a intentarlo." },
+  "Resposta interrompida. Sua mensagem foi mantida para tentar novamente.": { es: "Se interrumpió la respuesta. Tu mensaje se conservó. ¡Vuelve a intentarlo!" },
   "Complete a configuração e recupere uma publicação pendente antes de testar.": { es: "Completa la configuración y recupera cualquier publicación pendiente antes de probar." },
   "Não foi possível recuperar o rascunho.": { es: "No se pudo recuperar el borrador." },
   "Não foi possível publicar o agente.": { es: "No se pudo publicar el agente." },
@@ -1888,7 +1888,7 @@ export const DICIONARIO: Traducoes = {
   "ligação sem saída": { es: "conexión sin salida" },
   "ligações sem saída": { es: "conexiones sin salida" },
   "neste nó. Elas continuam desenhadas, mas param de levar a lugar nenhum até você religá-las.": {
-    es: "en este nodo. Siguen dibujadas, pero no llevan a ningún lado hasta que las vuelva a conectar.",
+    es: "en este nodo. Siguen dibujadas, pero no llevan a ningún lado hasta que las vuelvas a conectar.",
   },
   "Trocar mesmo assim": { es: "Cambiar de todas formas" },
   "Seguir por aqui quando": { es: "Seguir por aquí cuando" },
