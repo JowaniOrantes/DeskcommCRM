@@ -1654,6 +1654,14 @@ esac
   esac
   envq APP_NAME "$APP_NAME"
   envq APP_LOCALE "$APP_LOCALE"
+  # Idioma da CLI (t()/_i18n.sh) — distinto de APP_LOCALE, que é o idioma da
+  # aplicação web para os CLIENTES da empresa. Esta é a escolha que
+  # perguntar_idioma_cli() fez no início deste script. Grava para persistir
+  # entre execuções; hoje só install.sh e _common.sh a leem (DESKCOMM_IDIOMA_CLI
+  # no ambiente já exportada vence esta linha na resolução de _i18n.sh) — os
+  # demais scripts do kit (update.sh, backup.sh…) ainda não sourceiam _i18n.sh
+  # depois do load_env, então por ora eles continuam em pt-BR.
+  envq DESKCOMM_IDIOMA_CLI "$IDIOMA_CLI"
   envq APP_LOGO_URL "${APP_LOGO_URL:-}"
   # Perguntar sem gravar seria PIOR que não perguntar: este bloco fecha com
   # `} > .env`, que TRUNCA o arquivo a partir da lista fechada de `envq` acima e
