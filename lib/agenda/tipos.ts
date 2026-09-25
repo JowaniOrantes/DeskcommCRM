@@ -39,15 +39,15 @@ export type CategoriaDeAgendamento = (typeof CATEGORIAS_DE_AGENDAMENTO)[number];
 
 export const ROTULO_DA_CATEGORIA: Record<CategoriaDeAgendamento, string> = {
   consulta: "Consulta",
-  procedimento: "Procedimento",
+  procedimento: "Procedimiento",
   retorno: "Retorno",
   visita: "Visita",
-  vistoria: "Vistoria",
-  reuniao: "Reunião",
+  vistoria: "Inspección",
+  reuniao: "Reunión",
   call: "Call",
-  orcamento: "Orçamento",
-  demonstracao: "Demonstração",
-  outro: "Outro",
+  orcamento: "Presupuesto",
+  demonstracao: "Demostración",
+  outro: "Otro",
 };
 
 /** Onde o compromisso acontece — e é isto que decide o que a tela pergunta. */
@@ -62,9 +62,9 @@ export type LocalDeAgendamento = (typeof LOCAIS_DE_AGENDAMENTO)[number];
 
 export const ROTULO_DO_LOCAL: Record<LocalDeAgendamento, string> = {
   in_person: "Presencial",
-  phone: "Telefone",
+  phone: "Teléfono",
   whatsapp: "WhatsApp",
-  video_link: "Link de vídeo",
+  video_link: "Enlace de vídeo",
   google_meet: "Google Meet",
 };
 
@@ -93,11 +93,11 @@ export const SITUACOES_DO_AGENDAMENTO = [
 export type SituacaoDoAgendamento = (typeof SITUACOES_DO_AGENDAMENTO)[number];
 
 export const ROTULO_DA_SITUACAO: Record<SituacaoDoAgendamento, string> = {
-  pending: "Aguardando confirmação",
+  pending: "Esperando confirmación",
   confirmed: "Confirmado",
   cancelled: "Cancelado",
   completed: "Realizado",
-  no_show: "Não compareceu",
+  no_show: "No se presentó",
 };
 
 /**
@@ -151,11 +151,11 @@ export const AUTORES_DO_AGENDAMENTO = ["user", "ai", "system", "contact", "sync"
 export type AutorDoAgendamento = (typeof AUTORES_DO_AGENDAMENTO)[number];
 
 export const ROTULO_DO_AUTOR: Record<AutorDoAgendamento, string> = {
-  user: "Marcado pela equipe",
-  ai: "Marcado pelo atendente de IA",
-  system: "Marcado pelo sistema",
-  contact: "Marcado pelo próprio cliente",
-  sync: "Veio da agenda conectada",
+  user: "Programado por el equipo",
+  ai: "Programado por el agente de IA",
+  system: "Programado por el sistema",
+  contact: "Programado por el propio cliente",
+  sync: "Vino del calendario conectado",
 };
 
 /** Por qual porta o agendamento entrou. */
@@ -183,12 +183,12 @@ export type SituacaoDaConexao = (typeof SITUACOES_DA_CONEXAO)[number];
 
 export const ROTULO_DA_SITUACAO_DA_CONEXAO: Record<SituacaoDaConexao, string> = {
   connecting: "Conectando",
-  healthy: "Conectada",
-  token_expired: "Reconecte sua agenda",
-  scope_missing: "Falta permissão de calendário",
-  disconnected: "Desconectada",
-  rate_limited: "O Google pediu para esperar",
-  error: "Com erro",
+  healthy: "Conectado",
+  token_expired: "Reconecta tu calendario",
+  scope_missing: "Falta permiso de calendario",
+  disconnected: "Desconectado",
+  rate_limited: "Google pidió que esperemos",
+  error: "Con error",
 };
 
 /**
@@ -301,9 +301,9 @@ export const ENTIDADE_DO_AGENDAMENTO = "calendar_appointment" as const;
  * Enquanto esta string era digitada como literal dentro dos handlers, ela ERA o
  * caminho normal em três dos quatro gatilhos, e o efeito foi uma condição
  * decorativa: a tela oferece "Tipo de atendimento contém …", a pessoa configura,
- * salva, e a regra nunca dispara porque o payload sempre dizia "Agendamento".
+ * salva, e a regra nunca dispara porque o payload sempre dizia "Cita".
  */
-export const NOME_GENERICO_DO_TIPO = "Agendamento" as const;
+export const NOME_GENERICO_DO_TIPO = "Cita" as const;
 
 /**
  * O tipo de atividade que o agendamento emite na timeline do lead.
