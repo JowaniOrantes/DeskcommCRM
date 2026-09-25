@@ -289,6 +289,28 @@ y, si de verdad es un Traefik, pon REVERSE_PROXY=traefik en el .env y vuelve a e
   ["✖ {1} inválido:"]="✖ {1} inválido:"
   ["Corrija o .env e rode de novo."]="Corrige el .env y vuelve a ejecutar esto."
   ["✓ segredos prontos"]="✓ secretos listos"
+
+  # ── install.sh: red del Traefik, telemetría, escritura del .env ─────────
+  ["  (o Traefik roda em modo host, então o CRM publica numa rede própria: {1})"]="  (Traefik corre en modo host, así que el CRM publica en una red propia: {1})"
+  ["Não consegui descobrir a rede Docker do seu Traefik. Rode 'docker network ls',
+identifique a rede dele e ponha TRAEFIK_NETWORK=<nome> no .env antes de tentar de novo."]="No pude averiguar la red Docker de tu Traefik. Ejecuta 'docker network ls',
+identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a intentarlo."
+  ["  (entrypoints do seu Traefik: {1} para HTTP, {2} para HTTPS)"]="  (entrypoints de tu Traefik: {1} para HTTP, {2} para HTTPS)"
+  ["Telemetria de erros (opcional)"]="Telemetría de errores (opcional)"
+  ["Podemos receber os relatórios de ERRO desta instalação (stack trace) para"]="Podemos recibir los reportes de ERROR de esta instalación (stack trace) para"
+  ["corrigir bugs que afetam todo mundo. CPF, telefone e e-mail são substituídos,"]="corregir errores que afectan a todos. El CPF, teléfono y correo se sustituyen,"
+  ["cabeçalhos sensíveis removidos e tokens de webhook/convite redigidos da URL."]="se quitan los encabezados sensibles y se redactan los tokens de webhook/invitación de la URL."
+  ["NÃO enviamos rastreamento de performance nem replay de sessão."]="NO enviamos rastreo de rendimiento ni repetición de sesión."
+  ["Seus dados de clientes, conversas e banco NUNCA saem daqui."]="Tus datos de clientes, conversaciones y base de datos NUNCA salen de aquí."
+  ["Você pode mudar depois no .env, a qualquer momento."]="Puedes cambiarlo después en el .env, en cualquier momento."
+  ["  Enviar relatórios de erro anonimizados? (s/N) "]="  ¿Enviar reportes de error anonimizados? (s/N) "
+  ["✓ Telemetria de erros ligada — obrigado, isso ajuda o projeto."]="✓ Telemetría de errores activada — gracias, esto ayuda al proyecto."
+  ["✓ Telemetria desligada — nada será enviado."]="✓ Telemetría desactivada — no se enviará nada."
+  ["Escrevendo .env"]="Escribiendo .env"
+  ["→ preservando {1} variável(is) que você acrescentou à mão"]="→ preservando {1} variable(s) que agregaste a mano"
+  ["⚠ APP_IMAGE está pinado por digest."]="⚠ APP_IMAGE está fijado por digest."
+  ["  O worker e o scheduler ficam em 'stable' — ajuste WORKER_IMAGE/SCHEDULER_IMAGE"]="  El worker y el scheduler quedan en 'stable' — ajusta WORKER_IMAGE/SCHEDULER_IMAGE"
+  ["  no .env se você precisa deles num digest específico também."]="  en el .env si también los necesitas en un digest específico."
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…

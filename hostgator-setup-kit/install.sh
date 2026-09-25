@@ -1424,11 +1424,11 @@ if [ "$REVERSE_PROXY" = "traefik" ] && [ -z "${TRAEFIK_NETWORK:-}" ] && [ -n "$t
   traefik_redes="$(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$traefik_container" 2>/dev/null || true)"
   TRAEFIK_NETWORK="$(rede_do_traefik "$traefik_netmode" "$traefik_redes" "$rede_do_projeto")"
   [ "$traefik_netmode" = "host" ] && \
-    c_dim "  (o Traefik roda em modo host, então o CRM publica numa rede própria: ${TRAEFIK_NETWORK})"
+    c_dim "$(t "  (o Traefik roda em modo host, então o CRM publica numa rede própria: {1})" "$TRAEFIK_NETWORK")"
 fi
 if [ "$REVERSE_PROXY" = "traefik" ] && [ -z "${TRAEFIK_NETWORK:-}" ]; then
-  die "Não consegui descobrir a rede Docker do seu Traefik. Rode 'docker network ls',
-identifique a rede dele e ponha TRAEFIK_NETWORK=<nome> no .env antes de tentar de novo."
+  die "$(t "Não consegui descobrir a rede Docker do seu Traefik. Rode 'docker network ls',
+identifique a rede dele e ponha TRAEFIK_NETWORK=<nome> no .env antes de tentar de novo.")"
 fi
 # Os nomes dos entrypoints saem do MESMO contêiner que já respondeu pela rede.
 # Só entra onde o .env está vazio: quem declarou o nome à mão manda mais que a
@@ -1446,7 +1446,7 @@ if [ "$REVERSE_PROXY" = "traefik" ] && [ -n "$traefik_container" ] \
     TRAEFIK_ENTRYPOINT="${entrypoints_achados##* }"
   fi
   if [ -n "${TRAEFIK_ENTRYPOINT:-}" ]; then
-    c_dim "  (entrypoints do seu Traefik: ${TRAEFIK_ENTRYPOINT_HTTP:-web} para HTTP, ${TRAEFIK_ENTRYPOINT} para HTTPS)"
+    c_dim "$(t "  (entrypoints do seu Traefik: {1} para HTTP, {2} para HTTPS)" "${TRAEFIK_ENTRYPOINT_HTTP:-web}" "$TRAEFIK_ENTRYPOINT")"
   fi
 fi
 # Confere (e cria, quando a rede é a nossa) — em _common.sh, porque o update.sh
@@ -1465,25 +1465,25 @@ if [ -z "${SENTRY_DSN+x}" ]; then
     # Automação não consente por ninguém. Sem valor explícito, fica desligado.
     SENTRY_DSN="off"
   else
-    step "Telemetria de erros (opcional)"
-    printf '%s\n' "Podemos receber os relatórios de ERRO desta instalação (stack trace) para"
-    printf '%s\n' "corrigir bugs que afetam todo mundo. CPF, telefone e e-mail são substituídos,"
-    printf '%s\n' "cabeçalhos sensíveis removidos e tokens de webhook/convite redigidos da URL."
-    printf '%s\n' "NÃO enviamos rastreamento de performance nem replay de sessão."
-    printf '%s\n' "Seus dados de clientes, conversas e banco NUNCA saem daqui."
-    printf '\n%s\n' "Você pode mudar depois no .env, a qualquer momento."
-    read -r -p "  Enviar relatórios de erro anonimizados? (s/N) " _tel
+    step "$(t "Telemetria de erros (opcional)")"
+    printf '%s\n' "$(t "Podemos receber os relatórios de ERRO desta instalação (stack trace) para")"
+    printf '%s\n' "$(t "corrigir bugs que afetam todo mundo. CPF, telefone e e-mail são substituídos,")"
+    printf '%s\n' "$(t "cabeçalhos sensíveis removidos e tokens de webhook/convite redigidos da URL.")"
+    printf '%s\n' "$(t "NÃO enviamos rastreamento de performance nem replay de sessão.")"
+    printf '%s\n' "$(t "Seus dados de clientes, conversas e banco NUNCA saem daqui.")"
+    printf '\n%s\n' "$(t "Você pode mudar depois no .env, a qualquer momento.")"
+    read -r -p "$(t "  Enviar relatórios de erro anonimizados? (s/N) ")" _tel
     if resposta_sim "${_tel:-}"; then
       SENTRY_DSN=""
-      c_grn "✓ Telemetria de erros ligada — obrigado, isso ajuda o projeto."
+      c_grn "$(t "✓ Telemetria de erros ligada — obrigado, isso ajuda o projeto.")"
     else
       SENTRY_DSN="off"
-      c_grn "✓ Telemetria desligada — nada será enviado."
+      c_grn "$(t "✓ Telemetria desligada — nada será enviado.")"
     fi
   fi
 fi
 
-step "Escrevendo .env"
+step "$(t "Escrevendo .env")"
 umask 077
 
 # Todo valor sai pelo `envq` (definido lá em cima, junto do save_partial): entre
@@ -1552,7 +1552,7 @@ if [ -f .env ]; then
     fi
   done < .env
   if [ -n "$PRESERVADAS" ]; then
-    c_ylw "→ preservando $(printf '%s' "$PRESERVADAS" | grep -c .) variável(is) que você acrescentou à mão"
+    c_ylw "$(t "→ preservando {1} variável(is) que você acrescentou à mão" "$(printf '%s' "$PRESERVADAS" | grep -c .)")"
   fi
 fi
 
@@ -1575,9 +1575,9 @@ case "$_ref_final" in
     # quem pinou por digest tinha um motivo e precisa saber que ele não se
     # propagou às outras duas.
     TAG_ALVO="stable"
-    c_ylw "⚠ APP_IMAGE está pinado por digest."
-    c_ylw "  O worker e o scheduler ficam em 'stable' — ajuste WORKER_IMAGE/SCHEDULER_IMAGE"
-    c_ylw "  no .env se você precisa deles num digest específico também."
+    c_ylw "$(t "⚠ APP_IMAGE está pinado por digest.")"
+    c_ylw "$(t "  O worker e o scheduler ficam em 'stable' — ajuste WORKER_IMAGE/SCHEDULER_IMAGE")"
+    c_ylw "$(t "  no .env se você precisa deles num digest específico também.")"
     ;;
   *:*) TAG_ALVO="${_ref_final##*:}" ;;
   *)   TAG_ALVO="latest" ;;   # imagem sem ':' é :latest por definição do Docker
