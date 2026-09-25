@@ -35,7 +35,7 @@ function montar() {
     <QueryClientProvider client={client}>
       <RenameFollowupFlowDialog
         flowId="fluxo-1"
-        flowName="Carrito abandonado"
+        flowName="Carrinho abandonado"
         open
         onOpenChange={() => {}}
       />
