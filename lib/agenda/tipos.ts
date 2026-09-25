@@ -39,15 +39,15 @@ export type CategoriaDeAgendamento = (typeof CATEGORIAS_DE_AGENDAMENTO)[number];
 
 export const ROTULO_DA_CATEGORIA: Record<CategoriaDeAgendamento, string> = {
   consulta: "Consulta",
-  procedimento: "Procedimiento",
+  procedimento: "Procedimento",
   retorno: "Retorno",
   visita: "Visita",
-  vistoria: "Inspección",
-  reuniao: "Reunión",
-  call: "Call",
-  orcamento: "Presupuesto",
-  demonstracao: "Demostración",
-  outro: "Otro",
+  vistoria: "Vistoria",
+  reuniao: "Reunião",
+  call: "Chamada",
+  orcamento: "Orçamento",
+  demonstracao: "Demonstração",
+  outro: "Outro",
 };
 
 /** Onde o compromisso acontece — e é isto que decide o que a tela pergunta. */
@@ -62,9 +62,9 @@ export type LocalDeAgendamento = (typeof LOCAIS_DE_AGENDAMENTO)[number];
 
 export const ROTULO_DO_LOCAL: Record<LocalDeAgendamento, string> = {
   in_person: "Presencial",
-  phone: "Teléfono",
+  phone: "Telefone",
   whatsapp: "WhatsApp",
-  video_link: "Enlace de vídeo",
+  video_link: "Link de vídeo",
   google_meet: "Google Meet",
 };
 
@@ -93,11 +93,11 @@ export const SITUACOES_DO_AGENDAMENTO = [
 export type SituacaoDoAgendamento = (typeof SITUACOES_DO_AGENDAMENTO)[number];
 
 export const ROTULO_DA_SITUACAO: Record<SituacaoDoAgendamento, string> = {
-  pending: "Esperando confirmación",
+  pending: "Aguardando confirmação",
   confirmed: "Confirmado",
   cancelled: "Cancelado",
   completed: "Realizado",
-  no_show: "No se presentó",
+  no_show: "Não compareceu",
 };
 
 /**

@@ -8508,6 +8508,7 @@ export const DICIONARIO: Traducoes = {
   "Consulta": { es: "Consulta" },
   "Visita": { es: "Visita" },
   "Call": { es: "Call" },
+  "Chamada": { es: "Llamada" },
   "Presencial": { es: "Presencial" },
   "Link de vídeo": { es: "Enlace de video" },
   "Mostrar todos (agora só": { es: "Mostrar todos (ahora solo" },
