@@ -1008,82 +1008,82 @@ if [ -z "${REVERSE_PROXY:-}" ]; then
     # `confianca_no_dono_das_portas`.
     case "$(confianca_no_dono_das_portas "$dono_por_varredura_host" "$NONINTERACTIVE")" in
     pergunta)
-      c_ylw "⚠ As portas ${portas_ocupadas} estão ocupadas, mas NENHUM contêiner as publica."
-      c_ylw "  O único Traefik em modo host aqui é '${dono_portas}'${dono_imagem:+ (imagem ${dono_imagem})}."
-      printf '\n%s\n'   "  Em modo host o Docker não mostra as portas, então não consigo PROVAR que é ele"
-      printf '%s\n\n'   "  quem atende o seu domínio — poderia ser um nginx/apache instalado no servidor."
-      printf '%s\n'     "  Se for ele, o CRM sai publicado por ele e tudo funciona."
-      printf '%s\n\n'   "  Se não for, o site vai subir e não responder — sem erro nenhum na tela."
-      if ! read -r -p "  É o '${dono_portas}' que atende o seu site? (s/N) " _r; then _r=""; fi
+      c_ylw "$(t "⚠ As portas {1} estão ocupadas, mas NENHUM contêiner as publica." "$portas_ocupadas")"
+      c_ylw "$(t "  O único Traefik em modo host aqui é '{1}'{2}." "$dono_portas" "${dono_imagem:+ ($(t "imagem") $dono_imagem)}")"
+      printf '\n%s\n'   "$(t "  Em modo host o Docker não mostra as portas, então não consigo PROVAR que é ele")"
+      printf '%s\n\n'   "$(t "  quem atende o seu domínio — poderia ser um nginx/apache instalado no servidor.")"
+      printf '%s\n'     "$(t "  Se for ele, o CRM sai publicado por ele e tudo funciona.")"
+      printf '%s\n\n'   "$(t "  Se não for, o site vai subir e não responder — sem erro nenhum na tela.")"
+      if ! read -r -p "$(t "  É o '{1}' que atende o seu site? (s/N) " "$dono_portas")" _r; then _r=""; fi
       if ! resposta_sim "$_r"; then
-        die "Ok, não vou arriscar. Descubra quem está com as portas 80/443 (ex.: 'ss -ltnp | grep :80')
-e, se for mesmo um Traefik, ponha REVERSE_PROXY=traefik no .env e rode de novo."
+        die "$(t "Ok, não vou arriscar. Descubra quem está com as portas 80/443 (ex.: 'ss -ltnp | grep :80')
+e, se for mesmo um Traefik, ponha REVERSE_PROXY=traefik no .env e rode de novo.")"
       fi
       unset _r
       ;;
     recusa)
-      c_red "✖ As portas ${portas_ocupadas} estão ocupadas, mas NENHUM contêiner as publica."
-      printf '\n%s\n'   "  O único Traefik em modo host aqui é '${dono_portas}'${dono_imagem:+ (imagem ${dono_imagem})},"
-      printf '%s\n\n'   "  e em modo host o Docker não mostra porta — não dá para provar que é ele quem atende."
-      printf '%s\n'     "  Publicar o CRM atrás do proxy errado instala 'com sucesso' um site que não responde,"
-      printf '%s\n\n'   "  então em modo --yes eu paro aqui em vez de chutar."
-      printf '%s\n'     "  É esse Traefik mesmo? Ponha no .env e rode de novo:"
+      c_red "$(t "✖ As portas {1} estão ocupadas, mas NENHUM contêiner as publica." "$portas_ocupadas")"
+      printf '\n%s\n'   "$(t "  O único Traefik em modo host aqui é '{1}'{2}," "$dono_portas" "${dono_imagem:+ ($(t "imagem") $dono_imagem)}")"
+      printf '%s\n\n'   "$(t "  e em modo host o Docker não mostra porta — não dá para provar que é ele quem atende.")"
+      printf '%s\n'     "$(t "  Publicar o CRM atrás do proxy errado instala '"'"'com sucesso'"'"' um site que não responde,")"
+      printf '%s\n\n'   "$(t "  então em modo --yes eu paro aqui em vez de chutar.")"
+      printf '%s\n'     "$(t "  É esse Traefik mesmo? Ponha no .env e rode de novo:")"
       printf '%s\n\n'   "       REVERSE_PROXY=traefik"
-      printf '%s\n'     "  Não é? Confira quem está com as portas: ss -ltnp | grep -E ':80|:443'"
-      die "Não consigo identificar com certeza o dono das portas ${portas_ocupadas} em modo --yes."
+      printf '%s\n'     "$(t "  Não é? Confira quem está com as portas: ss -ltnp | grep -E '"'"':80|:443'"'"'")"
+      die "$(t "Não consigo identificar com certeza o dono das portas {1} em modo --yes." "$portas_ocupadas")"
       ;;
     esac
     REVERSE_PROXY=traefik
     traefik_container="$dono_portas"
-    c_ylw "⚠ Detectei um Traefik já rodando neste VPS (contêiner '${dono_portas}', ocupando 80/443)."
-    c_ylw "  Vou publicar o CRM através dele em vez de subir um proxy próprio —"
-    c_ylw "  desligar o Traefik quebraria o que a sua hospedagem instalou."
+    c_ylw "$(t "⚠ Detectei um Traefik já rodando neste VPS (contêiner '{1}', ocupando 80/443)." "$dono_portas")"
+    c_ylw "$(t "  Vou publicar o CRM através dele em vez de subir um proxy próprio —")"
+    c_ylw "$(t "  desligar o Traefik quebraria o que a sua hospedagem instalou.")"
     ;;
   *)
     # A preposição vem junto do trecho: "por o contêiner" sai errado se a frase
     # fixar "por" e o pedaço variável começar com artigo. E a imagem só entra se
     # for conhecida — "(imagem )" vazio era o sintoma de um campo perdido.
-    ocupante="${dono_portas:+pelo contêiner '${dono_portas}'${dono_imagem:+ (imagem ${dono_imagem})}}"
-    ocupante="${ocupante:-por um programa do próprio servidor}"
+    ocupante="${dono_portas:+$(t "pelo contêiner '{1}'{2}" "$dono_portas" "${dono_imagem:+ ($(t "imagem") $dono_imagem)}")}"
+    ocupante="${ocupante:-$(t "por um programa do próprio servidor")}"
     # Cópia irmã tem um diagnóstico próprio: o painel genérico abaixo fala de
     # "porta ocupada", e quem lê isso numa pasta recém-clonada não liga o aviso
     # à instalação que está no ar — foi assim que uma aula subiu por cima de uma
     # produção. Aqui o nome das DUAS pastas aparece.
     if [ -n "$dono_arvore" ] && [ "$dono_projeto" = "$proj_atual" ] && [ "$dono_arvore" != "$_minha_arvore" ]; then
-      c_red "✖ Já existe um DeskcommCRM NO AR nesta VPS, instalado em ${dono_arvore}."
-      printf '\n%s\n'   "  Esta pasta (${_minha_arvore}) é outra cópia do repo. As duas se chamam"
-      printf '%s\n'     "  DeskcommCRM, então o Docker dá às duas o MESMO nome de projeto"
-      printf '%s\n\n'   "  ('${proj_atual}') — e instalar aqui recriaria os contêineres daquela."
-      printf '%s\n'     "  Na prática: o CRM que está no ar passaria a rodar com o .env DESTA pasta"
-      printf '%s\n\n'   "  (outro banco, outras chaves), e as conexões de WhatsApp cairiam."
-      printf '%s\n'     "  Quer atualizar o que já existe? Use aquela pasta:"
+      c_red "$(t "✖ Já existe um DeskcommCRM NO AR nesta VPS, instalado em {1}." "$dono_arvore")"
+      printf '\n%s\n'   "$(t "  Esta pasta ({1}) é outra cópia do repo. As duas se chamam" "$_minha_arvore")"
+      printf '%s\n'     "$(t "  DeskcommCRM, então o Docker dá às duas o MESMO nome de projeto")"
+      printf '%s\n\n'   "$(t "  ('{1}') — e instalar aqui recriaria os contêineres daquela." "$proj_atual")"
+      printf '%s\n'     "$(t "  Na prática: o CRM que está no ar passaria a rodar com o .env DESTA pasta")"
+      printf '%s\n\n'   "$(t "  (outro banco, outras chaves), e as conexões de WhatsApp cairiam.")"
+      printf '%s\n'     "$(t "  Quer atualizar o que já existe? Use aquela pasta:")"
       printf '%s\n\n'   "       cd ${dono_arvore} && bash hostgator-setup-kit/update.sh"
-      printf '%s\n'     "  Quer mesmo uma SEGUNDA instalação nesta VPS? Ela precisa de nome de"
-      printf '%s\n'     "  projeto e domínio próprios — ponha no .env desta pasta, antes de rodar:"
+      printf '%s\n'     "$(t "  Quer mesmo uma SEGUNDA instalação nesta VPS? Ela precisa de nome de")"
+      printf '%s\n'     "$(t "  projeto e domínio próprios — ponha no .env desta pasta, antes de rodar:")"
       printf '%s\n\n'   "       COMPOSE_PROJECT_NAME=deskcomm-$(basename "${_minha_arvore}" | tr 'A-Z' 'a-z')-2"
-      die "Instalação interrompida para não derrubar o DeskcommCRM que está no ar em ${dono_arvore}."
+      die "$(t "Instalação interrompida para não derrubar o DeskcommCRM que está no ar em {1}." "$dono_arvore")"
     fi
     # Concordância com o número de portas: "A porta 80 e 443 já está ocupada"
     # saiu na prova real e denuncia texto montado sem olhar o próprio dado.
     if [ "$n_ocupadas" -gt 1 ]; then
-      c_red "✖ As portas ${portas_ocupadas} já estão ocupadas ${ocupante}."
+      c_red "$(t "✖ As portas {1} já estão ocupadas {2}." "$portas_ocupadas" "$ocupante")"
     else
-      c_red "✖ A porta ${portas_ocupadas} já está ocupada ${ocupante}."
+      c_red "$(t "✖ A porta {1} já está ocupada {2}." "$portas_ocupadas" "$ocupante")"
     fi
-    printf '\n%s\n'   "  O CRM precisa dessas duas portas para publicar o site com HTTPS. Subir um"
-    printf '%s\n\n'   "  segundo proxy nelas não funciona: o Docker recusa e a instalação para."
-    printf '%s\n'     "  Como resolver, na ordem do mais provável:"
-    printf '\n%s\n'   "  1. Já é outro DeskcommCRM neste servidor? Então use aquele — entre na"
-    printf '%s\n'     "     pasta dele e rode: bash hostgator-setup-kit/update.sh"
-    printf '\n%s\n'   "  2. Não usa mais o que está ocupando? Desligue e rode este instalador de novo:"
-    [ -n "$dono_portas" ] && printf '%s\n' "       docker stop ${dono_portas}"
-    printf '\n%s\n'   "  3. Quer manter os dois no ar? Aí o CRM tem de sair por um proxy só, e isso"
-    printf '%s\n'     "     é configuração manual — o kit automatiza esse caminho apenas para"
-    printf '%s\n\n'   "     Traefik (ponha REVERSE_PROXY=traefik no .env)."
+    printf '\n%s\n'   "$(t "  O CRM precisa dessas duas portas para publicar o site com HTTPS. Subir um")"
+    printf '%s\n\n'   "$(t "  segundo proxy nelas não funciona: o Docker recusa e a instalação para.")"
+    printf '%s\n'     "$(t "  Como resolver, na ordem do mais provável:")"
+    printf '\n%s\n'   "$(t "  1. Já é outro DeskcommCRM neste servidor? Então use aquele — entre na")"
+    printf '%s\n'     "$(t "     pasta dele e rode: bash hostgator-setup-kit/update.sh")"
+    printf '\n%s\n'   "$(t "  2. Não usa mais o que está ocupando? Desligue e rode este instalador de novo:")"
+    [ -n "$dono_portas" ] && printf '%s\n' "$(t "       docker stop {1}" "$dono_portas")"
+    printf '\n%s\n'   "$(t "  3. Quer manter os dois no ar? Aí o CRM tem de sair por um proxy só, e isso")"
+    printf '%s\n'     "$(t "     é configuração manual — o kit automatiza esse caminho apenas para")"
+    printf '%s\n\n'   "$(t "     Traefik (ponha REVERSE_PROXY=traefik no .env).")"
     if [ "$n_ocupadas" -gt 1 ]; then
-      die "Libere as portas ${portas_ocupadas} (ou use a instalação que já existe) e rode de novo."
+      die "$(t "Libere as portas {1} (ou use a instalação que já existe) e rode de novo." "$portas_ocupadas")"
     fi
-    die "Libere a porta ${portas_ocupadas} (ou use a instalação que já existe) e rode de novo."
+    die "$(t "Libere a porta {1} (ou use a instalação que já existe) e rode de novo." "$portas_ocupadas")"
     ;;
   esac
 fi
@@ -1117,9 +1117,9 @@ fi
 # projeto é criado aqui e as 4 variáveis entram direto no fluxo, sem copiar e
 # colar. Sem o token, nada muda: seguem as perguntas de sempre.
 if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
-  step "Criando o projeto Supabase automaticamente"
+  step "$(t "Criando o projeto Supabase automaticamente")"
   _sb_out="$(bash "$KIT_DIR/supabase-provision.sh" "${APP_NAME:-DeskcommCRM}" "${SUPABASE_REGION:-sa-east-1}")" \
-    || die "Não consegui criar o projeto Supabase. Crie no painel e rode de novo sem SUPABASE_ACCESS_TOKEN."
+    || die "$(t "Não consegui criar o projeto Supabase. Crie no painel e rode de novo sem SUPABASE_ACCESS_TOKEN.")"
   # O script imprime `CHAVE='valor'` em stdout (o visual dele vai para stderr).
   # A leitura é por parse, não por `eval` — o porquê está em
   # sb_carrega_credenciais(), e `test-validators.sh` cobra isso.
@@ -1131,9 +1131,9 @@ if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]
   # pessoa veria "erro de conexão" em vez de "o provisionamento não devolveu X".
   if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ] || [ -z "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" ] \
      || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] || [ -z "${SUPABASE_DB_URL:-}" ]; then
-    die "O provisionamento não devolveu as 4 credenciais. Crie o projeto no painel e rode de novo sem SUPABASE_ACCESS_TOKEN."
+    die "$(t "O provisionamento não devolveu as 4 credenciais. Crie o projeto no painel e rode de novo sem SUPABASE_ACCESS_TOKEN.")"
   fi
-  c_grn "✓ Supabase pronto — as 4 credenciais entraram sozinhas"
+  c_grn "$(t "✓ Supabase pronto — as 4 credenciais entraram sozinhas")"
 fi
 
 # Cada linha: VARIÁVEL|pergunta|padrão|validador|secret|opcional
@@ -1170,26 +1170,26 @@ escolher_provedor() {
     return 0
   fi
 
-  printf '\n\033[1mQual inteligência artificial vai atender seus clientes?\033[0m\n\n'
-  printf '  [1] OpenRouter  — uma chave, centenas de modelos de vários fabricantes.\n'
-  printf '                    O caminho mais simples para experimentar. (openrouter.ai/keys)\n'
-  printf '  [2] Anthropic   — o Claude. É o que melhor segue instruções longas e usa\n'
-  printf '                    as ferramentas do CRM. (console.anthropic.com)\n'
-  printf '  [3] OpenAI      — o GPT. (platform.openai.com/api-keys)\n'
+  printf '\n\033[1m%s\033[0m\n\n' "$(t "Qual inteligência artificial vai atender seus clientes?")"
+  printf '  %s\n' "$(t "[1] OpenRouter  — uma chave, centenas de modelos de vários fabricantes.")"
+  printf '                    %s\n' "$(t "O caminho mais simples para experimentar. (openrouter.ai/keys)")"
+  printf '  %s\n' "$(t "[2] Anthropic   — o Claude. É o que melhor segue instruções longas e usa")"
+  printf '                    %s\n' "$(t "as ferramentas do CRM. (console.anthropic.com)")"
+  printf '  %s\n' "$(t "[3] OpenAI      — o GPT. (platform.openai.com/api-keys)")"
   printf '\n'
-  printf '  Dá para trocar depois, e por parte do sistema, em Agente de IA → Provedores.\n\n'
+  printf '  %s\n\n' "$(t "Dá para trocar depois, e por parte do sistema, em Agente de IA → Provedores.")"
 
   local padrao_num=2
   case "$atual" in openrouter) padrao_num=1;; openai) padrao_num=3;; esac
 
   while :; do
-    if ! read -r -p "Escolha (Enter = ${padrao_num}): " escolha; then escolha=""; fi
+    if ! read -r -p "$(t "Escolha (Enter = {1}): " "$padrao_num")" escolha; then escolha=""; fi
     [ -z "$escolha" ] && escolha="$padrao_num"
     case "$escolha" in
       1) AI_PROVIDER="openrouter"; break;;
       2) AI_PROVIDER="anthropic";  break;;
       3) AI_PROVIDER="openai";     break;;
-      *) c_ylw "Digite 1, 2 ou 3.";;
+      *) c_ylw "$(t "Digite 1, 2 ou 3.")";;
     esac
   done
 }
