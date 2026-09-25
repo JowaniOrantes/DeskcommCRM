@@ -806,7 +806,7 @@ banner
 
 # ── 1. Preflight ────────────────────────────────────────────────────────────
 fase 1 "Preparando o servidor"
-step "Verificando dependências"
+step "$(t "Verificando dependências")"
 
 # VPS "cru" (Hetzner, DigitalOcean, Contabo…) não vem com Docker. Antes isto era
 # um beco sem saída: o script morria dizendo "instale antes de continuar" e a
@@ -865,7 +865,7 @@ if [ -r /proc/meminfo ]; then
 fi
 
 # ── 2. Repositório ──────────────────────────────────────────────────────────
-step "Localizando o projeto"
+step "$(t "Localizando o projeto")"
 if [ -f "$COMPOSE" ]; then
   c_grn "$(t "✓ rodando dentro do repositório")"
 elif [ -f "$REPO_DIR/$COMPOSE" ]; then
@@ -909,7 +909,7 @@ recusar_projeto_de_outra_arvore || die "$(t "Instalação interrompida para não
 
 # ── 3. Coleta de config ─────────────────────────────────────────────────────
 fase 2 "Suas informações"
-step "Configuração"
+step "$(t "Configuração")"
 # Se já existe .env, carrega pra não repetir perguntas (idempotência).
 if [ -f .env ]; then load_env .env; c_grn "$(t "✓ .env existente carregado")"; fi
 # Respostas guardadas de uma tentativa que não chegou ao fim. Carregam DEPOIS do
@@ -1378,7 +1378,7 @@ NEXT_PUBLIC_APP_URL="https://${DOMAIN}"
 NEXT_PUBLIC_ADMIN_URL="https://${DOMAIN}"
 
 # ── 4. Geração de segredos (idempotente: só gera o que falta) ────────────────
-step "Gerando segredos"
+step "$(t "Gerando segredos")"
 gen_hex() { openssl rand -hex 32; }
 gen_b64() { openssl rand -base64 32; }
 : "${INTERNAL_SECRET:=$(gen_hex)}"
@@ -2054,7 +2054,7 @@ PENDENCIA_ARQUIVO="$PENDENCIA_EMAIL" \
   bash "$KIT_DIR/marca-emails.sh" --projeto "$PROJECT_DIR" || true
 
 # ── 8. Bootstrap do 1º dono (cria no Auth + promove via psql) ───────────────
-step "Criando o primeiro admin (${OWNER_EMAIL})"
+step "$(t "Criando o primeiro admin ({1})" "$OWNER_EMAIL")"
 # 1) Cria o usuário no Supabase Auth. Se já existe, a API responde 422 — ignoramos
 #    (|| true): a re-execução é idempotente, o passo seguinte encontra o usuário.
 # No single-server o Caddy pode ainda estar emitindo o certificado: fala com o

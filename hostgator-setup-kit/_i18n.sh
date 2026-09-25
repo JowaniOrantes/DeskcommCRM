@@ -454,6 +454,13 @@ identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a in
   ["(mostra tudo o que você respondeu e deixa corrigir por número)"]="(muestra todo lo que respondiste y permite corregir por número)"
   ["recomeçar:"]="empezar de nuevo:"
   ["(derruba tudo; depois rode o install.sh de novo)"]="(derriba todo; después vuelve a ejecutar install.sh)"
+
+  # ── install.sh: títulos de step() restantes ──────────────────────────────
+  ["Verificando dependências"]="Verificando dependencias"
+  ["Localizando o projeto"]="Localizando el proyecto"
+  ["Configuração"]="Configuración"
+  ["Gerando segredos"]="Generando secretos"
+  ["Criando o primeiro admin ({1})"]="Creando el primer admin ({1})"
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…
