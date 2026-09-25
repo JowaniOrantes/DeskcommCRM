@@ -6975,6 +6975,8 @@ export const DICIONARIO: Traducoes = {
   "Ex: Cliente desistiu por X motivo": { es: "Ej: El cliente desistió por X motivo" },
   "Confirmar": { es: "Confirmar" },
   "Lead criado": { es: "Lead creado" },
+  "O agente pediu ajuda": { es: "El agente pidió ayuda" },
+  "O cliente retornou": { es: "El cliente retornó" },
   "O fluxo começa quando um negócio nasce: a primeira mensagem que abre o card, um formulário ou o cadastro manual. Negócios importados por planilha não entram. A entrada na fila leva poucos minutos, não é instantânea.":
     {
       es: "El flujo empieza cuando nace un negocio: el primer mensaje que abre la tarjeta, un formulario o el alta manual. Los negocios importados por planilla no entran. La entrada en la fila tarda unos minutos, no es instantánea.",
