@@ -88,20 +88,20 @@ const DEFAULT_THRESHOLD_MINUTES = 60;
 const MIN_THRESHOLD_MINUTES = 5;
 
 const KIND_LABEL: Record<TriggerKind, string> = {
-  appointment_no_show:"Falta confirmada pela equipe",
+  appointment_no_show:"Ausencia confirmada por el equipo",
   manual: "Manual",
-  silence: "Silêncio",
-  stage_change: "Etapa do funil",
-  // "Agente pediu ajuda", e não "Pedido de ajuda": numa lista ao lado de
-  // "Manual", "Silêncio" e "Etapa do funil", o rótulo sem sujeito não diz
+  silence: "Silencio",
+  stage_change: "Etapa del embudo",
+  // "El agente pidió ayuda", e não "Pedido de ajuda": numa lista ao lado de
+  // "Manual", "Silencio" e "Etapa del embudo", o rótulo sem sujeito não diz
   // QUEM pediu. O resumo do botão (`resumoDoGatilho`) e o vocabulário
-  // (`lib/followup/vocabulario.ts`) já falam de "o agente pede ajuda" —
+  // (`lib/followup/vocabulario.ts`) já falam de "o agente pide ayuda" —
   // esta era a única das três grafias sem sujeito, e as duas specs que
   // cercam o gatilho procuram por ela com `exact: true`.
-  case_opened: "Agente pediu ajuda",
-  webhook: "Automação (Webhooks)",
-  inbound_after_silence: "Cliente voltou",
-  lead_created: "Lead criado",
+  case_opened: "El agente pidió ayuda",
+  webhook: "Automatización (Webhooks)",
+  inbound_after_silence: "El cliente regresó",
+  lead_created: "Lead creado",
 };
 
 function parseTriggerConfig(raw: Record<string, unknown>): TriggerFormState {
@@ -196,10 +196,10 @@ function summaryLabel(
   etapa: { stageName: string; pipelineName: string } | null,
   t: (texto: string) => string = (texto) => texto,
 ): string {
-  if(cfg.kind === "appointment_no_show") return t("Gatilho: falta confirmada pela equipe");
+  if(cfg.kind === "appointment_no_show") return t("Gatilho: ausencia confirmada por el equipo");
   if (cfg.kind === "silence") {
     const minutes = (cfg.params as { threshold_minutes?: number } | undefined)?.threshold_minutes;
-    return `Gatilho: Silêncio${typeof minutes === "number" ? ` (${minutes} min)` : ""}`;
+    return `${t("Gatilho")}: ${t("Silencio")}${typeof minutes === "number" ? ` (${minutes} min)` : ""}`;
   }
   if (cfg.kind === "inbound_after_silence") {
     const minutes = (cfg.params as { threshold_minutes?: number } | undefined)?.threshold_minutes;
@@ -208,7 +208,7 @@ function summaryLabel(
       tela.unidade === "days"
         ? tela.valor === 1
           ? t("dia")
-          : t("dias")
+          : t("días")
         : tela.unidade === "hours"
           ? tela.valor === 1
             ? t("hora")
@@ -216,22 +216,22 @@ function summaryLabel(
           : tela.valor === 1
             ? t("minuto")
             : t("minutos");
-    return `${t("Gatilho")}: ${t("Cliente voltou")} (${tela.valor} ${unidade})`;
+    return `${t("Gatilho")}: ${t("El cliente regresó")} (${tela.valor} ${unidade})`;
   }
   if (cfg.kind === "stage_change") {
     // Enquanto os nomes não chegaram (ou a etapa sumiu do funil) o rótulo diz o
     // TIPO em vez de vazar o uuid — que é justamente o que esta tela não faz.
     // Com o funil junto, este rótulo passa a distinguir as homônimas: é a única
     // superfície que o dono lê uma semana depois, sem abrir nada.
-    return etapa ? `Gatilho: entrou em «${etapa.stageName}» em ${etapa.pipelineName}` : "Gatilho: Etapa do funil";
+    return etapa ? `${t("Gatilho")}: entró en «${etapa.stageName}» en ${etapa.pipelineName}` : `${t("Gatilho")}: ${t("Etapa del embudo")}`;
   }
-  if (cfg.kind === "case_opened") return `${t("Gatilho")}: ${t("quando o agente pede ajuda")}`;
-  if (cfg.kind === "webhook") return t("Disparado por uma automação em Webhooks");
-  if (cfg.kind === "lead_created") return `${t("Gatilho")}: ${t("Lead criado")}`;
+  if (cfg.kind === "case_opened") return `${t("Gatilho")}: ${t("cuando el agente pide ayuda")}`;
+  if (cfg.kind === "webhook") return t("Disparado por una automatización en Webhooks");
+  if (cfg.kind === "lead_created") return `${t("Gatilho")}: ${t("Lead creado")}`;
   if (cfg.kind === "manual" || cfg.kind === undefined) return `${t("Gatilho")}: ${t("Manual")}`;
   // conversation_end de dados antigos (API crua) — sem UI própria, mas mostrado
   // com transparência em vez de mentir "Manual".
-  return `Gatilho: ${String(cfg.kind)} (indisponível)`;
+  return `${t("Gatilho")}: ${String(cfg.kind)} (${t("indisponível")})`;
 }
 
 interface Props {
