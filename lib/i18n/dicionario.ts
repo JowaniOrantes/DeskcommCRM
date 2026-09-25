@@ -1961,6 +1961,8 @@ export const DICIONARIO: Traducoes = {
     },
   "quando o agente pede ajuda": { es: "cuando el agente pide ayuda" },
   Manual: { es: "Manual" },
+  "Silêncio": { es: "Silencio" },
+  "Telefone": { es: "Teléfono" },
   "indisponível": { es: "no disponible" },
   "Tipo de gatilho": { es: "Tipo de disparador" },
   "Etapa que dispara o fluxo": { es: "Etapa que dispara el flujo" },
