@@ -6987,7 +6987,7 @@ export const DICIONARIO: Traducoes = {
     {
       es: "Quien escribió puede recibir la respuesta del agente en el mismo instante — sin espera, salen dos mensajes juntos.",
     },
-  "Crie um lead manualmente neste pipeline.": { es: "Crea un lead manualmente en este pipeline." },
+  "Crie um lead manualmente neste pipeline.": { es: "Crea un lead manualmente en este embudo." },
   "Ex: Pedido Maria — combo presente": { es: "Ej: Pedido María — combo regalo" },
   "Contexto, observações, links…": { es: "Contexto, observaciones, enlaces…" },
   "Selecione a etapa": { es: "Selecciona la etapa" },
@@ -8145,7 +8145,7 @@ export const DICIONARIO: Traducoes = {
   "payload fora do contrato do canal": { es: "payload fuera del contrato del canal" },
   "Permissão insuficiente. Requer role >= manager.": { es: "Permiso insuficiente. Requiere role >= manager." },
   "phone_number_id, waba_id e token são obrigatórios": { es: "phone_number_id, waba_id y token son obligatorios" },
-  "Pipeline não encontrado.": { es: "Pipeline no encontrado." },
+  "Pipeline não encontrado.": { es: "Embudo no encontrado." },
   "provar a chave requer papel de administrador": { es: "probar la clave requiere rol de administrador" },
   "Provider desconhecido.": { es: "Provider desconocido." },
   "Rascunho da IA indisponível (config).": { es: "Borrador de la IA no disponible (config)." },
@@ -9259,7 +9259,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Falha ao criar lead.": { es: "No se pudo crear el lead." },
   "Stage não pertence ao pipeline informado.": {
-    es: "El stage no pertenece al pipeline indicado.",
+    es: "La etapa no pertenece al embudo indicado.",
   },
   "Lead foi modificado concorrentemente.": { es: "El lead se modificó de forma simultánea." },
   "leads por bulk.": { es: "leads por lote." },
@@ -9273,10 +9273,10 @@ export const DICIONARIO: Traducoes = {
     es: "Ese motivo de pérdida no está en la lista de este embudo. Elige uno de los motivos configurados.",
   },
   "Pipeline não tem stage de fechamento como ganho.": {
-    es: "El pipeline no tiene un stage de cierre para negocios ganados.",
+    es: "El embudo no tiene una etapa de cierre para negocios ganados.",
   },
   "Pipeline não tem stage de fechamento como perda.": {
-    es: "El pipeline no tiene un stage de cierre para negocios perdidos.",
+    es: "El embudo no tiene una etapa de cierre para negocios perdidos.",
   },
   "Perdido —": { es: "Perdido —" },
   "(negócio removido)": { es: "(negocio eliminado)" },
