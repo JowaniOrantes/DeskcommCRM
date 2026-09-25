@@ -4596,7 +4596,7 @@ export const DICIONARIO: Traducoes = {
   Revogar: { es: "Revocar" },
   "Criar novo token": { es: "Crear nuevo token" },
   "O plaintext será mostrado apenas uma vez.": {
-    es: "El plaintext se mostrará solo una vez.",
+    es: "El texto plano se mostrará solo una vez.",
   },
   "Worker de import": { es: "Worker de import" },
   "Expira em (dias) — opcional": { es: "Expira en (días) — opcional" },
@@ -4611,7 +4611,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Copiar para clipboard": { es: "Copiar al portapapeles" },
   "Tokens server-to-server. Plaintext exibido": {
-    es: "Tokens server-to-server. El plaintext se muestra",
+    es: "Tokens server-to-server. El texto plano se muestra",
   },
   "na criação.": { es: "en la creación." },
   "Agentes de IA podem LER o CRM (MCP)": { es: "Los agentes de IA pueden LEER el CRM (MCP)" },
@@ -6741,7 +6741,7 @@ export const DICIONARIO: Traducoes = {
     es: "Al confirmar, se anonimizarán todos los datos personales del tenant (irreversible). Esta acción afecta a todos los contactos del tenant.",
   },
   "Aprovação registrada — request mudou para processing": {
-    es: "Aprobación registrada — la solicitud pasó a processing",
+    es: "Aprobación registrada — la solicitud pasó a estado Procesando",
   },
   "Falha ao aprovar a solicitação. Tente novamente.": {
     es: "No se pudo aprobar la solicitud. Intenta de nuevo.",
