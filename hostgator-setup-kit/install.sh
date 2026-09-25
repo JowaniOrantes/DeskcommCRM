@@ -1249,25 +1249,25 @@ VERSAO_ALVO="$(ultima_versao_publicada "$REPO_URL")"
 if [ -n "$VERSAO_ALVO" ] && trio_publicado "$VERSAO_ALVO"; then
   : # o caminho normal: as três publicadas na última versão
 elif trio_publicado "stable"; then
-  c_ylw "⚠ A versão ${VERSAO_ALVO:-mais recente} ainda não tem as três imagens publicadas."
-  c_ylw "  Instalando pelo canal 'stable' (a última versão completa)."
+  c_ylw "$(t "⚠ A versão {1} ainda não tem as três imagens publicadas." "${VERSAO_ALVO:-$(t "mais recente")}")"
+  c_ylw "$(t "  Instalando pelo canal 'stable' (a última versão completa).")"
   VERSAO_ALVO="stable"
 elif [ -n "$VERSAO_ALVO" ]; then
   # Nem a versão nem o `stable` têm o trio. Segue assim mesmo — o compose tem
   # `build:` ao lado do `image:` do worker e do scheduler, então eles são
   # construídos aqui. É lento, mas instala. O que NÃO pode é isso acontecer
   # calado: o dono precisa saber que duas peças dele saíram do fonte local.
-  c_ylw "⚠ As imagens do worker e do agendador ainda não estão publicadas."
-  c_ylw "  Elas serão construídas neste servidor — leva alguns minutos a mais."
-  c_ylw "  Rode 'bash hostgator-setup-kit/update.sh' quando a próxima versão sair."
+  c_ylw "$(t "⚠ As imagens do worker e do agendador ainda não estão publicadas.")"
+  c_ylw "$(t "  Elas serão construídas neste servidor — leva alguns minutos a mais.")"
+  c_ylw "$(t "  Rode 'bash hostgator-setup-kit/update.sh' quando a próxima versão sair.")"
 else
   # Falha ABERTA: sem rede ou sem tag no remoto, segue como antes. Travar a
   # instalação por não resolver um número seria trocar previsibilidade por
   # disponibilidade — mas o aviso sai, porque o dono precisa saber que ficou
   # num canal móvel em vez de numa versão.
   VERSAO_ALVO="latest"
-  c_ylw "⚠ Não consegui descobrir a última versão publicada (rede?)."
-  c_ylw "  Instalando pelo canal 'latest'. Depois rode: bash hostgator-setup-kit/update.sh"
+  c_ylw "$(t "⚠ Não consegui descobrir a última versão publicada (rede?).")"
+  c_ylw "$(t "  Instalando pelo canal 'latest'. Depois rode: bash hostgator-setup-kit/update.sh")"
 fi
 IMAGEM_APP_DEFAULT="${IMG_APP}:${VERSAO_ALVO}"
 
@@ -1308,12 +1308,17 @@ FIELDS=(
   "RESEND_FROM_EMAIL|Remetente dos e-mails, de um domínio verificado na Resend (Enter pula)||v_email||opcional"
 )
 
-field_at() { IFS='|' read -r F_VAR F_PROMPT F_DEF F_VAL F_SEC F_OPT <<< "${FIELDS[$1]}"; }
+# Um único ponto para traduzir o PROMPT: os campos de FIELDS[] vêm separados
+# por '|', e tocar em cada linha do array quebraria esse separador na hora de
+# escrever a tradução (vírgula ou barra dentro do texto en español). Passar o
+# F_PROMPT por t() aqui cobre as ~15 perguntas com uma entrada por prompt na
+# tabela, em vez de reescrever a sintaxe do array.
+field_at() { IFS='|' read -r F_VAR F_PROMPT F_DEF F_VAL F_SEC F_OPT <<< "${FIELDS[$1]}"; F_PROMPT="$(t "$F_PROMPT")"; }
 
 if [ "$NONINTERACTIVE" = 0 ]; then
-  c_dim "Dica: em qualquer pergunta, digite 'voltar' para refazer a anterior."
+  c_dim "$(t "Dica: em qualquer pergunta, digite 'voltar' para refazer a anterior.")"
   if [ "$AI_PROVIDER" != "openai" ]; then
-    c_ylw "A chave da OpenAI é opcional, mas sem ela a IA não ouve áudio nem consulta a base de conhecimento."
+    c_ylw "$(t "A chave da OpenAI é opcional, mas sem ela a IA não ouve áudio nem consulta a base de conhecimento.")"
   fi
 fi
 
@@ -1322,7 +1327,7 @@ while [ "$i" -lt "${#FIELDS[@]}" ]; do
   field_at "$i"
   set +e; ask_one "$F_VAR" "$F_PROMPT" "$F_DEF" "$F_VAL" "$F_SEC" "$F_OPT"; rc=$?; set -e
   if [ "$rc" = "2" ]; then
-    if [ "$i" -eq 0 ]; then c_ylw "  Essa já é a primeira pergunta."; continue; fi
+    if [ "$i" -eq 0 ]; then c_ylw "$(t "  Essa já é a primeira pergunta.")"; continue; fi
     i=$((i-1)); field_at "$i"; unset "$F_VAR"      # limpa o anterior para ele ser perguntado de novo
   else
     i=$((i+1))
@@ -1335,22 +1340,22 @@ done
 # preso no .env sem nenhuma forma de trocar pelo instalador.
 if [ "$NONINTERACTIVE" = 0 ]; then
   while :; do
-    printf '\n\033[1mConfira antes de eu escrever a configuração:\033[0m\n\n'
+    printf '\n\033[1m%s\033[0m\n\n' "$(t "Confira antes de eu escrever a configuração:")"
     n=1
     for f in "${FIELDS[@]}"; do
       IFS='|' read -r v p _d _val sec _o <<< "$f"
       if [ "$sec" = "secret" ]; then printf '  [%2d] %-28s %s\n' "$n" "${v}" "$(mask "${!v:-}")"
-      else printf '  [%2d] %-28s %s\n' "$n" "${v}" "${!v:-(vazio)}"; fi
+      else printf '  [%2d] %-28s %s\n' "$n" "${v}" "${!v:-$(t "(vazio)")}"; fi
       n=$((n+1))
     done
     printf '\n'
-    if ! read -r -p "Está tudo certo? (Enter = continuar / número = corrigir): " answer; then answer=""; fi
+    if ! read -r -p "$(t "Está tudo certo? (Enter = continuar / número = corrigir): ")" answer; then answer=""; fi
     [ -z "$answer" ] && break
     case "$answer" in
-      ''|*[!0-9]*) c_ylw "Digite o número do item que quer corrigir, ou Enter para continuar."; continue;;
+      ''|*[!0-9]*) c_ylw "$(t "Digite o número do item que quer corrigir, ou Enter para continuar.")"; continue;;
     esac
     if [ "$answer" -lt 1 ] || [ "$answer" -gt "${#FIELDS[@]}" ]; then
-      c_ylw "Número fora da lista."; continue
+      c_ylw "$(t "Número fora da lista.")"; continue
     fi
     field_at "$((answer-1))"; unset "$F_VAR"
     set +e; ask_one "$F_VAR" "$F_PROMPT" "$F_DEF" "$F_VAL" "$F_SEC" "$F_OPT"; set -e
@@ -1360,10 +1365,10 @@ else
   for f in "${FIELDS[@]}"; do
     IFS='|' read -r v _p _d val _sec opt <<< "$f"
     [ -z "$val" ] && continue
-    [ -z "${!v:-}" ] && { [ -n "$opt" ] && continue; die "Falta $v (modo --yes exige .env preenchido)."; }
+    [ -z "${!v:-}" ] && { [ -n "$opt" ] && continue; die "$(t "Falta {1} (modo --yes exige .env preenchido)." "$v")"; }
     if ! msg="$("$val" "${!v}" 2>&1)"; then
-      c_red "✖ $v inválido:"; printf '%s\n' "$msg"
-      die "Corrija o .env e rode de novo."
+      c_red "$(t "✖ {1} inválido:" "$v")"; printf '%s\n' "$msg"
+      die "$(t "Corrija o .env e rode de novo.")"
     fi
   done
 fi
@@ -1397,7 +1402,7 @@ gen_b64() { openssl rand -base64 32; }
 # O container WAHA espera o HASH SHA512 hex; o app envia o plaintext no X-Api-Key.
 WAHA_API_KEY_SHA512="$(printf '%s' "$WAHA_API_KEY" | openssl dgst -sha512 -hex | awk '{print $NF}')"
 UPSTASH_REDIS_REST_TOKEN="$SRH_TOKEN"
-c_grn "✓ segredos prontos"
+c_grn "$(t "✓ segredos prontos")"
 
 # ── 5. Escreve .env (600) ───────────────────────────────────────────────────
 # Onde o Traefik encontra o app. Os dois cenários e as duas medições que os

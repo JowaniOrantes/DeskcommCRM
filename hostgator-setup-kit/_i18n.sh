@@ -244,6 +244,51 @@ y, si de verdad es un Traefik, pon REVERSE_PROXY=traefik en el .env y vuelve a e
   ["Digite 1, 2 ou 3."]="Escribe 1, 2 o 3."
   ["pelo contêiner '{1}'{2}"]="por el contenedor '{1}'{2}"
   ["por um programa do próprio servidor"]="por un programa del propio servidor"
+
+  # ── install.sh: versión objetivo (canal stable/latest) ──────────────────
+  ["⚠ A versão {1} ainda não tem as três imagens publicadas."]="⚠ La versión {1} todavía no tiene las tres imágenes publicadas."
+  ["mais recente"]="más reciente"
+  ["  Instalando pelo canal 'stable' (a última versão completa)."]="  Instalando por el canal 'stable' (la última versión completa)."
+  ["⚠ As imagens do worker e do agendador ainda não estão publicadas."]="⚠ Las imágenes del worker y del agendador todavía no están publicadas."
+  ["  Elas serão construídas neste servidor — leva alguns minutos a mais."]="  Se van a construir en este servidor — toma algunos minutos más."
+  ["  Rode 'bash hostgator-setup-kit/update.sh' quando a próxima versão sair."]="  Ejecuta 'bash hostgator-setup-kit/update.sh' cuando salga la próxima versión."
+  ["⚠ Não consegui descobrir a última versão publicada (rede?)."]="⚠ No pude averiguar la última versión publicada (¿red?)."
+  ["  Instalando pelo canal 'latest'. Depois rode: bash hostgator-setup-kit/update.sh"]="  Instalando por el canal 'latest'. Después ejecuta: bash hostgator-setup-kit/update.sh"
+
+  # ── install.sh: FIELDS[] — los prompts de la entrevista, vía field_at() ──
+  ["Domínio do CRM (ex: crm.suaempresa.com.br)"]="Dominio del CRM (ej: crm.tuempresa.com.mx)"
+  ["Seu e-mail (avisos de SSL)"]="Tu correo (avisos de SSL)"
+  ["Imagem Docker do app"]="Imagen Docker de la app"
+  ["Supabase Project URL (Settings > API)"]="Supabase Project URL (Settings > API)"
+  ["Supabase anon key (Settings > API)"]="Supabase anon key (Settings > API)"
+  ["Supabase service_role key (Settings > API)"]="Supabase service_role key (Settings > API)"
+  ["Supabase connection string — Session pooler, modo URI (Settings > Database)"]="Supabase connection string — Session pooler, modo URI (Settings > Database)"
+  ["Token de acesso do Supabase — configura os links de e-mail (supabase.com/dashboard/account/tokens). NÃO fica salvo. Enter pula"]="Token de acceso de Supabase — configura los enlaces de correo (supabase.com/dashboard/account/tokens). NO se guarda. Enter lo salta"
+  ["Chave da OpenRouter — a IA que atende (openrouter.ai/keys; Enter pula: dá para cadastrar depois pela tela, em IA › Credenciais)"]="Clave de OpenRouter — la IA que atiende (openrouter.ai/keys; Enter la salta: puedes registrarla después desde la pantalla, en IA › Credenciales)"
+  ["Chave da OpenAI — a IA que atende (platform.openai.com/api-keys; Enter pula: dá para cadastrar depois pela tela, em IA › Credenciais)"]="Clave de OpenAI — la IA que atiende (platform.openai.com/api-keys; Enter la salta: puedes registrarla después desde la pantalla, en IA › Credenciales)"
+  ["Chave da Anthropic — a IA que atende (console.anthropic.com; Enter pula: dá para cadastrar depois pela tela, em IA › Credenciais)"]="Clave de Anthropic — la IA que atiende (console.anthropic.com; Enter la salta: puedes registrarla después desde la pantalla, en IA › Credenciales)"
+  ["Chave da OpenAI — só para ouvir áudios e usar a base de conhecimento (Enter pula: dá para cadastrar depois pela tela, em IA › Credenciais)"]="Clave de OpenAI — solo para escuchar audios y usar la base de conocimiento (Enter la salta: puedes registrarla después desde la pantalla, en IA › Credenciales)"
+  ["E-mail do primeiro admin (dono)"]="Correo del primer admin (dueño)"
+  ["Senha do primeiro admin (mínimo 8 caracteres)"]="Contraseña del primer admin (mínimo 8 caracteres)"
+  ["Nome que aparece na interface (Enter para o padrão)"]="Nombre que aparece en la interfaz (Enter para el predeterminado)"
+  ["Idioma do sistema — 1) Português  2) Español (Enter = Português)"]="Idioma del sistema — 1) Português  2) Español (Enter = Português)"
+  ["Cor da sua marca em hex, ex.: #7a5cd6 (Enter usa a cor do sistema)"]="Color de tu marca en hex, ej.: #7a5cd6 (Enter usa el color del sistema)"
+  ["E-mail de suporte que SEUS clientes veem (Enter pula)"]="Correo de soporte que ven TUS clientes (Enter lo salta)"
+  ["Chave da Resend — envia convite e e-mail de LGPD (resend.com/api-keys, Enter pula)"]="Clave de Resend — envía invitación y correo de LGPD (resend.com/api-keys, Enter la salta)"
+  ["Remetente dos e-mails, de um domínio verificado na Resend (Enter pula)"]="Remitente de los correos, de un dominio verificado en Resend (Enter lo salta)"
+
+  # ── install.sh: entrevista y pantalla de confirmación ────────────────────
+  ["Dica: em qualquer pergunta, digite 'voltar' para refazer a anterior."]="Consejo: en cualquier pregunta, escribe 'voltar' para rehacer la anterior."
+  ["A chave da OpenAI é opcional, mas sem ela a IA não ouve áudio nem consulta a base de conhecimento."]="La clave de OpenAI es opcional, pero sin ella la IA no escucha audio ni consulta la base de conocimiento."
+  ["  Essa já é a primeira pergunta."]="  Esa ya es la primera pregunta."
+  ["Confira antes de eu escrever a configuração:"]="Revisa antes de que escriba la configuración:"
+  ["(vazio)"]="(vacío)"
+  ["Está tudo certo? (Enter = continuar / número = corrigir): "]="¿Está todo bien? (Enter = continuar / número = corregir): "
+  ["Digite o número do item que quer corrigir, ou Enter para continuar."]="Escribe el número del ítem que quieres corregir, o Enter para continuar."
+  ["Número fora da lista."]="Número fuera de la lista."
+  ["✖ {1} inválido:"]="✖ {1} inválido:"
+  ["Corrija o .env e rode de novo."]="Corrige el .env y vuelve a ejecutar esto."
+  ["✓ segredos prontos"]="✓ secretos listos"
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…
