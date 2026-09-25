@@ -819,37 +819,37 @@ step "Verificando dependências"
 # alguém sem avisar é abuso de confiança); com --yes segue direto, que é o
 # contrato desse modo.
 if ! command -v docker >/dev/null 2>&1; then
-  c_ylw "⚠ Docker não está instalado — é o motor que roda o CRM."
+  c_ylw "$(t "⚠ Docker não está instalado — é o motor que roda o CRM.")"
   instalar=1
   if [ "$NONINTERACTIVE" = 0 ]; then
-    read -r -p "  Posso instalar agora? (S/n) " r
+    read -r -p "$(t "  Posso instalar agora? (S/n) ")" r
     case "${r:-S}" in [Nn]*) instalar=0;; esac
   fi
   if [ "$instalar" = 1 ]; then
-    c_dim "  Instalando (get.docker.com — o instalador oficial). Leva 1-2 minutos…"
+    c_dim "$(t "  Instalando (get.docker.com — o instalador oficial). Leva 1-2 minutos…")"
     # A saída vai para um log em vez de /dev/null: silenciar o stderr também
     # deixava a falha MUDA (disco cheio, apt travado, arquitetura sem pacote
     # viravam todos a mesma frase genérica) — exatamente o que o trap lá em cima
     # existe para impedir. Tela limpa no caminho feliz, causa real no caminho ruim.
     _docker_log="$(mktemp)"
     if ! curl -fsSL https://get.docker.com | sh >"$_docker_log" 2>&1; then
-      c_red "  Últimas linhas do instalador do Docker:"; tail -15 "$_docker_log" >&2
-      die "Não consegui instalar o Docker (log em $_docker_log). Rode 'curl -fsSL https://get.docker.com | sh' e tente de novo."
+      c_red "$(t "  Últimas linhas do instalador do Docker:")"; tail -15 "$_docker_log" >&2
+      die "$(t "Não consegui instalar o Docker (log em {1}). Rode 'curl -fsSL https://get.docker.com | sh' e tente de novo." "$_docker_log")"
     fi
     rm -f "$_docker_log"; unset _docker_log
-    command -v docker >/dev/null 2>&1 || die "Docker instalou mas não ficou no PATH. Reabra o terminal e rode de novo."
-    c_grn "✓ Docker instalado"
+    command -v docker >/dev/null 2>&1 || die "$(t "Docker instalou mas não ficou no PATH. Reabra o terminal e rode de novo.")"
+    c_grn "$(t "✓ Docker instalado")"
   else
-    die "Sem Docker não dá para seguir. Instale com: curl -fsSL https://get.docker.com | sh"
+    die "$(t "Sem Docker não dá para seguir. Instale com: curl -fsSL https://get.docker.com | sh")"
   fi
 fi
 
 for bin in docker git openssl curl; do
-  command -v "$bin" >/dev/null 2>&1 || die "'$bin' não encontrado. Instale antes de continuar."
+  command -v "$bin" >/dev/null 2>&1 || die "$(t "'{1}' não encontrado. Instale antes de continuar." "$bin")"
 done
-docker compose version >/dev/null 2>&1 || die "'docker compose' (v2) não encontrado."
-docker info >/dev/null 2>&1 || die "O daemon do Docker não está rodando (ou seu usuário não tem permissão)."
-c_grn "✓ docker, git, openssl, curl ok"
+docker compose version >/dev/null 2>&1 || die "$(t "'docker compose' (v2) não encontrado.")"
+docker info >/dev/null 2>&1 || die "$(t "O daemon do Docker não está rodando (ou seu usuário não tem permissão).")"
+c_grn "$(t "✓ docker, git, openssl, curl ok")"
 
 # RAM: a imagem é pré-buildada, então a stack SOBE com 2GB. Mas o runbook de produção
 # declara 4GB como mínimo de operação: 7 contêineres, e o WAHA usa ~150MB por sessão
@@ -858,20 +858,20 @@ c_grn "✓ docker, git, openssl, curl ok"
 if [ -r /proc/meminfo ]; then
   mem_kb=$(awk '/MemTotal/{print $2}' /proc/meminfo)
   if ram_abaixo_do_recomendado "$mem_kb"; then
-    c_ylw "⚠ Este servidor tem ~$((mem_kb/1024))MB de RAM. O CRM sobe, mas fica no limite:"
-    c_ylw "  são 7 contêineres e o WhatsApp usa ~150MB por número conectado."
-    c_ylw "  Adicione swap antes de operar — ver docs/runbooks/waha-hostgator.md."
+    c_ylw "$(t "⚠ Este servidor tem ~{1}MB de RAM. O CRM sobe, mas fica no limite:" "$((mem_kb/1024))")"
+    c_ylw "$(t "  são 7 contêineres e o WhatsApp usa ~150MB por número conectado.")"
+    c_ylw "$(t "  Adicione swap antes de operar — ver docs/runbooks/waha-hostgator.md.")"
   fi
 fi
 
 # ── 2. Repositório ──────────────────────────────────────────────────────────
 step "Localizando o projeto"
 if [ -f "$COMPOSE" ]; then
-  c_grn "✓ rodando dentro do repositório"
+  c_grn "$(t "✓ rodando dentro do repositório")"
 elif [ -f "$REPO_DIR/$COMPOSE" ]; then
-  cd "$REPO_DIR"; c_grn "✓ repositório em ./$REPO_DIR"
+  cd "$REPO_DIR"; c_grn "$(t "✓ repositório em ./{1}" "$REPO_DIR")"
 else
-  c_ylw "Clonando $REPO_URL ..."
+  c_ylw "$(t "Clonando {1} ..." "$REPO_URL")"
   git clone --depth 1 "$REPO_URL" "$REPO_DIR"
   cd "$REPO_DIR"
 fi
@@ -905,22 +905,22 @@ source "$KIT_DIR/_common.sh"
 # devolve vazio e o guarda deixa passar. Re-executar na MESMA pasta idem — a
 # árvore é a mesma. `DESKCOMM_ASSUMIR_PROJETO=1` é a saída para quem move a
 # instalação de lugar de propósito, e é a mesma dos outros dois call sites.
-recusar_projeto_de_outra_arvore || die "Instalação interrompida para não derrubar o CRM que já está no ar nesta VPS."
+recusar_projeto_de_outra_arvore || die "$(t "Instalação interrompida para não derrubar o CRM que já está no ar nesta VPS.")"
 
 # ── 3. Coleta de config ─────────────────────────────────────────────────────
 fase 2 "Suas informações"
 step "Configuração"
 # Se já existe .env, carrega pra não repetir perguntas (idempotência).
-if [ -f .env ]; then load_env .env; c_grn "✓ .env existente carregado"; fi
+if [ -f .env ]; then load_env .env; c_grn "$(t "✓ .env existente carregado")"; fi
 # Respostas guardadas de uma tentativa que não chegou ao fim. Carregam DEPOIS do
 # .env de propósito: se as duas fontes têm a chave, a mais recente é esta.
 if [ -f "$PARTIAL_FILE" ]; then
   load_env "$PARTIAL_FILE"
-  c_grn "✓ retomando: $(grep -c '=' "$PARTIAL_FILE" 2>/dev/null || echo 0) resposta(s) guardadas da tentativa anterior"
-  c_dim "  (para responder tudo de novo do zero: rm $PARTIAL_FILE)"
+  c_grn "$(t "✓ retomando: {1} resposta(s) guardadas da tentativa anterior" "$(grep -c '=' "$PARTIAL_FILE" 2>/dev/null || echo 0)")"
+  c_dim "$(t "  (para responder tudo de novo do zero: rm {1})" "$PARTIAL_FILE")"
   # Sem esta linha, ser perguntado de novo sobre o token — depois de uma tela
   # dizendo que N respostas foram guardadas — lê como defeito do instalador.
-  c_dim "  (o token do Supabase é de conta e nunca entra no rascunho: ele é perguntado de novo. Enter pula)"
+  c_dim "$(t "  (o token do Supabase é de conta e nunca entra no rascunho: ele é perguntado de novo. Enter pula)")"
 fi
 
 # ── Proxy reverso: quem está com as portas 80 e 443? ────────────────────────
@@ -1001,7 +1001,7 @@ if [ -z "${REVERSE_PROXY:-}" ]; then
   case "$(decide_proxy "$portas_ocupadas" "$dono_projeto" "$proj_atual" "$dono_imagem" "$dono_portas" "$dono_arvore" "$_minha_arvore")" in
   caddy)
     REVERSE_PROXY=caddy
-    [ -n "$portas_ocupadas" ] && c_dim "  (as portas 80/443 já estão com esta instalação — seguindo)"
+    [ -n "$portas_ocupadas" ] && c_dim "$(t "  (as portas 80/443 já estão com esta instalação — seguindo)")"
     ;;
   traefik)
     # O porquê de a varredura por modo host não bastar sozinha está em
