@@ -311,6 +311,26 @@ identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a in
   ["⚠ APP_IMAGE está pinado por digest."]="⚠ APP_IMAGE está fijado por digest."
   ["  O worker e o scheduler ficam em 'stable' — ajuste WORKER_IMAGE/SCHEDULER_IMAGE"]="  El worker y el scheduler quedan en 'stable' — ajusta WORKER_IMAGE/SCHEDULER_IMAGE"
   ["  no .env se você precisa deles num digest específico também."]="  en el .env si también los necesitas en un digest específico."
+
+  # ── install.sh: escritura del .env (fin) y verificación de DNS ───────────
+  ["✓ .env escrito (permissão 600)"]="✓ .env escrito (permiso 600)"
+  ["Conferindo DNS de {1}"]="Revisando el DNS de {1}"
+  ["✓ {1} → {2} (aponta pra este VPS)"]="✓ {1} → {2} (apunta a esta VPS)"
+  ["⚠ {1} resolve para '{2}' e o IP deste VPS é '{3}'."]="⚠ {1} resuelve a '{2}' y el IP de esta VPS es '{3}'."
+  ["nada"]="nada"
+  ["desconhecido"]="desconocido"
+  ["  O SSL (Let's Encrypt) só será emitido quando o A-record apontar pra cá."]="  El SSL (Let's Encrypt) solo se emitirá cuando el registro A apunte hacia aquí."
+  ["  No painel do seu domínio, crie um registro A apontando {1}"]="  En el panel de tu dominio, crea un registro A que apunte {1}"
+  ["  para {1}. Costuma valer em poucos minutos."]="  hacia {1}. Suele tardar solo unos minutos en aplicarse."
+  ["o IP deste servidor"]="el IP de este servidor"
+  ["  Enter = conferir de novo"]="  Enter = revisar de nuevo"
+  ["  c     = continuar assim mesmo (o site sobe sem cadeado até o DNS valer)"]="  c     = continuar de todas formas (el sitio arranca sin candado hasta que el DNS surta efecto)"
+  ["  s     = sair e voltar depois (o que você já respondeu fica guardado)"]="  s     = salir y volver después (lo que ya respondiste queda guardado)"
+  ["  Seguindo sem o DNS pronto — lembre de apontar o A-record."]="  Continuando sin el DNS listo — recuerda apuntar el registro A."
+  ["Ajuste o A-record de {1} para {2} e rode o instalador de novo."]="Ajusta el registro A de {1} hacia {2} y vuelve a ejecutar el instalador."
+  ["✓ {1} → {2} (agora aponta pra este VPS)"]="✓ {1} → {2} (ahora apunta a esta VPS)"
+  ["  Ainda não propagou. Dá pra esperar e tentar de novo."]="  Todavía no se propagó. Puedes esperar y volver a intentarlo."
+  ["Aplicando o schema no Supabase (baseline.sql)"]="Aplicando el esquema en Supabase (baseline.sql)"
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…

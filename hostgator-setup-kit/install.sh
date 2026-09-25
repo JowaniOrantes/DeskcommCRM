@@ -1799,11 +1799,11 @@ chmod 600 .env
 # disco seria uma segunda cópia dos segredos, e desatualizada na primeira
 # correção que alguém fizer no .env.
 rm -f "$PARTIAL_FILE"
-c_grn "✓ .env escrito (permissão 600)"
+c_grn "$(t "✓ .env escrito (permissão 600)")"
 
 # ── 6. Checagem de DNS ──────────────────────────────────────────────────────
 fase 3 "Banco de dados e domínio"
-step "Conferindo DNS de ${DOMAIN}"
+step "$(t "Conferindo DNS de {1}" "$DOMAIN")"
 public_ip="$(curl -fsS --max-time 8 https://api.ipify.org 2>/dev/null || echo '')"
 # Um domínio pode ter A (IPv4) e AAAA (IPv6) ao mesmo tempo, e o resolver não
 # garante ordem entre eles. Comparar só o PRIMEIRO endereço (o antigo `hosts`
@@ -1814,37 +1814,37 @@ public_ip="$(curl -fsS --max-time 8 https://api.ipify.org 2>/dev/null || echo ''
 # que UM deles seja o IP do VPS.
 resolved="$(getent ahosts "$DOMAIN" 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ' || echo '')"
 if [ -n "$public_ip" ] && case " $resolved " in *" $public_ip "*) true;; *) false;; esac; then
-  c_grn "✓ ${DOMAIN} → ${public_ip} (aponta pra este VPS)"
+  c_grn "$(t "✓ {1} → {2} (aponta pra este VPS)" "$DOMAIN" "$public_ip")"
 else
   # DNS recém-apontado leva minutos para propagar: chegar aqui é estado NORMAL,
   # não erro. Antes havia uma única saída — responder exatamente "s" — e
   # qualquer outra coisa matava a instalação. Agora o padrão é esperar junto com
   # a pessoa: Enter reconsulta, e sair é uma escolha explícita dela.
   while [ "$NONINTERACTIVE" = 0 ]; do
-    c_ylw "⚠ ${DOMAIN} resolve para '${resolved:-nada}' e o IP deste VPS é '${public_ip:-desconhecido}'."
-    c_ylw "  O SSL (Let's Encrypt) só será emitido quando o A-record apontar pra cá."
-    printf '\n%s\n'   "  No painel do seu domínio, crie um registro A apontando ${DOMAIN}"
-    printf '%s\n\n'   "  para ${public_ip:-o IP deste servidor}. Costuma valer em poucos minutos."
-    printf '%s\n'     "  Enter = conferir de novo"
-    printf '%s\n'     "  c     = continuar assim mesmo (o site sobe sem cadeado até o DNS valer)"
-    printf '%s\n'     "  s     = sair e voltar depois (o que você já respondeu fica guardado)"
+    c_ylw "$(t "⚠ {1} resolve para '{2}' e o IP deste VPS é '{3}'." "$DOMAIN" "${resolved:-$(t nada)}" "${public_ip:-$(t desconhecido)}")"
+    c_ylw "$(t "  O SSL (Let's Encrypt) só será emitido quando o A-record apontar pra cá.")"
+    printf '\n%s\n'   "$(t "  No painel do seu domínio, crie um registro A apontando {1}" "$DOMAIN")"
+    printf '%s\n\n'   "$(t "  para {1}. Costuma valer em poucos minutos." "${public_ip:-$(t "o IP deste servidor")}")"
+    printf '%s\n'     "$(t "  Enter = conferir de novo")"
+    printf '%s\n'     "$(t "  c     = continuar assim mesmo (o site sobe sem cadeado até o DNS valer)")"
+    printf '%s\n'     "$(t "  s     = sair e voltar depois (o que você já respondeu fica guardado)")"
     if ! read -r -p "  > " a; then a="s"; fi
     case "$(printf '%s' "$a" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')" in
-      c|continuar) c_ylw "  Seguindo sem o DNS pronto — lembre de apontar o A-record."; break;;
-      s|sair|n|nao) die "Ajuste o A-record de ${DOMAIN} para ${public_ip:-o IP deste servidor} e rode o instalador de novo.";;
+      c|continuar) c_ylw "$(t "  Seguindo sem o DNS pronto — lembre de apontar o A-record.")"; break;;
+      s|sair|n|nao) die "$(t "Ajuste o A-record de {1} para {2} e rode o instalador de novo." "$DOMAIN" "${public_ip:-$(t "o IP deste servidor")}")";;
       *)
         resolved="$(getent ahosts "$DOMAIN" 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ' || echo '')"
         if [ -n "$public_ip" ] && case " $resolved " in *" $public_ip "*) true;; *) false;; esac; then
-          c_grn "✓ ${DOMAIN} → ${public_ip} (agora aponta pra este VPS)"; break
+          c_grn "$(t "✓ {1} → {2} (agora aponta pra este VPS)" "$DOMAIN" "$public_ip")"; break
         fi
-        c_ylw "  Ainda não propagou. Dá pra esperar e tentar de novo."
+        c_ylw "$(t "  Ainda não propagou. Dá pra esperar e tentar de novo.")"
         ;;
     esac
   done
 fi
 
 # ── 7. Aplica o schema (baseline) no Supabase — via container postgres ───────
-step "Aplicando o schema no Supabase (baseline.sql)"
+step "$(t "Aplicando o schema no Supabase (baseline.sql)")"
 # Tudo daqui até o fim da etapa 8 fala com o banco por `url_do_schema`
 # (_common.sh), não pela string que vai para o `.env`: criar extensão, aplicar o
 # baseline e promover o dono exigem o DONO do banco, e num Supabase próprio a
