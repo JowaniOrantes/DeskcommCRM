@@ -11113,7 +11113,7 @@ export const DICIONARIO: Traducoes = {
   "Esta jornada está ativada": { es: "Este recorrido está activado" },
   "Ativada, com peças removidas": { es: "Activado, con piezas eliminadas" },
   "Ativar de novo não recria o que você apagou — só cria o que nunca existiu.": {
-    es: "Activarlo de nuevo no recrea lo que usted borró — solo crea lo que nunca existió.",
+    es: "Activarlo de nuevo no recrea lo que borraste — solo crea lo que nunca existió.",
   },
   "colunas": { es: "columnas" },
   "campos": { es: "campos" },
@@ -11156,7 +11156,7 @@ export const DICIONARIO: Traducoes = {
   "Criar empresa": { es: "Crear empresa" },
   "Empresa criada": { es: "Empresa creada" },
   "Editar empresa": { es: "Editar empresa" },
-  "Atualize os dados desta empresa.": { es: "Actualice los datos de esta empresa." },
+  "Atualize os dados desta empresa.": { es: "Actualiza los datos de esta empresa." },
   "Empresa atualizada": { es: "Empresa actualizada" },
   "Contatos da empresa": { es: "Contactos de la empresa" },
   "Vincular contato": { es: "Vincular contacto" },
@@ -11213,7 +11213,7 @@ export const DICIONARIO: Traducoes = {
     es: "Uno por número. Quien cobra es el agente publicado en ese número — el cobro de un negocio no sale por la línea del otro.",
   },
   "Nenhum fluxo com gatilho de sistema externo. Crie um em Follow-ups.": {
-    es: "Ningún flujo con disparador de sistema externo. Cree uno en Seguimientos.",
+    es: "Ningún flujo con disparador de sistema externo. Crea uno en Seguimientos.",
   },
   "Este fluxo tem mensagem fixa; recomendamos mensagem do assistente.": {
     es: "Este flujo tiene mensaje fijo; recomendamos mensaje del asistente.",
@@ -11347,7 +11347,7 @@ export const DICIONARIO: Traducoes = {
   "ainda não enviadas": { es: "aún no enviadas" },
   "Ainda não enviadas": { es: "Aún no enviadas" },
   "A lista ainda não foi montada. Use Preparar para ver quem entra.": {
-    es: "La lista aún no fue armada. Use Preparar para ver quién entra.",
+    es: "La lista aún no fue armada. Usa Preparar para ver quién entra.",
   },
   "Base legal": { es: "Base legal" },
   "Base legal do envio": { es: "Base legal del envío" },
@@ -11370,7 +11370,7 @@ export const DICIONARIO: Traducoes = {
   "contatos na lista": { es: "contactos en la lista" },
   "criada": { es: "creada" },
   "Em branco, vale o ritmo do número (Conexões › Proteção de envio). O que você puser aqui só pode deixar mais devagar.": {
-    es: "En blanco, vale el ritmo del número (Conexiones › Protección de envío). Lo que ponga aquí solo puede hacerlo más lento.",
+    es: "En blanco, vale el ritmo del número (Conexiones › Protección de envío). Lo que pongas aquí solo puede hacerlo más lento.",
   },
   "Entregues": { es: "Entregadas" },
   "Enviadas": { es: "Enviadas" },
@@ -11380,13 +11380,13 @@ export const DICIONARIO: Traducoes = {
   "Enviar teste": { es: "Enviar prueba" },
   "Erro ao carregar as campanhas.": { es: "Error al cargar las campañas." },
   "Escolha o público, escreva a mensagem e acompanhe quem recebeu.": {
-    es: "Elija el público, escriba el mensaje y acompañe quién lo recibió.",
+    es: "Elige el público, escribe el mensaje y sigue quién lo recibió.",
   },
   "Escolha pelo menos um critério — uma lista sem recorte ninguém confere antes de apertar.": {
-    es: "Elija al menos un criterio — una lista sin recorte nadie la revisa antes de apretar.",
+    es: "Elige al menos un criterio — una lista sin recorte nadie la revisa antes de apretar.",
   },
-  "Escolha um número": { es: "Elija un número" },
-  "Escreva como você falaria com uma pessoa só.": { es: "Escriba como le hablaría a una sola persona." },
+  "Escolha um número": { es: "Elige un número" },
+  "Escreva como você falaria com uma pessoa só.": { es: "Escribe como le hablarías a una sola persona." },
   "Ex.: LIA-2026-01": { es: "Ej.: LIA-2026-01" },
   "Ex.: Reativação de clientes parados": { es: "Ej.: Reactivación de clientes inactivos" },
   "falharam": { es: "fallaron" },
@@ -11402,7 +11402,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Intervalo mínimo entre mensagens (segundos)": { es: "Intervalo mínimo entre mensajes (segundos)" },
   "Isto cria um rascunho. Nada é enviado antes de você preparar a lista e iniciar.": {
-    es: "Esto crea un borrador. No se envía nada antes de que usted prepare la lista e inicie.",
+    es: "Esto crea un borrador. No se envía nada antes de que prepares la lista e inicies.",
   },
   "Lidas": { es: "Leídas" },
   "lista ainda não preparada": { es: "lista aún no preparada" },
@@ -11412,7 +11412,7 @@ export const DICIONARIO: Traducoes = {
   "Não foi possível carregar a campanha.": { es: "No fue posible cargar la campaña." },
   "Nenhuma campanha ainda.": { es: "Ninguna campaña todavía." },
   "Nenhum número conectado. Conecte um em Conexões antes de criar a campanha.": {
-    es: "Ningún número conectado. Conecte uno en Conexiones antes de crear la campaña.",
+    es: "Ningún número conectado. Conecta uno en Conexiones antes de crear la campaña.",
   },
   "Nome da campanha": { es: "Nombre de la campaña" },
   "Nova campanha": { es: "Nueva campaña" },
@@ -11442,10 +11442,10 @@ export const DICIONARIO: Traducoes = {
   "separe por vírgula": { es: "separe por coma" },
   "Último problema": { es: "Último problema" },
   "Uma campanha fala com uma lista de contatos que você escolhe, no ritmo do número — nunca em rajada.": {
-    es: "Una campaña habla con una lista de contactos que usted elige, al ritmo del número — nunca en ráfaga.",
+    es: "Una campaña habla con una lista de contactos que eliges, al ritmo del número — nunca en ráfaga.",
   },
   "Ver quantas pessoas": { es: "Ver cuántas personas" },
-  "Você pode usar:": { es: "Puede usar:" },
+  "Você pode usar:": { es: "Puedes usar:" },
   "Máximo por hora": { es: "Máximo por hora" },
   "Ritmo salvo.": { es: "Ritmo guardado." },
   "Salvar ritmo": { es: "Guardar ritmo" },
@@ -11454,7 +11454,7 @@ export const DICIONARIO: Traducoes = {
     es: "Mientras es borrador, todo cambia. Una vez preparada, solo el ritmo.",
   },
   "Esta campanha já foi preparada: cada pessoa da lista tem o texto que vai receber guardado. Para mudar o texto ou o público, volte a campanha para rascunho — isso descarta a lista montada.": {
-    es: "Esta campaña ya fue preparada: cada persona de la lista tiene guardado el texto que va a recibir. Para cambiar el texto o el público, vuelva la campaña a borrador — eso descarta la lista armada.",
+    es: "Esta campaña ya fue preparada: cada persona de la lista tiene guardado el texto que va a recibir. Para cambiar el texto o el público, vuelve la campaña a borrador — eso descarta la lista armada.",
   },
   "O ritmo você ajusta na própria tela da campanha, sem descartar nada.": {
     es: "El ritmo se ajusta en la propia pantalla de la campaña, sin descartar nada.",
@@ -11475,7 +11475,7 @@ export const DICIONARIO: Traducoes = {
   "Quem atende a resposta": { es: "Quién atiende la respuesta" },
   "Quem responder": { es: "Quien responda" },
   "Vale só para conversas que nascem desta campanha: quem já falava com você continua com quem o atendia. Quem aborda precisa saber dizer de onde veio o contato — essa resposta tem de estar no material do agente escolhido.": {
-    es: "Vale solo para conversaciones que nacen de esta campaña: quien ya hablaba con usted sigue con quien lo atendía. Quien aborda necesita saber decir de dónde vino el contacto — esa respuesta tiene que estar en el material del agente elegido.",
+    es: "Vale solo para conversaciones que nacen de esta campaña: quien ya hablaba contigo sigue con quien lo atendía. Quien aborda necesita saber decir de dónde vino el contacto — esa respuesta tiene que estar en el material del agente elegido.",
   },
   "Vira card no funil": { es: "Se convierte en tarjeta en el embudo" },
   "pessoa?": { es: "persona?" },
@@ -11487,7 +11487,7 @@ export const DICIONARIO: Traducoes = {
     es: "En cada envío, la campaña usa el número con más margen en el tope del día — y el número que la persona ya conoce, cuando ya conversó con alguno de ellos.",
   },
   "A campanha reveza entre os números marcados, escolhendo a cada envio o que tem mais folga no teto do dia. Quem já conversa com você por um deles recebe por esse mesmo, para não chegar de um número desconhecido.": {
-    es: "La campaña alterna entre los números marcados, eligiendo en cada envío el que tiene más margen en el tope del día. Quien ya conversa con usted por uno de ellos recibe por ese mismo, para no llegar desde un número desconocido.",
+    es: "La campaña alterna entre los números marcados, eligiendo en cada envío el que tiene más margen en el tope del día. Quien ya conversa contigo por uno de ellos recibe por ese mismo, para no llegar desde un número desconocido.",
   },
   "Atenção: o intervalo e os tetos da CAMPANHA somam todos os números. Para o rodízio aumentar o volume, deixe o ritmo da campanha em branco e cada número usa o dele.": {
     es: "Atención: el intervalo y los topes de la CAMPAÑA suman todos los números. Para que la alternancia aumente el volumen, deje el ritmo de la campaña en blanco y cada número usa el suyo.",
@@ -11511,7 +11511,7 @@ export const DICIONARIO: Traducoes = {
     es: "Contar como respuesta hasta (horas después del envío)",
   },
   "Copy que você reusa entre campanhas. Mudar um texto aqui não muda mensagem que já foi preparada nem que já foi enviada.": {
-    es: "Texto que usted reutiliza entre campañas. Cambiarlo aquí no cambia un mensaje ya preparado ni ya enviado.",
+    es: "Texto que reutilizas entre campañas. Cambiarlo aquí no cambia un mensaje ya preparado ni ya enviado.",
   },
   "Excluir das campanhas": { es: "Excluir de las campañas" },
   "Ex.: Primeiro contato — produtor": { es: "Ej.: Primer contacto — productor" },
@@ -11519,7 +11519,7 @@ export const DICIONARIO: Traducoes = {
   "Nenhum número excluído.": { es: "Ningún número excluido." },
   "Nenhum texto salvo ainda.": { es: "Ningún texto guardado todavía." },
   "Números que nenhuma campanha alcança. Diferente de quem pediu para parar: aqui o atendimento continua normal se a pessoa escrever — isto é uma decisão sua, não dela.": {
-    es: "Números que ninguna campaña alcanza. Distinto de quien pidió parar: aquí la atención sigue normal si la persona escribe — esta es una decisión suya, no de ella.",
+    es: "Números que ninguna campaña alcanza. Distinto de quien pidió parar: aquí la atención sigue normal si la persona escribe — esta es una decisión tuya, no de ella.",
   },
   "O que vale para todas as campanhas, e não para uma só.": {
     es: "Lo que vale para todas las campañas, y no para una sola.",
