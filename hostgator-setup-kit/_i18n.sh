@@ -331,6 +331,60 @@ identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a in
   ["✓ {1} → {2} (agora aponta pra este VPS)"]="✓ {1} → {2} (ahora apunta a esta VPS)"
   ["  Ainda não propagou. Dá pra esperar e tentar de novo."]="  Todavía no se propagó. Puedes esperar y volver a intentarlo."
   ["Aplicando o schema no Supabase (baseline.sql)"]="Aplicando el esquema en Supabase (baseline.sql)"
+
+  # ── install.sh: aplicación del baseline.sql ──────────────────────────────
+  ["✓ extensões (vector, citext, pg_trgm) habilitadas no public"]="✓ extensiones (vector, citext, pg_trgm) habilitadas en public"
+  ["⚠ não consegui habilitar as extensões — o schema pode falhar abaixo."]="⚠ no pude habilitar las extensiones — el esquema puede fallar más abajo."
+  ["  Supabase próprio? Criar extensão exige o dono do banco: rode de novo com"]="  ¿Supabase propio? Crear una extensión requiere ser dueño de la base de datos: vuelve a ejecutar esto con"
+  ["• schema já existe — re-aplicando em modo update (erros 'já existe' são esperados e ficam no log)"]="• el esquema ya existe — reaplicando en modo actualización (errores 'ya existe' son esperados y quedan en el log)"
+  ["✓ schema re-aplicado (apêndice de migrations incluído)"]="✓ esquema reaplicado (apéndice de migrations incluido)"
+  ["⚠ Erros no banco que NÃO são os esperados (log completo: {1}):"]="⚠ Errores en la base de datos que NO son los esperados (log completo: {1}):"
+  ["✓ schema aplicado (log: {1})"]="✓ esquema aplicado (log: {1})"
+  ["baseline falhou num banco NOVO — o schema ficaria incompleto (sem RLS). Log completo: {1}
+     Se o erro fala em permissão: o baseline exige o DONO do banco. Num Supabase próprio,
+     rode de novo com SUPABASE_DB_ADMIN_URL='postgresql://<dono>:<senha>@<host>:5432/postgres'
+     — ela roda só o schema e NÃO é gravada no .env dos contêineres."]="el baseline falló en una base de datos NUEVA — el esquema quedaría incompleto (sin RLS). Log completo: {1}
+     Si el error menciona permisos: el baseline requiere ser el DUEÑO de la base de datos. En un Supabase propio,
+     vuelve a ejecutar esto con SUPABASE_DB_ADMIN_URL='postgresql://<dueño>:<contraseña>@<host>:5432/postgres'
+     — esa cadena solo aplica el esquema y NO se guarda en el .env de los contenedores."
+  ["✓ verificação: {1} tabelas no schema public"]="✓ verificación: {1} tablas en el schema public"
+  ["⚠ verificação: só {1} tabelas no schema public — confira {2}"]="⚠ verificación: solo {1} tablas en el schema public — revisa {2}"
+  ["⚠ supabase/baseline.sql não encontrado — pulei (aplique o schema manualmente)."]="⚠ no se encontró supabase/baseline.sql — lo salté (aplica el esquema manualmente)."
+
+  # ── install.sh: pendencia_dos_emails() — Supabase en la nube ─────────────
+  ["FALTA UM PASSO, e ele é no painel do Supabase"]="FALTA UN PASO, y es en el panel de Supabase"
+  ["Os e-mails de acesso (esqueci minha senha, confirmação de cadastro e"]="Los correos de acceso (olvidé mi contraseña, confirmación de registro y"
+  ["aceite de convite) ainda não levam para este app. Sem este passo,"]="aceptación de invitación) todavía no llevan a esta app. Sin este paso,"
+  ["ninguém consegue redefinir a própria senha."]="nadie puede restablecer su propia contraseña."
+  ["O que o passo automático encontrou:"]="Lo que encontró el paso automático:"
+  ["Em https://supabase.com/dashboard → seu projeto → Authentication →"]="En https://supabase.com/dashboard → tu proyecto → Authentication →"
+  ["URL Configuration, preencha:"]="URL Configuration, completa:"
+  ["Depois é só salvar — não precisa reiniciar nada aqui."]="Después solo guarda — no hace falta reiniciar nada aquí."
+  ["Para o instalador fazer isso sozinho da próxima vez, rode"]="Para que el instalador haga esto solo la próxima vez, ejecuta"
+  ["\`bash hostgator-setup-kit/install.sh\` de novo e informe o token de"]="\`bash hostgator-setup-kit/install.sh\` de nuevo e indica el token de"
+  ["acesso quando ele perguntar (supabase.com/dashboard/account/tokens)."]="acceso cuando lo pida (supabase.com/dashboard/account/tokens)."
+
+  # ── install.sh: pendencia_dos_emails_proprio() — Supabase self-hosted ───
+  ["FALTA UM PASSO, no SEU Supabase"]="FALTA UN PASO, en TU Supabase"
+  ["Os e-mails de acesso (confirmar cadastro e redefinir senha) ainda saem no"]="Los correos de acceso (confirmar registro y restablecer contraseña) todavía salen con la"
+  ["modelo padrão do GoTrue. O link desse modelo NÃO fecha a sessão quando o"]="plantilla predeterminada de GoTrue. El enlace de esa plantilla NO cierra la sesión cuando el"
+  ["clique vem do webmail — a conta é confirmada e a pessoa entra sem"]="clic viene del webmail — la cuenta se confirma y la persona entra sin"
+  ["organização e sem menu."]="organización y sin menú."
+  ["Como o seu Supabase é próprio, não há painel na nuvem nem API para isto:"]="Como tu Supabase es propio, no hay panel en la nube ni API para esto:"
+  ["a configuração é por variável de ambiente do serviço \`auth\` (GoTrue)."]="la configuración es por variable de entorno del servicio \`auth\` (GoTrue)."
+  ["Acrescente ao compose DELE — não a este:"]="Agrégalo al compose DE ÉL — no a este:"
+  ["Tem de ser URL http(s)."]="Tiene que ser una URL http(s)."
+  ["O GoTrue cola no fim do SITE_URL tudo o que não"]="GoTrue pega al final del SITE_URL todo lo que no"
+  ["começa com \`http\` e busca por HTTP — um caminho de arquivo faz o cliente"]="empiece con \`http\` y lo busca por HTTP — una ruta de archivo hace que el cliente"
+  ["receber a tela de login dentro do e-mail."]="reciba la pantalla de inicio de sesión dentro del correo."
+  ["Depois reinicie só o auth do seu Supabase e confira aqui com:"]="Después reinicia solo el auth de tu Supabase y revísalo aquí con:"
+
+  # ── install.sh: pendencia_da_ia() ────────────────────────────────────────
+  ["A IA ainda não atende — falta cadastrar a chave"]="La IA todavía no atiende — falta registrar la clave"
+  ["Você deixou a chave de IA para depois, e o CRM está no ar sem ela. O que"]="Dejaste la clave de IA para después, y el CRM está activo sin ella. Lo que"
+  ["ainda não funciona é o agente: ele responde quando uma credencial existir."]="todavía no funciona es el agente: responderá en cuanto exista una credencial."
+  ["Quando tiver a chave da {1}, cadastre em:"]="Cuando tengas la clave de {1}, regístrala en:"
+  ["A chave fica CIFRADA no banco — não precisa mexer no .env nem reiniciar nada."]="La clave queda CIFRADA en la base de datos — no hace falta tocar el .env ni reiniciar nada."
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…

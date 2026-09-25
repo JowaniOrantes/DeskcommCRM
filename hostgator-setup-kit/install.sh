@@ -1858,9 +1858,9 @@ if [ -f supabase/baseline.sql ]; then
   pg_container postgres:17-alpine psql "$(url_do_schema)" -v ON_ERROR_STOP=1 -c \
     "create extension if not exists vector with schema public; create extension if not exists citext with schema public; create extension if not exists pg_trgm with schema public;" \
     >/dev/null 2>&1 \
-    && c_grn "✓ extensões (vector, citext, pg_trgm) habilitadas no public" \
-    || { c_ylw "⚠ não consegui habilitar as extensões — o schema pode falhar abaixo."
-         c_ylw "  Supabase próprio? Criar extensão exige o dono do banco: rode de novo com"
+    && c_grn "$(t "✓ extensões (vector, citext, pg_trgm) habilitadas no public")" \
+    || { c_ylw "$(t "⚠ não consegui habilitar as extensões — o schema pode falhar abaixo.")"
+         c_ylw "$(t "  Supabase próprio? Criar extensão exige o dono do banco: rode de novo com")"
          c_ylw "  SUPABASE_DB_ADMIN_URL='postgresql://<dono>:<senha>@<host>:5432/postgres'"; }
   SCHEMA_LOG="$PROJECT_DIR/baseline-apply.log"
   # Banco novo ou re-execução? Re-aplicar com ON_ERROR_STOP pararia no primeiro
@@ -1876,13 +1876,13 @@ if [ -f supabase/baseline.sql ]; then
     "select 1 from information_schema.tables where table_schema='public' and table_name='organizations' limit 1" 2>/dev/null | tr -d '[:space:]' || true)"
 
   if [ "$has_schema" = "1" ]; then
-    c_ylw "• schema já existe — re-aplicando em modo update (erros 'já existe' são esperados e ficam no log)"
+    c_ylw "$(t "• schema já existe — re-aplicando em modo update (erros 'já existe' são esperados e ficam no log)")"
     # Mesmo contrato do update.sh, inclusive a nova passada quando o banco está
     # em disputa: `reaplicar_baseline` em _common.sh.
     if reaplicar_baseline "$PROJECT_DIR/supabase/baseline.sql" "$SCHEMA_LOG"; then
-      c_grn "✓ schema re-aplicado (apêndice de migrations incluído)"
+      c_grn "$(t "✓ schema re-aplicado (apêndice de migrations incluído)")"
     else
-      c_ylw "⚠ Erros no banco que NÃO são os esperados (log completo: $SCHEMA_LOG):"
+      c_ylw "$(t "⚠ Erros no banco que NÃO são os esperados (log completo: {1}):" "$SCHEMA_LOG")"
       # Sem `| head`: com pipefail, o head que fecha cedo mata o printf com SIGPIPE
       # numa lista grande, e o set -e derrubava o instalador aqui.
       listar_erros_do_banco "$BASELINE_INESPERADO" 20
@@ -1891,13 +1891,13 @@ if [ -f supabase/baseline.sql ]; then
     if pg_container -i -v "$PROJECT_DIR/supabase/baseline.sql:/baseline.sql:ro" \
         postgres:17-alpine psql "$(url_do_schema)" -v ON_ERROR_STOP=1 -f /baseline.sql \
         > "$SCHEMA_LOG" 2>&1; then
-      c_grn "✓ schema aplicado (log: $SCHEMA_LOG)"
+      c_grn "$(t "✓ schema aplicado (log: {1})" "$SCHEMA_LOG")"
     else
       tail -5 "$SCHEMA_LOG"
-      die "baseline falhou num banco NOVO — o schema ficaria incompleto (sem RLS). Log completo: $SCHEMA_LOG
+      die "$(t "baseline falhou num banco NOVO — o schema ficaria incompleto (sem RLS). Log completo: {1}
      Se o erro fala em permissão: o baseline exige o DONO do banco. Num Supabase próprio,
      rode de novo com SUPABASE_DB_ADMIN_URL='postgresql://<dono>:<senha>@<host>:5432/postgres'
-     — ela roda só o schema e NÃO é gravada no .env dos contêineres."
+     — ela roda só o schema e NÃO é gravada no .env dos contêineres." "$SCHEMA_LOG")"
     fi
   fi
 
@@ -1905,12 +1905,12 @@ if [ -f supabase/baseline.sql ]; then
   n_tables="$(pg_container postgres:17-alpine psql "$(url_do_schema)" -tAc \
     "select count(*) from information_schema.tables where table_schema='public'" 2>/dev/null | tr -d '[:space:]')"
   if [ "${n_tables:-0}" -ge 30 ]; then
-    c_grn "✓ verificação: ${n_tables} tabelas no schema public"
+    c_grn "$(t "✓ verificação: {1} tabelas no schema public" "$n_tables")"
   else
-    c_ylw "⚠ verificação: só ${n_tables:-0} tabelas no schema public — confira $SCHEMA_LOG"
+    c_ylw "$(t "⚠ verificação: só {1} tabelas no schema public — confira {2}" "${n_tables:-0}" "$SCHEMA_LOG")"
   fi
 else
-  c_ylw "⚠ supabase/baseline.sql não encontrado — pulei (aplique o schema manualmente)."
+  c_ylw "$(t "⚠ supabase/baseline.sql não encontrado — pulei (aplique o schema manualmente).")"
 fi
 
 # ── 7.5 E-mails de acesso (criar conta / recuperar senha) ───────────────────
@@ -1948,27 +1948,27 @@ pendencia_dos_emails() {
 
   cat <<PEND
 
-$(c_ylw "  ─── FALTA UM PASSO, e ele é no painel do Supabase ─────")
+$(c_ylw "  ─── $(t "FALTA UM PASSO, e ele é no painel do Supabase") ─────")
 
-  Os e-mails de acesso (esqueci minha senha, confirmação de cadastro e
-  aceite de convite) ainda não levam para este app. Sem este passo,
-  ninguém consegue redefinir a própria senha.
+  $(t "Os e-mails de acesso (esqueci minha senha, confirmação de cadastro e")
+  $(t "aceite de convite) ainda não levam para este app. Sem este passo,")
+  $(t "ninguém consegue redefinir a própria senha.")
 
-  O que o passo automático encontrou:
+  $(t "O que o passo automático encontrou:")
 
 $(sed 's/^/    /' "$PENDENCIA_EMAIL")
 
-  Em https://supabase.com/dashboard → seu projeto → Authentication →
-  URL Configuration, preencha:
+  $(t "Em https://supabase.com/dashboard → seu projeto → Authentication →")
+  $(t "URL Configuration, preencha:")
 
        Site URL:       https://${DOMAIN}
        Redirect URLs:  https://${DOMAIN}/auth/confirm
 
-  Depois é só salvar — não precisa reiniciar nada aqui.
+  $(t "Depois é só salvar — não precisa reiniciar nada aqui.")
 
-  Para o instalador fazer isso sozinho da próxima vez, rode
-  \`bash hostgator-setup-kit/install.sh\` de novo e informe o token de
-  acesso quando ele perguntar (supabase.com/dashboard/account/tokens).
+  $(t "Para o instalador fazer isso sozinho da próxima vez, rode")
+  $(t "\`bash hostgator-setup-kit/install.sh\` de novo e informe o token de")
+  $(t "acesso quando ele perguntar (supabase.com/dashboard/account/tokens).")
 PEND
 }
 
@@ -1982,31 +1982,31 @@ PEND
 pendencia_dos_emails_proprio() {
   cat <<PEND
 
-$(c_ylw "  ─── FALTA UM PASSO, no SEU Supabase ───────────────────")
+$(c_ylw "  ─── $(t "FALTA UM PASSO, no SEU Supabase") ───────────────────")
 
-  Os e-mails de acesso (confirmar cadastro e redefinir senha) ainda saem no
-  modelo padrão do GoTrue. O link desse modelo NÃO fecha a sessão quando o
-  clique vem do webmail — a conta é confirmada e a pessoa entra sem
-  organização e sem menu.
+  $(t "Os e-mails de acesso (confirmar cadastro e redefinir senha) ainda saem no")
+  $(t "modelo padrão do GoTrue. O link desse modelo NÃO fecha a sessão quando o")
+  $(t "clique vem do webmail — a conta é confirmada e a pessoa entra sem")
+  $(t "organização e sem menu.")
 
-  O que o passo automático encontrou:
+  $(t "O que o passo automático encontrou:")
 
 $(sed 's/^/    /' "$PENDENCIA_EMAIL")
 
-  Como o seu Supabase é próprio, não há painel na nuvem nem API para isto:
-  a configuração é por variável de ambiente do serviço \`auth\` (GoTrue).
-  Acrescente ao compose DELE — não a este:
+  $(t "Como o seu Supabase é próprio, não há painel na nuvem nem API para isto:")
+  $(t "a configuração é por variável de ambiente do serviço \`auth\` (GoTrue).")
+  $(t "Acrescente ao compose DELE — não a este:")
 
        GOTRUE_SITE_URL=https://${DOMAIN}
        GOTRUE_URI_ALLOW_LIST=https://${DOMAIN}/auth/confirm
        GOTRUE_MAILER_TEMPLATES_CONFIRMATION=https://${DOMAIN}/email-templates/confirmation
        GOTRUE_MAILER_TEMPLATES_RECOVERY=https://${DOMAIN}/email-templates/recovery
 
-  $(c_ylw "Tem de ser URL http(s).") O GoTrue cola no fim do SITE_URL tudo o que não
-  começa com \`http\` e busca por HTTP — um caminho de arquivo faz o cliente
-  receber a tela de login dentro do e-mail.
+  $(c_ylw "$(t "Tem de ser URL http(s).")") $(t "O GoTrue cola no fim do SITE_URL tudo o que não")
+  $(t "começa com \`http\` e busca por HTTP — um caminho de arquivo faz o cliente")
+  $(t "receber a tela de login dentro do e-mail.")
 
-  Depois reinicie só o auth do seu Supabase e confira aqui com:
+  $(t "Depois reinicie só o auth do seu Supabase e confira aqui com:")
 
        bash hostgator-setup-kit/healthcheck.sh
 PEND
@@ -2035,16 +2035,16 @@ pendencia_da_ia() {
 
   cat <<PEND
 
-$(c_ylw "  ─── A IA ainda não atende — falta cadastrar a chave ───")
+$(c_ylw "  ─── $(t "A IA ainda não atende — falta cadastrar a chave") ───")
 
-  Você deixou a chave de IA para depois, e o CRM está no ar sem ela. O que
-  ainda não funciona é o agente: ele responde quando uma credencial existir.
+  $(t "Você deixou a chave de IA para depois, e o CRM está no ar sem ela. O que")
+  $(t "ainda não funciona é o agente: ele responde quando uma credencial existir.")
 
-  Quando tiver a chave da ${rotulo}, cadastre em:
+  $(t "Quando tiver a chave da {1}, cadastre em:" "$rotulo")
 
       IA › Credenciais
 
-  A chave fica CIFRADA no banco — não precisa mexer no .env nem reiniciar nada.
+  $(t "A chave fica CIFRADA no banco — não precisa mexer no .env nem reiniciar nada.")
 PEND
 }
 
