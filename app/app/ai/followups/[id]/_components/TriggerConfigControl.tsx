@@ -196,10 +196,10 @@ function summaryLabel(
   etapa: { stageName: string; pipelineName: string } | null,
   t: (texto: string) => string = (texto) => texto,
 ): string {
-  if(cfg.kind === "appointment_no_show") return t("Gatilho: ausencia confirmada por el equipo");
+  if (cfg.kind === "appointment_no_show") return `${t("Gatilho")}: ${t("Falta confirmada pela equipe")}`;
   if (cfg.kind === "silence") {
     const minutes = (cfg.params as { threshold_minutes?: number } | undefined)?.threshold_minutes;
-    return `${t("Gatilho")}: ${t("Silencio")}${typeof minutes === "number" ? ` (${minutes} min)` : ""}`;
+    return `${t("Gatilho")}: ${t("Silêncio")}${typeof minutes === "number" ? ` (${minutes} min)` : ""}`;
   }
   if (cfg.kind === "inbound_after_silence") {
     const minutes = (cfg.params as { threshold_minutes?: number } | undefined)?.threshold_minutes;
@@ -208,7 +208,7 @@ function summaryLabel(
       tela.unidade === "days"
         ? tela.valor === 1
           ? t("dia")
-          : t("días")
+          : t("dias")
         : tela.unidade === "hours"
           ? tela.valor === 1
             ? t("hora")
@@ -216,18 +216,20 @@ function summaryLabel(
           : tela.valor === 1
             ? t("minuto")
             : t("minutos");
-    return `${t("Gatilho")}: ${t("El cliente regresó")} (${tela.valor} ${unidade})`;
+    return `${t("Gatilho")}: ${t("O cliente retornou")} (${tela.valor} ${unidade})`;
   }
   if (cfg.kind === "stage_change") {
     // Enquanto os nomes não chegaram (ou a etapa sumiu do funil) o rótulo diz o
     // TIPO em vez de vazar o uuid — que é justamente o que esta tela não faz.
     // Com o funil junto, este rótulo passa a distinguir as homônimas: é a única
     // superfície que o dono lê uma semana depois, sem abrir nada.
-    return etapa ? `${t("Gatilho")}: entró en «${etapa.stageName}» en ${etapa.pipelineName}` : `${t("Gatilho")}: ${t("Etapa del embudo")}`;
+    return etapa
+      ? `${t("Gatilho")}: ${t("entrou em")} «${etapa.stageName}» ${t("em")} ${etapa.pipelineName}`
+      : `${t("Gatilho")}: ${t("Etapa do funil")}`;
   }
-  if (cfg.kind === "case_opened") return `${t("Gatilho")}: ${t("cuando el agente pide ayuda")}`;
-  if (cfg.kind === "webhook") return t("Disparado por una automatización en Webhooks");
-  if (cfg.kind === "lead_created") return `${t("Gatilho")}: ${t("Lead creado")}`;
+  if (cfg.kind === "case_opened") return `${t("Gatilho")}: ${t("quando o agente pede ajuda")}`;
+  if (cfg.kind === "webhook") return `${t("Gatilho")}: ${t(KIND_LABEL.webhook)}`;
+  if (cfg.kind === "lead_created") return `${t("Gatilho")}: ${t("Lead criado")}`;
   if (cfg.kind === "manual" || cfg.kind === undefined) return `${t("Gatilho")}: ${t("Manual")}`;
   // conversation_end de dados antigos (API crua) — sem UI própria, mas mostrado
   // com transparência em vez de mentir "Manual".
