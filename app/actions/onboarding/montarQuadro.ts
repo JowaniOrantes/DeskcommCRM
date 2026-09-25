@@ -298,7 +298,7 @@ export async function pularQuadro(): Promise<void> {
   await patchOnboardingState(ctx.orgId, { funil: { skipped: true } });
   // Pular também é decisão, e é a que deixa o quadro de e-commerce de pé numa
   // clínica: sem registro, ninguém consegue explicar depois por que aquele
-  // tenant tem "Carrinho abandonado" no quadro.
+  // tenant tem "Carrito abandonado" no quadro.
   await audit({
     action: "onboarding.quadro_pulado",
     actorUserId: ctx.userId,

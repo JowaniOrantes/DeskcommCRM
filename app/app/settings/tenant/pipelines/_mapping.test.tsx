@@ -46,9 +46,9 @@ globalThis.ResizeObserver = class {
 const PIPE = "11111111-1111-4111-8111-111111111111";
 
 const ETAPAS = [
-  { id: "e1", name: "Carrinho abandonado", is_won: false, is_lost: false },
-  { id: "e2", name: "Aguardando pagamento", is_won: false, is_lost: false },
-  { id: "e3", name: "Pago", is_won: true, is_lost: false },
+  { id: "e1", name: "Carrito abandonado", is_won: false, is_lost: false },
+  { id: "e2", name: "Esperando pago", is_won: false, is_lost: false },
+  { id: "e3", name: "Pagado", is_won: true, is_lost: false },
   { id: "e4", name: "Cancelado", is_won: false, is_lost: true },
 ];
 
@@ -173,9 +173,9 @@ describe("motivoDaListaVazia — lista vazia sempre explica por quê", () => {
 describe("mensagemDeErro — nem toda frase do servidor é texto de tela", () => {
   it("recusa de regra (409/422) chega inteira ao usuário", () => {
     const m = mensagemDeErro(
-      new ApiError(409, "state_conflict", undefined, "r", "A etapa «Pago» mudou de papel."),
+      new ApiError(409, "state_conflict", undefined, "r", "A etapa «Pagado» mudou de papel."),
     );
-    expect(m).toBe("A etapa «Pago» mudou de papel.");
+    expect(m).toBe("A etapa «Pagado» mudou de papel.");
   });
 
   it("500 NÃO vaza texto do Postgres em inglês", () => {
@@ -218,13 +218,13 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
 
     expect(await opcoesNaTela(user, "qualifying")).toEqual([
       "Não mover o card",
-      "Carrinho abandonado",
-      "Aguardando pagamento",
+      "Carrito abandonado",
+      "Esperando pago",
     ]);
     await user.keyboard("{Escape}");
 
     await user.click(screen.getByTestId("etapa-new"));
-    await user.click(await screen.findByRole("option", { name: "Carrinho abandonado" }));
+    await user.click(await screen.findByRole("option", { name: "Carrito abandonado" }));
 
     expect(await opcoesNaTela(user, "qualifying")).toEqual([
       "Não mover o card",
@@ -237,8 +237,8 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
 
     expect(await opcoesNaTela(user, "qualifying")).toEqual([
       "Não mover o card",
-      "Carrinho abandonado",
-      "Aguardando pagamento",
+      "Carrito abandonado",
+      "Esperando pago",
     ]);
   });
 
@@ -246,7 +246,7 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
     const user = userEvent.setup();
     montar();
     await screen.findByTestId("etapa-won");
-    expect(await opcoesNaTela(user, "won")).toEqual(["Não mover o card", "Pago"]);
+    expect(await opcoesNaTela(user, "won")).toEqual(["Não mover o card", "Pagado"]);
   });
 
   it("salva os SETE passos, com null explícito no que ficou sem etapa", async () => {
@@ -256,7 +256,7 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
     await screen.findByTestId("etapa-new");
 
     await user.click(screen.getByTestId("etapa-new"));
-    await user.click(await screen.findByRole("option", { name: "Carrinho abandonado" }));
+    await user.click(await screen.findByRole("option", { name: "Carrito abandonado" }));
     await user.click(screen.getByTestId("salvar-mapeamento"));
 
     await waitFor(() => expect(apiClient.put).toHaveBeenCalledTimes(1));
@@ -286,7 +286,7 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
     montar();
     await screen.findByTestId("etapa-new");
     await user.click(screen.getByTestId("etapa-new"));
-    await user.click(await screen.findByRole("option", { name: "Carrinho abandonado" }));
+    await user.click(await screen.findByRole("option", { name: "Carrito abandonado" }));
     await user.click(screen.getByTestId("salvar-mapeamento"));
 
     const aviso = await screen.findByTestId("mapeamento-erro");
@@ -300,24 +300,24 @@ describe("AgentMappingSection — o que a tela oferece e envia", () => {
     // Enquanto o usuário editava, outra pessoa mapeou «Novo lead» para outra
     // etapa. Se a tela mantivesse o rascunho, o segundo envio gravaria por cima.
     vi.mocked(apiClient.put).mockRejectedValue(
-      new ApiError(409, "state_conflict", undefined, "req-1", "A etapa «Pago» mudou de papel."),
+      new ApiError(409, "state_conflict", undefined, "req-1", "A etapa «Pagado» mudou de papel."),
     );
     montar();
     await screen.findByTestId("etapa-new");
 
     await user.click(screen.getByTestId("etapa-new"));
-    await user.click(await screen.findByRole("option", { name: "Carrinho abandonado" }));
-    expect(screen.getByTestId("etapa-new")).toHaveTextContent("Carrinho abandonado");
+    await user.click(await screen.findByRole("option", { name: "Carrito abandonado" }));
+    expect(screen.getByTestId("etapa-new")).toHaveTextContent("Carrito abandonado");
 
     vi.mocked(apiClient.get).mockResolvedValue({ data: estado({ new: "e2" }) });
     await user.click(screen.getByTestId("salvar-mapeamento"));
 
     // A mensagem do servidor chega inteira ao usuário (é ela que ensina o quê fazer).
     expect(await screen.findByTestId("mapeamento-erro")).toHaveTextContent(
-      "A etapa «Pago» mudou de papel.",
+      "A etapa «Pagado» mudou de papel.",
     );
     await waitFor(() =>
-      expect(screen.getByTestId("etapa-new")).toHaveTextContent("Aguardando pagamento"),
+      expect(screen.getByTestId("etapa-new")).toHaveTextContent("Esperando pago"),
     );
     expect(apiClient.get).toHaveBeenCalledTimes(2);
     // E não dá para reenviar às cegas: o rascunho é igual ao servidor de novo.

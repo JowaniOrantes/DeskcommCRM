@@ -37,8 +37,8 @@ import { mensagemDeErro } from "./_mapping";
  *
  * ⚠️ ESTA TELA EXISTE PORQUE O SISTEMA JÁ DECIDE POR QUEM INSTALA. O gatilho
  * `trg_seed_default_pipeline_for_org` semeia um funil de e-commerce em TODA
- * organização criada — uma clínica abre o produto e vê "Carrinho abandonado",
- * "Aguardando pagamento", "Em separacao". Até aqui não havia tela, rota nem
+ * organização criada — uma clínica abre o produto e vê "Carrito abandonado",
+ * "Esperando pago", "En separación". Até aqui não havia tela, rota nem
  * action que renomeasse, criasse ou tirasse uma etapa do quadro.
  *
  * ⚠️ AS REGRAS SÃO DA API; AQUI SÓ HÁ REFLEXO. Nada nesta tela recalcula o que

@@ -51,9 +51,9 @@ const PIPE = "11111111-1111-4111-8111-111111111111";
 
 /** O funil que o gatilho semeia — o que a clínica vê no primeiro login, encurtado. */
 const ETAPAS: EtapaDoFunil[] = [
-  { id: "e1", name: "Carrinho abandonado", is_won: false, is_lost: false },
-  { id: "e2", name: "Aguardando pagamento", is_won: false, is_lost: false },
-  { id: "e3", name: "Pago", is_won: true, is_lost: false },
+  { id: "e1", name: "Carrito abandonado", is_won: false, is_lost: false },
+  { id: "e2", name: "Esperando pago", is_won: false, is_lost: false },
+  { id: "e3", name: "Pagado", is_won: true, is_lost: false },
   { id: "e4", name: "Cancelado", is_won: false, is_lost: true },
 ];
 
@@ -423,7 +423,7 @@ describe("StagesSection — arquivar", () => {
         "unprocessable_entity",
         { negocios: 38, precisa_destino: true },
         "r",
-        "A etapa «Carrinho abandonado» tem 38 negócios. Escolha para qual etapa eles vão antes de arquivá-la.",
+        "A etapa «Carrito abandonado» tem 38 negócios. Escolha para qual etapa eles vão antes de arquivá-la.",
       ),
     );
     montar();
@@ -441,8 +441,8 @@ describe("StagesSection — arquivar", () => {
 
     // ⭐ E o destino nunca inclui fechamento nem perda: mandar os negócios para
     // «Pago» os daria por vendidos, com data de fechamento.
-    expect(await opcoesNaTela(user, "destino-e1")).toEqual(["Aguardando pagamento"]);
-    await user.click(await screen.findByRole("option", { name: "Aguardando pagamento" }));
+    expect(await opcoesNaTela(user, "destino-e1")).toEqual(["Esperando pago"]);
+    await user.click(await screen.findByRole("option", { name: "Esperando pago" }));
 
     vi.mocked(apiClient.delete).mockResolvedValue({ data: { etapas: [] } });
     await waitFor(() => expect(screen.getByTestId("arquivar-confirmar-e1")).toBeEnabled());
@@ -468,7 +468,7 @@ describe("StagesSection — arquivar", () => {
     await user.click(screen.getByTestId("arquivar-confirmar-e1"));
 
     expect(await screen.findByTestId("arquivar-sem-destino-e1")).toHaveTextContent(
-      "Crie uma etapa antes de arquivar «Carrinho abandonado»",
+      "Crie uma etapa antes de arquivar «Carrito abandonado»",
     );
     expect(screen.queryByTestId("destino-e1")).not.toBeInTheDocument();
     expect(screen.queryByTestId("arquivar-confirmar-e1")).not.toBeInTheDocument();
@@ -567,7 +567,7 @@ describe("StagesSection — arquivar", () => {
         "state_conflict",
         { negocios: 7, precisa_destino: false },
         "r",
-        "«Carrinho abandonado» mudou de papel neste funil enquanto você editava.",
+        "«Carrito abandonado» mudou de papel neste funil enquanto você editava.",
       ),
     );
     montar();
