@@ -2256,27 +2256,27 @@ if [ "${APP_SAUDAVEL:-0}" != 1 ]; then
   cat <<INCOMPLETO
 
 $(c_ylw "═══════════════════════════════════════════════════════")
-$(c_ylw " Quase lá — falta o app responder")
+$(c_ylw " $(t "Quase lá — falta o app responder")")
 $(c_ylw "═══════════════════════════════════════════════════════")
 
-  A configuração está salva e os contêineres estão no ar. Você NÃO precisa
-  refazer nada — falta o app dizer que está saudável.
+  $(t "A configuração está salva e os contêineres estão no ar. Você NÃO precisa")
+  $(t "refazer nada — falta o app dizer que está saudável.")
 
-  O motivo mais comum é uma chave faltando ou errada no .env. O log diz qual:
+  $(t "O motivo mais comum é uma chave faltando ou errada no .env. O log diz qual:")
 
        docker compose $(dc_files) logs --tail=50 app
 
-     procure por: [env] Falha de validação
+     $(t "procure por: [env] Falha de validação")
 
-  Diagnóstico completo dos serviços:
+  $(t "Diagnóstico completo dos serviços:")
 
        bash ${KIT_DIR}/healthcheck.sh
 
-  Depois de corrigir o .env, é só subir de novo (nada é perdido):
+  $(t "Depois de corrigir o .env, é só subir de novo (nada é perdido):")
 
        docker compose $(dc_files) up -d
 
-  Travou? Leve o log para a comunidade — tem gente que já passou por isso:
+  $(t "Travou? Leve o log para a comunidade — tem gente que já passou por isso:")
 
        ${COMUNIDADE_URL}
 
@@ -2293,55 +2293,55 @@ fi
 # passa a refletir a escolha feita, em vez de afirmar um padrão.
 telemetria_no_banner() {
   if [ "${SENTRY_DSN:-}" = "off" ]; then
-    printf '%s\n' "  Telemetria: DESLIGADA — nenhum relatório de erro sai desta instalação."
-    printf '%s\n' "  Para ligar, apague a linha SENTRY_DSN do .env e rode: docker compose $(dc_files) up -d"
+    printf '%s\n' "$(t "  Telemetria: DESLIGADA — nenhum relatório de erro sai desta instalação.")"
+    printf '%s\n' "$(t "  Para ligar, apague a linha SENTRY_DSN do .env e rode: {1}" "docker compose $(dc_files) up -d")"
   else
-    printf '%s\n' "  Telemetria: LIGADA — só relatórios de erro anonimizados vão ao Sentry do"
-    printf '%s\n' "  projeto. Para desligar, ponha SENTRY_DSN='off' no .env e rode: docker compose $(dc_files) up -d"
+    printf '%s\n' "$(t "  Telemetria: LIGADA — só relatórios de erro anonimizados vão ao Sentry do")"
+    printf '%s\n' "$(t "  projeto. Para desligar, ponha SENTRY_DSN='off' no .env e rode: {1}" "docker compose $(dc_files) up -d")"
   fi
 }
 
 cat <<DONE
 
 $(c_grn "═══════════════════════════════════════════════════════")
-$(c_grn " Instalação concluída!")
+$(c_grn " $(t "Instalação concluída!")")
 $(c_grn "═══════════════════════════════════════════════════════")
 
 $(pendencia_dos_emails)
 $(pendencia_da_ia)
-  1. Acesse:  https://${DOMAIN}
-     (o SSL leva ~1min pra emitir no primeiro acesso)
+  1. $(t "Acesse:")  https://${DOMAIN}
+     $(t "(o SSL leva ~1min pra emitir no primeiro acesso)")
 
-  2. Faça login com:
-       e-mail: ${OWNER_EMAIL}
-       senha:  (a que você definiu)
+  2. $(t "Faça login com:")
+       $(t "e-mail:") ${OWNER_EMAIL}
+       $(t "senha:")  $(t "(a que você definiu)")
 
-  3. Conecte o WhatsApp (2º passo do onboarding):
-       Deixe o WhatsApp JÁ ABERTO em Configurações → Aparelhos conectados
-       antes de abrir a tela — o QR code vale só uns minutos. Se expirar,
-       o próprio CRM tem o botão "Gerar novo QR Code".
+  3. $(t "Conecte o WhatsApp (2º passo do onboarding):")
+       $(t "Deixe o WhatsApp JÁ ABERTO em Configurações → Aparelhos conectados")
+       $(t "antes de abrir a tela — o QR code vale só uns minutos. Se expirar,")
+       $(t "o próprio CRM tem o botão \"Gerar novo QR Code\".")
 
-  4. A verificação em duas etapas é OPCIONAL: quem quiser liga em
-       Configurações → Segurança (guarde os códigos de recuperação).
-       Perdeu o celular? bash hostgator-setup-kit/reset-mfa.sh ${OWNER_EMAIL}
+  4. $(t "A verificação em duas etapas é OPCIONAL: quem quiser liga em")
+       $(t "Configurações → Segurança (guarde os códigos de recuperação).")
+       $(t "Perdeu o celular?") bash hostgator-setup-kit/reset-mfa.sh ${OWNER_EMAIL}
 
-$(c_grn "  ─── A comunidade ──────────────────────────────────────")
+$(c_grn "  ─── $(t "A comunidade") ──────────────────────────────────────")
 
-  É onde saem os avisos de versão nova, os agentes que outras pessoas já
-  configuraram e a resposta de quem roda exatamente este CRM:
+  $(t "É onde saem os avisos de versão nova, os agentes que outras pessoas já")
+  $(t "configuraram e a resposta de quem roda exatamente este CRM:")
 
        ${COMUNIDADE_URL}
 
 $(telemetria_no_banner)
 
-  Comandos úteis:
-    ver logs:      docker compose $(dc_files) logs -f app
-    reiniciar:     docker compose $(dc_files) restart
-    atualizar:     bash hostgator-setup-kit/update.sh
-    backup:        bash hostgator-setup-kit/backup.sh
-    trocar config: bash hostgator-setup-kit/install.sh
-                   (mostra tudo o que você respondeu e deixa corrigir por número)
-    recomeçar:     docker compose $(dc_files) down -v && rm -f .env
-                   (derruba tudo; depois rode o install.sh de novo)
+  $(t "Comandos úteis:")
+    $(t "ver logs:")      docker compose $(dc_files) logs -f app
+    $(t "reiniciar:")     docker compose $(dc_files) restart
+    $(t "atualizar:")     bash hostgator-setup-kit/update.sh
+    $(t "backup:")        bash hostgator-setup-kit/backup.sh
+    $(t "trocar config:") bash hostgator-setup-kit/install.sh
+                   $(t "(mostra tudo o que você respondeu e deixa corrigir por número)")
+    $(t "recomeçar:")     docker compose $(dc_files) down -v && rm -f .env
+                   $(t "(derruba tudo; depois rode o install.sh de novo)")
 
 DONE

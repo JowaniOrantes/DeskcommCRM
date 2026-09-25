@@ -410,6 +410,50 @@ identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a in
   ["⚠ não consegui semear o catálogo de modelos agora; o agendador tenta de novo às 04:15 UTC."]="⚠ no pude sembrar el catálogo de modelos ahora; el agendador lo vuelve a intentar a las 04:15 UTC."
   ["  detalhe: {1}"]="  detalle: {1}"
   ["Ativando as automações"]="Activando las automatizaciones"
+
+  # ── install.sh: pantalla "quase lá" (app no respondió saludable todavía) ─
+  ["Quase lá — falta o app responder"]="Ya casi — falta que la app responda"
+  ["A configuração está salva e os contêineres estão no ar. Você NÃO precisa"]="La configuración está guardada y los contenedores están en línea. NO necesitas"
+  ["refazer nada — falta o app dizer que está saudável."]="rehacer nada — falta que la app diga que está saludable."
+  ["O motivo mais comum é uma chave faltando ou errada no .env. O log diz qual:"]="El motivo más común es una clave faltante o incorrecta en el .env. El log dice cuál:"
+  ["procure por: [env] Falha de validação"]="busca: [env] Falha de validação"
+  ["Diagnóstico completo dos serviços:"]="Diagnóstico completo de los servicios:"
+  ["Depois de corrigir o .env, é só subir de novo (nada é perdido):"]="Después de corregir el .env, solo levántalo de nuevo (no se pierde nada):"
+  ["Travou? Leve o log para a comunidade — tem gente que já passou por isso:"]="¿Se atascó? Lleva el log a la comunidad — hay gente que ya pasó por esto:"
+
+  # ── install.sh: telemetria_no_banner() ───────────────────────────────────
+  ["  Telemetria: DESLIGADA — nenhum relatório de erro sai desta instalação."]="  Telemetría: DESACTIVADA — ningún reporte de error sale de esta instalación."
+  ["  Para ligar, apague a linha SENTRY_DSN do .env e rode: {1}"]="  Para activarla, borra la línea SENTRY_DSN del .env y ejecuta: {1}"
+  ["  Telemetria: LIGADA — só relatórios de erro anonimizados vão ao Sentry do"]="  Telemetría: ACTIVADA — solo reportes de error anonimizados van al Sentry del"
+  ["  projeto. Para desligar, ponha SENTRY_DSN='off' no .env e rode: {1}"]="  proyecto. Para desactivarla, pon SENTRY_DSN='off' en el .env y ejecuta: {1}"
+
+  # ── install.sh: mensaje final "Instalación concluida" (DONE) ────────────
+  ["Instalação concluída!"]="¡Instalación completada!"
+  ["Acesse:"]="Entra en:"
+  ["(o SSL leva ~1min pra emitir no primeiro acesso)"]="(el SSL tarda ~1min en emitirse en el primer acceso)"
+  ["Faça login com:"]="Inicia sesión con:"
+  ["e-mail:"]="correo:"
+  ["senha:"]="contraseña:"
+  ["(a que você definiu)"]="(la que definiste)"
+  ["Conecte o WhatsApp (2º passo do onboarding):"]="Conecta WhatsApp (2.º paso de la configuración inicial):"
+  ["Deixe o WhatsApp JÁ ABERTO em Configurações → Aparelhos conectados"]="Deja WhatsApp YA ABIERTO en Configuración → Dispositivos vinculados"
+  ["antes de abrir a tela — o QR code vale só uns minutos. Se expirar,"]="antes de abrir la pantalla — el código QR dura solo unos minutos. Si expira,"
+  ["o próprio CRM tem o botão \"Gerar novo QR Code\"."]="el propio CRM tiene el botón \"Generar nuevo código QR\"."
+  ["A verificação em duas etapas é OPCIONAL: quem quiser liga em"]="La verificación en dos pasos es OPCIONAL: quien quiera la activa en"
+  ["Configurações → Segurança (guarde os códigos de recuperação)."]="Configuración → Seguridad (guarda los códigos de recuperación)."
+  ["Perdeu o celular?"]="¿Perdiste el celular?"
+  ["A comunidade"]="La comunidad"
+  ["É onde saem os avisos de versão nova, os agentes que outras pessoas já"]="Es donde salen los avisos de versión nueva, los agentes que otras personas ya"
+  ["configuraram e a resposta de quem roda exatamente este CRM:"]="configuraron y la respuesta de quien corre exactamente este CRM:"
+  ["Comandos úteis:"]="Comandos útiles:"
+  ["ver logs:"]="ver logs:"
+  ["reiniciar:"]="reiniciar:"
+  ["atualizar:"]="actualizar:"
+  ["backup:"]="backup:"
+  ["trocar config:"]="cambiar config:"
+  ["(mostra tudo o que você respondeu e deixa corrigir por número)"]="(muestra todo lo que respondiste y permite corregir por número)"
+  ["recomeçar:"]="empezar de nuevo:"
+  ["(derruba tudo; depois rode o install.sh de novo)"]="(derriba todo; después vuelve a ejecutar install.sh)"
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…
