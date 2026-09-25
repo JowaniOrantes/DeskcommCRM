@@ -1964,7 +1964,7 @@ export const DICIONARIO: Traducoes = {
   "Silêncio": { es: "Silencio" },
   "Telefone": { es: "Teléfono" },
   "indisponível": { es: "no disponible" },
-  "Tipo de gatilho": { es: "Tipo de disparador" },
+  "Tipo de gatilho": { es: "Tipo de Trigger" },
   "Etapa que dispara o fluxo": { es: "Etapa que dispara el flujo" },
   "Carregando etapas…": { es: "Cargando etapas…" },
   "Escolha a etapa": { es: "Elige la etapa" },
@@ -1990,7 +1990,7 @@ export const DICIONARIO: Traducoes = {
     es: "No hay ninguna etapa activa. Crea el embudo antes de configurar este disparador.",
   },
   "O gatilho não está disponível — use Etapa do funil, Silêncio ou Manual.": {
-    es: "El disparador no está disponible — usa Etapa del embudo, Silencio o Manual.",
+    es: "El Trigger no está disponible — usa Etapa del embudo, Silencio o Manual.",
   },
   "O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.":
     {
@@ -2014,7 +2014,7 @@ export const DICIONARIO: Traducoes = {
   "Segmentos (tags, opcional)": { es: "Segmentos (tags, opcional)" },
   "ex: vip, carrinho-abandonado": { es: "Ej.: vip, carrito-abandonado" },
   "Cancelar se o lead responder": { es: "Cancelar si el lead responde" },
-  "Salvar gatilho": { es: "Guardar disparador" },
+  "Salvar gatilho": { es: "Guardar Trigger" },
   "Fila de follow-ups": { es: "Cola de seguimientos" },
   "Fluxo removido": { es: "Flujo eliminado" },
   Agente: { es: "Agente" },
@@ -3898,7 +3898,7 @@ export const DICIONARIO: Traducoes = {
   "Nome da automação": { es: "Nombre de la automatización" },
   "Boas-vindas a contato novo": { es: "Bienvenida a contacto nuevo" },
   QUANDO: { es: "CUANDO" },
-  "Escolha o gatilho": { es: "Elige el disparador" },
+  "Escolha o gatilho": { es: "Elige el Trigger" },
   "SE (opcional)": { es: "SI (opcional)" },
   "ex: lead.custom_fields.minha_chave": { es: "ej: lead.custom_fields.mi_clave" },
   "usar campo da lista": { es: "usar campo de la lista" },
@@ -9123,7 +9123,7 @@ export const DICIONARIO: Traducoes = {
   "dados inválidos": { es: "datos inválidos" },
   // ─── Fase A: mensagens de erro de rotas de API (codemod + revisão manual) ───
   "A decisão não pôde ser registrada. Nada foi enviado ao cliente.": { es: "No se pudo registrar la decisión. No se envió nada al cliente." },
-  "A etapa escolhida para o gatilho não existe mais neste funil — escolha outra.": { es: "La etapa elegida para el disparador ya no existe en este embudo — elige otra." },
+  "A etapa escolhida para o gatilho não existe mais neste funil — escolha outra.": { es: "La etapa elegida para el Trigger ya no existe en este embudo — elige otra." },
   "A proposta mudou desde que você a leu. Confira a nova antes de decidir.": { es: "La propuesta cambió desde que la leíste. Revisa la nueva antes de decidir." },
   "A régua do abandono precisa ser um número inteiro de horas entre 1 e 2160.": { es: "La regla de abandono debe ser un número entero de horas entre 1 y 2160." },
   "Alguém assumiu esta conversa agora — recarregue e tente de novo.": { es: "Alguien acaba de asumir esta conversación. Recarga e inténtalo de nuevo." },
