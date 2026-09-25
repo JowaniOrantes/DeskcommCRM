@@ -1987,6 +1987,9 @@ export const DICIONARIO: Traducoes = {
   "Nenhuma etapa ativa encontrada — crie o funil antes de armar este gatilho.": {
     es: "No hay ninguna etapa activa. Crea el embudo antes de configurar este disparador.",
   },
+  "O gatilho não está disponível — use Etapa do funil, Silêncio ou Manual.": {
+    es: "El disparador no está disponible — usa Etapa del embudo, Silencio o Manual.",
+  },
   "O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.":
     {
       es: "El flujo empieza cuando un negocio entra a esta etapa, ya sea porque lo arrastras en el tablero o por una automatización. Entrar a la cola tarda unos minutos; no es instantáneo.",

@@ -102,7 +102,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx): Promise<Response> 
   if (!KINDS_COM_MOTOR.has(triggerKind)) {
     return fail(
       "trigger_kind_not_implemented",
-      `El gatillo «${triggerKind}» no está disponible — usa Etapa del embudo, Silencio o Manual.`,
+      t("O gatilho não está disponível — use Etapa do funil, Silêncio ou Manual."),
       422,
       { requestId },
     );

@@ -88,20 +88,20 @@ const DEFAULT_THRESHOLD_MINUTES = 60;
 const MIN_THRESHOLD_MINUTES = 5;
 
 const KIND_LABEL: Record<TriggerKind, string> = {
-  appointment_no_show:"Ausencia confirmada por el equipo",
+  appointment_no_show: "Falta confirmada pela equipe",
   manual: "Manual",
-  silence: "Silencio",
-  stage_change: "Etapa del embudo",
-  // "El agente pidió ayuda", e não "Pedido de ajuda": numa lista ao lado de
-  // "Manual", "Silencio" e "Etapa del embudo", o rótulo sem sujeito não diz
+  silence: "Silêncio",
+  stage_change: "Etapa do funil",
+  // "O agente pediu ajuda", não "Pedido de ajuda": numa lista ao lado de
+  // "Manual", "Silêncio" e "Etapa do funil", o rótulo sem sujeito não diz
   // QUEM pediu. O resumo do botão (`resumoDoGatilho`) e o vocabulário
-  // (`lib/followup/vocabulario.ts`) já falam de "o agente pide ayuda" —
+  // (`lib/followup/vocabulario.ts`) já falam de "o agente pede ajuda" —
   // esta era a única das três grafias sem sujeito, e as duas specs que
   // cercam o gatilho procuram por ela com `exact: true`.
-  case_opened: "El agente pidió ayuda",
-  webhook: "Automatización (Webhooks)",
-  inbound_after_silence: "El cliente regresó",
-  lead_created: "Lead creado",
+  case_opened: "O agente pediu ajuda",
+  webhook: "Automação (Webhooks)",
+  inbound_after_silence: "O cliente retornou",
+  lead_created: "Lead criado",
 };
 
 function parseTriggerConfig(raw: Record<string, unknown>): TriggerFormState {
