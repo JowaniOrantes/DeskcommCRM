@@ -78,7 +78,7 @@ export default async function TeamPage({
         </TabsContent>
         <TabsContent value="attendants" className="mt-4">
           {isManager ? (
-            <AttendantsClient canManage={isManager} organizationTimezone={activeOrg?.timezone} />
+            <AttendantsClient canManage={isManager} organizationTimezone={activeOrg?.timezone ?? undefined} />
           ) : (
             <p className="text-sm text-muted-foreground">
               {/*

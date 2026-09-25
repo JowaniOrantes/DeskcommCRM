@@ -234,7 +234,7 @@ export default async function AgentEditorPage({ params }: { params: Promise<{ id
         materiais={materiais}
         routerMembership={routerMembership}
         readOnly={readOnly}
-        organizationTimezone={activeOrg.timezone}
+        organizationTimezone={activeOrg.timezone ?? undefined}
       />
     </div>
   );

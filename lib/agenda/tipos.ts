@@ -151,11 +151,11 @@ export const AUTORES_DO_AGENDAMENTO = ["user", "ai", "system", "contact", "sync"
 export type AutorDoAgendamento = (typeof AUTORES_DO_AGENDAMENTO)[number];
 
 export const ROTULO_DO_AUTOR: Record<AutorDoAgendamento, string> = {
-  user: "Programado por el equipo",
-  ai: "Programado por el agente de IA",
-  system: "Programado por el sistema",
-  contact: "Programado por el propio cliente",
-  sync: "Vino del calendario conectado",
+  user: "Marcado pela equipe",
+  ai: "Marcado pelo atendente de IA",
+  system: "Marcado pelo sistema",
+  contact: "Marcado pelo próprio cliente",
+  sync: "Veio da agenda conectada",
 };
 
 /** Por qual porta o agendamento entrou. */
@@ -183,12 +183,12 @@ export type SituacaoDaConexao = (typeof SITUACOES_DA_CONEXAO)[number];
 
 export const ROTULO_DA_SITUACAO_DA_CONEXAO: Record<SituacaoDaConexao, string> = {
   connecting: "Conectando",
-  healthy: "Conectado",
-  token_expired: "Reconecta tu calendario",
-  scope_missing: "Falta permiso de calendario",
-  disconnected: "Desconectado",
-  rate_limited: "Google pidió que esperemos",
-  error: "Con error",
+  healthy: "Conectada",
+  token_expired: "Reconecte sua agenda",
+  scope_missing: "Falta permissão de calendário",
+  disconnected: "Desconectada",
+  rate_limited: "O Google pediu para esperar",
+  error: "Com erro",
 };
 
 /**
@@ -301,9 +301,9 @@ export const ENTIDADE_DO_AGENDAMENTO = "calendar_appointment" as const;
  * Enquanto esta string era digitada como literal dentro dos handlers, ela ERA o
  * caminho normal em três dos quatro gatilhos, e o efeito foi uma condição
  * decorativa: a tela oferece "Tipo de atendimento contém …", a pessoa configura,
- * salva, e a regra nunca dispara porque o payload sempre dizia "Cita".
+ * salva, e a regra nunca dispara porque o payload sempre dizia "Agendamento".
  */
-export const NOME_GENERICO_DO_TIPO = "Cita" as const;
+export const NOME_GENERICO_DO_TIPO = "Agendamento" as const;
 
 /**
  * O tipo de atividade que o agendamento emite na timeline do lead.

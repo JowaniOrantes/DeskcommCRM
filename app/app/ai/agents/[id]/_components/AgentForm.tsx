@@ -1145,7 +1145,7 @@ export function AgentForm(props: Props) {
               value={form.trigger_config}
               onChange={(v) => patch({ trigger_config: v })}
               disabled={disabled}
-              organizationTimezone={organizationTimezone}
+              organizationTimezone={props.organizationTimezone}
             />
           </Card>
 

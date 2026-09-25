@@ -56,7 +56,7 @@ export default async function NewAgentPage() {
         credentials={credentials}
         provedoresDaInstalacao={provedoresDaInstalacao()}
         channelSessions={channelSessions}
-        organizationTimezone={activeOrg.timezone}
+        organizationTimezone={activeOrg.timezone ?? undefined}
       />
     </div>
   );
