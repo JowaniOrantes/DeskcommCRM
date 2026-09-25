@@ -26,6 +26,11 @@ COMPOSE_NPM="docker-compose.npm.yml"
 NONINTERACTIVE=0
 [ "${1:-}" = "--yes" ] && NONINTERACTIVE=1
 
+# t()/IDIOMA_CLI — ver o cabeçalho de _i18n.sh. Sourced aqui (e não só depois
+# do clone) porque este script já fala com o operador antes de _common.sh
+# existir no disco (banner, validadores, prompts da Fase 1 e 2).
+source "$KIT_DIR/_i18n.sh"
+
 # Este script é standalone de propósito (roda antes do clone, então não dá para
 # usar o _common.sh). As duas funções abaixo são gêmeas das de lá — se mexer
 # numa, mexa na outra.
@@ -142,8 +147,8 @@ banner() {
 LOGO
   fi
   printf '\n'
-  c_dim "  Agentes de IA que atendem no WhatsApp, dentro do seu CRM."
-  c_dim "  Open-source · roda no seu servidor · os dados são seus."
+  c_dim "$(t "  Agentes de IA que atendem no WhatsApp, dentro do seu CRM.")"
+  c_dim "$(t "  Open-source · roda no seu servidor · os dados são seus.")"
 }
 
 # ── Rede de segurança: nenhuma saída silenciosa ─────────────────────────────
@@ -156,15 +161,15 @@ show_recovery() {
   local dir="${PROJECT_DIR:-$(pwd)}"
   c_red ""
   c_red "═══════════════════════════════════════════════════════"
-  c_red " A instalação parou. Nada ficou pela metade sem conserto."
+  c_red " $(t "A instalação parou. Nada ficou pela metade sem conserto.")"
   c_red "═══════════════════════════════════════════════════════"
-  printf '\n%s\n\n' "Como voltar atrás e recomeçar do zero:"
+  printf '\n%s\n\n' "$(t "Como voltar atrás e recomeçar do zero:")"
   printf '  %s\n' "cd ${dir}"
-  printf '  %s\n' "rm -f .env                                    # apaga a configuração digitada"
-  printf '  %s\n' "docker compose $(dc_files) down -v          # derruba o que subiu"
-  printf '  %s\n' "bash ${KIT_DIR:-hostgator-setup-kit}/install.sh   # começa de novo"
-  printf '\n%s\n' "Se o schema chegou a ser aplicado e você quer o banco limpo de novo,"
-  printf '%s\n'   "abra o Supabase > SQL Editor e rode (ATENÇÃO: apaga todos os dados):"
+  printf '  %s\n' "rm -f .env                                    # $(t "apaga a configuração digitada")"
+  printf '  %s\n' "docker compose $(dc_files) down -v          # $(t "derruba o que subiu")"
+  printf '  %s\n' "bash ${KIT_DIR:-hostgator-setup-kit}/install.sh   # $(t "começa de novo")"
+  printf '\n%s\n' "$(t "Se o schema chegou a ser aplicado e você quer o banco limpo de novo,")"
+  printf '%s\n'   "$(t "abra o Supabase > SQL Editor e rode (ATENÇÃO: apaga todos os dados):")"
   printf '  %s\n\n' "drop schema public cascade; create schema public;"
 }
 trap 'rc=$?; [ "$rc" -ne 0 ] && show_recovery; exit $rc' EXIT
@@ -189,16 +194,16 @@ sb_ref() { local u="${1#https://}"; printf '%s' "${u%%.*}"; }
 
 v_domain() {
   case "$1" in
-    http*) echo "Digite só o domínio, sem https:// — ex.: crm.suaempresa.com.br"; return 1;;
-    */*)   echo "Digite só o domínio, sem barra nem caminho — ex.: crm.suaempresa.com.br"; return 1;;
+    http*) echo "$(t "Digite só o domínio, sem https:// — ex.: crm.suaempresa.com.br")"; return 1;;
+    */*)   echo "$(t "Digite só o domínio, sem barra nem caminho — ex.: crm.suaempresa.com.br")"; return 1;;
     *.*)   return 0;;
-    *)     echo "Isso não parece um domínio (falta o ponto) — ex.: crm.suaempresa.com.br"; return 1;;
+    *)     echo "$(t "Isso não parece um domínio (falta o ponto) — ex.: crm.suaempresa.com.br")"; return 1;;
   esac
 }
 
 v_email() {
   case "$1" in *@*.*) return 0;; esac
-  echo "E-mail inválido — precisa ter @ e um domínio, ex.: voce@suaempresa.com.br"
+  echo "$(t "E-mail inválido — precisa ter @ e um domínio, ex.: voce@suaempresa.com.br")"
   return 1
 }
 
@@ -217,7 +222,7 @@ v_email() {
 # amanhã não vire uma instalação travada em quem não quer cor nenhuma.
 v_hex() {
   case "$1" in ''|'#'[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) return 0;; esac
-  echo "Use um código de cor como #7a5cd6 — cerquilha e 6 dígitos —, ou Enter para a cor do sistema"
+  echo "$(t "Use um código de cor como #7a5cd6 — cerquilha e 6 dígitos —, ou Enter para a cor do sistema")"
   return 1
 }
 
@@ -237,7 +242,7 @@ v_locale() {
     1) return 0;;
     2) return 0;;
   esac
-  echo "Escolha 1 (Português) ou 2 (Español) — ou Enter para Português"
+  echo "$(t "Escolha 1 (Português) ou 2 (Español) — ou Enter para Português")"
   return 1
 }
 
@@ -248,8 +253,8 @@ v_supabase_url() {
     # chamada a /auth/v1/health logo abaixo, que vale para qualquer host — o
     # que se dispensa aqui é só a suposição de que todo Supabase é o da nuvem.
     https://*) ;;
-    *supabase.co*) echo "Cole a URL completa, começando com https:// — ex.: https://abcdefgh.supabase.co"; return 1;;
-    *) echo "A URL precisa começar com https://. Na nuvem ela fica em Settings > API > Project URL (termina em .supabase.co); num Supabase próprio, é o endereço do seu servidor."; return 1;;
+    *supabase.co*) echo "$(t "Cole a URL completa, começando com https:// — ex.: https://abcdefgh.supabase.co")"; return 1;;
+    *) echo "$(t "A URL precisa começar com https://. Na nuvem ela fica em Settings > API > Project URL (termina em .supabase.co); num Supabase próprio, é o endereço do seu servidor.")"; return 1;;
   esac
   # No single-server a URL pública é servida pelo Caddy, que só sobe DEPOIS
   # deste validador. A prova disponível aqui é o gateway local do Supabase,
@@ -258,13 +263,13 @@ v_supabase_url() {
   if [ "${SINGLE_SERVER:-0}" = "1" ]; then
     case "${SUPABASE_INTERNAL_URL:-}" in
       http://*|https://*) health_url="$SUPABASE_INTERNAL_URL";;
-      *) echo "O modo single-server exige SUPABASE_INTERNAL_URL com http:// ou https:// para validar o Supabase local."; return 1;;
+      *) echo "$(t "O modo single-server exige SUPABASE_INTERNAL_URL com http:// ou https:// para validar o Supabase local.")"; return 1;;
     esac
   fi
   local code
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 15 "${health_url%/}/auth/v1/health" 2>/dev/null)" || code=000
   if [ "$code" = "000" ]; then
-    echo "Não consegui alcançar $health_url — confira se o projeto existe, está ativo (projeto pausado não responde) e se o VPS tem internet."
+    echo "$(t "Não consegui alcançar {1} — confira se o projeto existe, está ativo (projeto pausado não responde) e se o VPS tem internet." "$health_url")"
     return 1
   fi
   return 0
@@ -279,15 +284,15 @@ v_sb_key() {
       local role ref
       role="$(jwt_claim "$key" role)"; ref="$(jwt_claim "$key" ref)"
       if [ -n "$role" ] && [ "$role" != "$want" ]; then
-        echo "Essa é a chave '${role}', e aqui eu preciso da '${want}'. Em Settings > API elas ficam uma embaixo da outra — confira qual copiou."
+        echo "$(t "Essa é a chave '{1}', e aqui eu preciso da '{2}'. Em Settings > API elas ficam uma embaixo da outra — confira qual copiou." "$role" "$want")"
         return 1
       fi
       if [ -n "$ref" ] && [ -n "$url" ] && [ "$ref" != "$(sb_ref "$url")" ]; then
-        echo "Essa chave é de OUTRO projeto Supabase (${ref}), e a URL que você deu é do projeto $(sb_ref "$url"). Copie as duas do mesmo projeto."
+        echo "$(t "Essa chave é de OUTRO projeto Supabase ({1}), e a URL que você deu é do projeto {2}. Copie as duas do mesmo projeto." "$ref" "$(sb_ref "$url")")"
         return 1
       fi;;
     sb_publishable_*|sb_secret_*) : ;;  # formato novo do Supabase — a prova é a chamada HTTP
-    *) echo "Isso não parece uma chave do Supabase (elas começam com 'eyJ' ou 'sb_'). Pegue em Settings > API."; return 1;;
+    *) echo "$(t "Isso não parece uma chave do Supabase (elas começam com 'eyJ' ou 'sb_'). Pegue em Settings > API.")"; return 1;;
   esac
   [ -z "$url" ] && return 0
   local code
@@ -306,9 +311,9 @@ v_sb_key() {
   fi
   case "$code" in
     2*) return 0;;
-    000) c_ylw "  ⚠ não consegui checar a chave online (sem resposta do Supabase); sigo com ela."; return 0;;
-    401|403) echo "O Supabase recusou essa chave (resposta ${code}). Confira se copiou a '${want}' inteira, sem espaço no fim."; return 1;;
-    *) echo "Resposta inesperada do Supabase ao testar a chave (${code}). Confira a chave e o projeto."; return 1;;
+    000) c_ylw "$(t "  ⚠ não consegui checar a chave online (sem resposta do Supabase); sigo com ela.")"; return 0;;
+    401|403) echo "$(t "O Supabase recusou essa chave (resposta {1}). Confira se copiou a '{2}' inteira, sem espaço no fim." "$code" "$want")"; return 1;;
+    *) echo "$(t "Resposta inesperada do Supabase ao testar a chave ({1}). Confira a chave e o projeto." "$code")"; return 1;;
   esac
 }
 v_anon()    { v_sb_key "$1" anon; }
@@ -317,16 +322,16 @@ v_service() { v_sb_key "$1" service_role; }
 v_db_url() {
   case "$1" in
     postgres://*|postgresql://*) ;;
-    *) echo "A connection string começa com postgresql:// — copie em Settings > Database > Connection string, modo URI."; return 1;;
+    *) echo "$(t "A connection string começa com postgresql:// — copie em Settings > Database > Connection string, modo URI.")"; return 1;;
   esac
   case "$1" in
     *"[YOUR-PASSWORD]"*|*"[SUA-SENHA]"*|*"[your-password]"*)
-      echo "Você colou a string com o [YOUR-PASSWORD] no meio — troque isso pela senha do banco (a que você definiu ao criar o projeto)."; return 1;;
+      echo "$(t "Você colou a string com o [YOUR-PASSWORD] no meio — troque isso pela senha do banco (a que você definiu ao criar o projeto).")"; return 1;;
   esac
   case "$1" in
     *db.*.supabase.co*)
-      echo "Essa é a 'Direct connection' do Supabase — ela só existe em IPv6 e o VPS é IPv4, então nunca conecta."
-      echo "   👉 Volte em Settings > Database e copie a do Session pooler (o host termina em .pooler.supabase.com)."
+      echo "$(t "Essa é a 'Direct connection' do Supabase — ela só existe em IPv6 e o VPS é IPv4, então nunca conecta.")"
+      echo "   👉 $(t "Volte em Settings > Database e copie a do Session pooler (o host termina em .pooler.supabase.com).")"
       return 1;;
   esac
   # Mesma família de projeto? (usuário do pooler é 'postgres.<ref>')
@@ -344,7 +349,7 @@ v_db_url() {
     *.supabase.co)
       if [ "$dbref" != "postgres" ] \
          && [ "$dbref" != "$(sb_ref "$NEXT_PUBLIC_SUPABASE_URL")" ]; then
-        echo "Essa connection string é do projeto '${dbref}', mas a URL que você deu é do projeto '$(sb_ref "$NEXT_PUBLIC_SUPABASE_URL")'. Precisam ser o mesmo projeto."
+        echo "$(t "Essa connection string é do projeto '{1}', mas a URL que você deu é do projeto '{2}'. Precisam ser o mesmo projeto." "$dbref" "$(sb_ref "$NEXT_PUBLIC_SUPABASE_URL")")"
         return 1
       fi;;
   esac
@@ -352,31 +357,31 @@ v_db_url() {
   if out="$(pg_container postgres:17-alpine psql "$1" -tAc 'select 1' 2>&1)"; then
     return 0
   fi
-  echo "Não consegui conectar no banco. O Postgres respondeu:"
+  echo "$(t "Não consegui conectar no banco. O Postgres respondeu:")"
   printf '   %s\n' "$(printf '%s' "$out" | head -2)"
   case "$out" in
     *"could not translate host name"*)
-      echo "   👉 Quase sempre é a senha com caractere especial: na URL ela precisa ser codificada."
-      echo "      Troque  @ por %40   :  por %3A   /  por %2F   ?  por %3F   #  por %23";;
+      echo "   👉 $(t "Quase sempre é a senha com caractere especial: na URL ela precisa ser codificada.")"
+      echo "      $(t "Troque  @ por %40   :  por %3A   /  por %2F   ?  por %3F   #  por %23")";;
     *"password authentication failed"*)
-      echo "   👉 Senha do banco errada. É a senha do PROJETO (definida ao criá-lo), não a da sua conta Supabase."
-      echo "      Dá pra redefinir em Settings > Database > Reset database password.";;
+      echo "   👉 $(t "Senha do banco errada. É a senha do PROJETO (definida ao criá-lo), não a da sua conta Supabase.")"
+      echo "      $(t "Dá pra redefinir em Settings > Database > Reset database password.")";;
     *"Network is unreachable"*|*"Cannot assign requested address"*)
-      echo "   👉 Isso é o problema de IPv6: use a connection string do Session pooler, não a Direct connection.";;
+      echo "   👉 $(t "Isso é o problema de IPv6: use a connection string do Session pooler, não a Direct connection.")";;
   esac
   return 1
 }
 
 v_anthropic() {
-  case "$1" in sk-ant-*) ;; *) echo "A chave da Anthropic começa com 'sk-ant-'. Pegue em console.anthropic.com > API Keys."; return 1;; esac
+  case "$1" in sk-ant-*) ;; *) echo "$(t "A chave da Anthropic começa com 'sk-ant-'. Pegue em console.anthropic.com > API Keys.")"; return 1;; esac
   local code
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 20 https://api.anthropic.com/v1/models \
     -H "x-api-key: $1" -H "anthropic-version: 2023-06-01" 2>/dev/null)" || code=000
   case "$code" in
     2*) return 0;;
-    000) c_ylw "  ⚠ não consegui checar a chave online; sigo com ela."; return 0;;
-    401) echo "A Anthropic recusou essa chave (401). Confira se está ativa e se copiou inteira."; return 1;;
-    *)   c_ylw "  ⚠ a Anthropic respondeu ${code} ao testar a chave; sigo com ela."; return 0;;
+    000) c_ylw "$(t "  ⚠ não consegui checar a chave online; sigo com ela.")"; return 0;;
+    401) echo "$(t "A Anthropic recusou essa chave (401). Confira se está ativa e se copiou inteira.")"; return 1;;
+    *)   c_ylw "$(t "  ⚠ a Anthropic respondeu {1} ao testar a chave; sigo com ela." "$code")"; return 0;;
   esac
 }
 
@@ -388,35 +393,35 @@ v_anthropic() {
 # "OPENROUTER_API_KEY inválido" seguido de "Corrija o .env e rode de novo" —
 # instrução impossível de cumprir, porque o .env está certo.
 v_openrouter() {
-  case "$1" in sk-or-*) ;; *) echo "A chave da OpenRouter começa com 'sk-or-'. Pegue em openrouter.ai/keys."; return 1;; esac
+  case "$1" in sk-or-*) ;; *) echo "$(t "A chave da OpenRouter começa com 'sk-or-'. Pegue em openrouter.ai/keys.")"; return 1;; esac
   local code
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 20 https://openrouter.ai/api/v1/key \
     -H "Authorization: Bearer $1" 2>/dev/null)" || code=000
   case "$code" in
     2*) return 0;;
-    000) c_ylw "  ⚠ não consegui checar a chave online; sigo com ela."; return 0;;
-    401) echo "A OpenRouter recusou essa chave (401). Confira se está ativa e se copiou inteira."; return 1;;
-    *)   c_ylw "  ⚠ a OpenRouter respondeu ${code} ao testar a chave; sigo com ela."; return 0;;
+    000) c_ylw "$(t "  ⚠ não consegui checar a chave online; sigo com ela.")"; return 0;;
+    401) echo "$(t "A OpenRouter recusou essa chave (401). Confira se está ativa e se copiou inteira.")"; return 1;;
+    *)   c_ylw "$(t "  ⚠ a OpenRouter respondeu {1} ao testar a chave; sigo com ela." "$code")"; return 0;;
   esac
 }
 
 v_openai() {
   [ -z "$1" ] && return 0   # opcional
-  case "$1" in sk-*) ;; *) echo "A chave da OpenAI começa com 'sk-'. Pegue em platform.openai.com > API keys (ou deixe em branco)."; return 1;; esac
+  case "$1" in sk-*) ;; *) echo "$(t "A chave da OpenAI começa com 'sk-'. Pegue em platform.openai.com > API keys (ou deixe em branco).")"; return 1;; esac
   local code
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 20 https://api.openai.com/v1/models \
     -H "Authorization: Bearer $1" 2>/dev/null)" || code=000
   case "$code" in
     2*) return 0;;
-    000) c_ylw "  ⚠ não consegui checar a chave online; sigo com ela."; return 0;;
-    401) echo "A OpenAI recusou essa chave (401). Confira se está ativa e se copiou inteira."; return 1;;
-    *)   c_ylw "  ⚠ a OpenAI respondeu ${code} ao testar a chave; sigo com ela."; return 0;;
+    000) c_ylw "$(t "  ⚠ não consegui checar a chave online; sigo com ela.")"; return 0;;
+    401) echo "$(t "A OpenAI recusou essa chave (401). Confira se está ativa e se copiou inteira.")"; return 1;;
+    *)   c_ylw "$(t "  ⚠ a OpenAI respondeu {1} ao testar a chave; sigo com ela." "$code")"; return 0;;
   esac
 }
 
 v_password() {
   [ "${#1}" -ge 8 ] && return 0
-  echo "Senha muito curta (${#1} caracteres). Use pelo menos 8 — é a senha de admin do seu CRM."
+  echo "$(t "Senha muito curta ({1} caracteres). Use pelo menos 8 — é a senha de admin do seu CRM." "${#1}")"
   return 1
 }
 
@@ -431,25 +436,25 @@ ask_one() {
   if [ "$NONINTERACTIVE" = 1 ]; then
     if [ -n "$default" ]; then printf -v "$var" '%s' "$default"; return 0; fi
     [ -n "$optional" ] && return 0
-    die "Falta $var (modo --yes exige .env preenchido)."
+    die "$(t "Falta {1} (modo --yes exige .env preenchido)." "$var")"
   fi
   local input
   while :; do
     if [ "$secret" = "secret" ]; then
       if ! read -r -s -p "$prompt${default:+ [$default]}: " input; then
-        die "A entrada terminou antes de eu receber $var. Rode o instalador num terminal interativo."
+        die "$(t "A entrada terminou antes de eu receber {1}. Rode o instalador num terminal interativo." "$var")"
       fi
       echo
     else
       if ! read -r -p "$prompt${default:+ [$default]}: " input; then
-        die "A entrada terminou antes de eu receber $var. Rode o instalador num terminal interativo."
+        die "$(t "A entrada terminou antes de eu receber {1}. Rode o instalador num terminal interativo." "$var")"
       fi
     fi
     [ "$input" = "voltar" ] && return 2
     input="${input:-$default}"
     if [ -z "$input" ]; then
       [ -n "$optional" ] && { printf -v "$var" '%s' ""; return 0; }
-      c_red "  Esse campo é obrigatório. (digite 'voltar' para refazer a pergunta anterior)"
+      c_red "$(t "  Esse campo é obrigatório. (digite 'voltar' para refazer a pergunta anterior)")"
       continue
     fi
     # Campo secreto não ecoa o que foi colado — a pessoa não vê se colou, então
@@ -459,7 +464,7 @@ ask_one() {
     if [ "$secret" = "secret" ]; then
       local len=${#input} half=$(( ${#input} / 2 ))
       if [ $((len % 2)) -eq 0 ] && [ "${input:0:half}" = "${input:half}" ]; then
-        c_red "  Esse valor parece ter sido colado 2x seguidas (o campo é secreto e não mostra o que você cola). Cole uma vez só."
+        c_red "$(t "  Esse valor parece ter sido colado 2x seguidas (o campo é secreto e não mostra o que você cola). Cole uma vez só.")"
         continue
       fi
     fi
@@ -470,13 +475,13 @@ ask_one() {
         printf '            \r'
         printf '\033[31m  ✖ %s\033[0m\n' "$(printf '%s' "$msg" | head -1)"
         printf '%s\n' "$(printf '%s' "$msg" | tail -n +2)" | grep -v '^$' || true
-        c_dim "  (digite 'voltar' para refazer a pergunta anterior)"
+        c_dim "$(t "  (digite 'voltar' para refazer a pergunta anterior)")"
         continue
       fi
       [ -n "$msg" ] && printf '%s\n' "$msg"
       printf '            \r'
     fi
-    if [ "$secret" = "secret" ]; then c_grn "  ✓ recebido (${#input} caracteres)"; else c_grn "  ✓"; fi
+    if [ "$secret" = "secret" ]; then c_grn "$(t "  ✓ recebido ({1} caracteres)" "${#input}")"; else c_grn "  ✓"; fi
     printf -v "$var" '%s' "$input"
     save_partial "$var"
     return 0
@@ -792,6 +797,10 @@ sb_carrega_credenciais() {
 # Carrega só as funções acima, sem instalar nada — é assim que
 # `test-validators.sh` exercita os validadores:  INSTALL_SH_LIB=1 . install.sh
 if [ "${INSTALL_SH_LIB:-}" = "1" ]; then trap - EXIT; return 0; fi
+
+# Primeiro passo interativo de todos — antes do banner, para o resto da
+# instalação já nascer no idioma escolhido.
+perguntar_idioma_cli
 
 banner
 
