@@ -2070,10 +2070,10 @@ curl -fsS -X POST "${SUPABASE_INTERNAL_URL:-${NEXT_PUBLIC_SUPABASE_URL}}/auth/v1
 #    Resolver o uid DENTRO do SQL evita parsing frágil de JSON e funciona tanto para
 #    usuário recém-criado quanto para um que já existia (re-execução).
 pg_container -i postgres:17-alpine psql "$(url_do_schema)" -v ON_ERROR_STOP=1 <<SQL \
-  && c_grn "✓ dono criado e promovido a super-admin" \
-  || die "Não consegui promover o admin. Confira a service_role key, a URL e a connection string do Supabase.
+  && c_grn "$(t "✓ dono criado e promovido a super-admin")" \
+  || die "$(t "Não consegui promover o admin. Confira a service_role key, a URL e a connection string do Supabase.
      Este passo lê auth.users e escreve em public: num Supabase próprio ele precisa do dono do
-     banco — declare SUPABASE_DB_ADMIN_URL e rode de novo."
+     banco — declare SUPABASE_DB_ADMIN_URL e rode de novo.")"
 do \$\$
 declare v_org uuid; v_uid uuid;
 begin
@@ -2156,8 +2156,8 @@ end \$\$;
 SQL
 
 # ── 9. Sobe a stack ─────────────────────────────────────────────────────────
-fase 4 "Colocando o CRM no ar"
-step "Puxando a imagem e subindo os serviços"
+fase 4 "$(t "Colocando o CRM no ar")"
+step "$(t "Puxando a imagem e subindo os serviços")"
 # A guarda existe porque dar `image:` a um serviço que era build-only mudou o
 # comportamento do `pull`: antes ele PULAVA o worker ("Skipped - No image to be
 # pulled"), agora FALHA a operação inteira se a referência não resolver. E há
@@ -2170,8 +2170,8 @@ step "Puxando a imagem e subindo os serviços"
 # worker e o scheduler têm `build:` ao lado do `image:`, e o Compose os constrói
 # quando a imagem não existe (medido).
 if ! dc pull; then
-  c_ylw "⚠ Não consegui puxar todas as imagens do registro."
-  c_ylw "  Sigo assim mesmo: o que faltar é construído aqui (mais lento, mesmo resultado)."
+  c_ylw "$(t "⚠ Não consegui puxar todas as imagens do registro.")"
+  c_ylw "$(t "  Sigo assim mesmo: o que faltar é construído aqui (mais lento, mesmo resultado).")"
 fi
 # O "sigo assim mesmo" acima vale para o worker e o scheduler, que têm `build:`
 # ao lado do `image:` — mas NÃO para o app, que não tem: se a imagem dele não
@@ -2183,17 +2183,17 @@ if ! dc up -d; then
   if construir_aqui_e_subir "$VERSAO_ALVO"; then
     CONSTRUIU_AQUI=1
   else
-    die "Não coloquei o CRM no ar: nem as imagens prontas desta versão nem a construção aqui funcionaram. O erro está logo acima; para reproduzir só a construção: docker compose $(dc_files) -f ${COMPOSE_BUILD} build"
+    die "$(t "Não coloquei o CRM no ar: nem as imagens prontas desta versão nem a construção aqui funcionaram. O erro está logo acima; para reproduzir só a construção: {1}" "docker compose $(dc_files) -f ${COMPOSE_BUILD} build")"
   fi
 fi
-c_grn "✓ containers no ar"
+c_grn "$(t "✓ containers no ar")"
 if [ -n "$CONSTRUIU_AQUI" ]; then
-  c_ylw "  (as três imagens desta versão foram construídas aqui nesta VPS: as prontas"
-  c_ylw "   não servem para a arquitetura dela. É mais lento e não precisa de nada manual.)"
+  c_ylw "$(t "  (as três imagens desta versão foram construídas aqui nesta VPS: as prontas")"
+  c_ylw "$(t "   não servem para a arquitetura dela. É mais lento e não precisa de nada manual.)")"
 fi
 
 # ── 10. Healthcheck ─────────────────────────────────────────────────────────
-step "Aguardando o app ficar saudável"
+step "$(t "Aguardando o app ficar saudável")"
 # Antes isto abria um socket na porta 3000 e dava por bom. A porta abre assim
 # que o Node sobe, então o "✓" saía com o app ainda sem banco — e o bloco
 # "Instalação concluída!" saía logo atrás, incondicionalmente. Um falso verde
@@ -2201,13 +2201,13 @@ step "Aguardando o app ficar saudável"
 # é o mesmo do update.sh: a rota /api/v1/health responder "status":"ok".
 if health_body="$(wait_app_healthy 30 3)"; then
   APP_SAUDAVEL=1
-  c_grn "✓ app no ar e saudável"
+  c_grn "$(t "✓ app no ar e saudável")"
 else
   APP_SAUDAVEL=0
-  c_ylw "⚠ os contêineres subiram, mas o app não respondeu que está saudável."
+  c_ylw "$(t "⚠ os contêineres subiram, mas o app não respondeu que está saudável.")"
   # "|| true": mesma família do pipe que matava o supabase-provision.sh — o
   # corpo passa de 200 bytes, o head fecha o pipe e o printf leva SIGPIPE.
-  [ -n "$health_body" ] && c_dim "  última resposta: $(printf '%s' "$health_body" | head -c 200 || true)"
+  [ -n "$health_body" ] && c_dim "$(t "  última resposta: {1}" "$(printf '%s' "$health_body" | head -c 200 || true)")"
 fi
 
 # O catálogo dos provedores diretos vem no baseline, mas a OpenRouter é grande
@@ -2228,17 +2228,17 @@ fi
 # operador lê aqui que ela existe. Por isso o comando mora na CONDIÇÃO de um
 # `if`, onde o `set -e` não aborta o script.
 if [ "${APP_SAUDAVEL:-0}" = 1 ]; then
-  step "Semeando o catálogo de modelos de IA"
+  step "$(t "Semeando o catálogo de modelos de IA")"
   if catalogo_body="$(dc exec -T scheduler sh -c 'curl -fsS -m60 -H "Authorization: Bearer $INTERNAL_SECRET" http://app:3000/api/v1/cron/sync-model-catalog' 2>&1)"; then
-    c_grn "✓ catálogo de modelos semeado"
+    c_grn "$(t "✓ catálogo de modelos semeado")"
   else
-    c_ylw "⚠ não consegui semear o catálogo de modelos agora; o agendador tenta de novo às 04:15 UTC."
-    [ -n "$catalogo_body" ] && c_dim "  detalhe: $(printf '%s' "$catalogo_body" | head -c 200 || true)"
+    c_ylw "$(t "⚠ não consegui semear o catálogo de modelos agora; o agendador tenta de novo às 04:15 UTC.")"
+    [ -n "$catalogo_body" ] && c_dim "$(t "  detalhe: {1}" "$(printf '%s' "$catalogo_body" | head -c 200 || true)")"
   fi
 fi
 
 # ── 11. Automações (cron do drain de eventos) ───────────────────────────────
-step "Ativando as automações"
+step "$(t "Ativando as automações")"
 ensure_encryption_key .env
 # A senha desta instalação nasceu agora e vai para um arquivo, nunca para a
 # linha do crontab: não há o que trocar depois (ver trocar_segredo_do_cron_vazado).

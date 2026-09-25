@@ -385,6 +385,31 @@ identifica su red y pon TRAEFIK_NETWORK=<nombre> en el .env antes de volver a in
   ["ainda não funciona é o agente: ele responde quando uma credencial existir."]="todavía no funciona es el agente: responderá en cuanto exista una credencial."
   ["Quando tiver a chave da {1}, cadastre em:"]="Cuando tengas la clave de {1}, regístrala en:"
   ["A chave fica CIFRADA no banco — não precisa mexer no .env nem reiniciar nada."]="La clave queda CIFRADA en la base de datos — no hace falta tocar el .env ni reiniciar nada."
+
+  # ── install.sh: creación del admin, arranque de la stack, healthcheck ───
+  ["✓ dono criado e promovido a super-admin"]="✓ dueño creado y promovido a super-admin"
+  ["Não consegui promover o admin. Confira a service_role key, a URL e a connection string do Supabase.
+     Este passo lê auth.users e escreve em public: num Supabase próprio ele precisa do dono do
+     banco — declare SUPABASE_DB_ADMIN_URL e rode de novo."]="No pude promover al admin. Revisa la service_role key, la URL y la connection string de Supabase.
+     Este paso lee auth.users y escribe en public: en un Supabase propio necesita ser el dueño de la
+     base de datos — declara SUPABASE_DB_ADMIN_URL y vuelve a ejecutar esto."
+  ["Colocando o CRM no ar"]="Poniendo el CRM en línea"
+  ["Puxando a imagem e subindo os serviços"]="Descargando la imagen y levantando los servicios"
+  ["⚠ Não consegui puxar todas as imagens do registro."]="⚠ No pude descargar todas las imágenes del registro."
+  ["  Sigo assim mesmo: o que faltar é construído aqui (mais lento, mesmo resultado)."]="  Continúo de todas formas: lo que falte se construye aquí (más lento, mismo resultado)."
+  ["Não coloquei o CRM no ar: nem as imagens prontas desta versão nem a construção aqui funcionaram. O erro está logo acima; para reproduzir só a construção: {1}"]="No pude poner el CRM en línea: ni las imágenes listas de esta versión ni la construcción local funcionaron. El error está justo arriba; para reproducir solo la construcción: {1}"
+  ["✓ containers no ar"]="✓ contenedores en línea"
+  ["  (as três imagens desta versão foram construídas aqui nesta VPS: as prontas"]="  (las tres imágenes de esta versión se construyeron aquí en esta VPS: las ya"
+  ["   não servem para a arquitetura dela. É mais lento e não precisa de nada manual.)"]="   listas no sirven para su arquitectura. Es más lento y no requiere nada manual.)"
+  ["Aguardando o app ficar saudável"]="Esperando a que la app esté saludable"
+  ["✓ app no ar e saudável"]="✓ app en línea y saludable"
+  ["⚠ os contêineres subiram, mas o app não respondeu que está saudável."]="⚠ los contenedores arrancaron, pero la app no respondió que está saludable."
+  ["  última resposta: {1}"]="  última respuesta: {1}"
+  ["Semeando o catálogo de modelos de IA"]="Sembrando el catálogo de modelos de IA"
+  ["✓ catálogo de modelos semeado"]="✓ catálogo de modelos sembrado"
+  ["⚠ não consegui semear o catálogo de modelos agora; o agendador tenta de novo às 04:15 UTC."]="⚠ no pude sembrar el catálogo de modelos ahora; el agendador lo vuelve a intentar a las 04:15 UTC."
+  ["  detalhe: {1}"]="  detalle: {1}"
+  ["Ativando as automações"]="Activando las automatizaciones"
 )
 
 # t <texto-modelo-em-pt-BR> [valor-de-{1}] [valor-de-{2}]…
