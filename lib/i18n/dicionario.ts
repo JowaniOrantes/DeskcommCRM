@@ -1148,7 +1148,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Nenhum agent configurado": { es: "Ningún agente configurado" },
   "Crie um agent para responder a conversas no WhatsApp com IA. Você configura prompt, tools, gatilhos e janela de contexto.": {
-    es: "Crea un agente para responder conversaciones de WhatsApp con IA. Configuras el prompt, las herramientas, los Triggers y la ventana de contexto.",
+    es: "Crea un agente para responder conversaciones de WhatsApp con IA. Configuras el prompt, las herramientas, los disparadores y la ventana de contexto.",
   },
   "Novo agente": { es: "Nuevo agente" },
   "Nenhum agent corresponde aos filtros atuais.": {
@@ -1183,7 +1183,7 @@ export const DICIONARIO: Traducoes = {
     es: "El agente predeterminado de la organización no se puede archivar.",
   },
   "O agent deixa de responder gatilhos e some das listas ativas. Versões publicadas são preservadas para auditoria. Não é possível desarquivar pela UI nesta versão.": {
-    es: "El agente deja de responder a los Triggers y desaparece de las listas activas. Las versiones publicadas se conservan para auditoría. En esta versión no se puede desarchivar desde la interfaz.",
+    es: "El agente deja de responder a los disparadores y desaparece de las listas activas. Las versiones publicadas se conservan para auditoría. En esta versión no se puede desarchivar desde la interfaz.",
   },
   "Renomear agent": { es: "Renombrar agente" },
   "Apenas o nome interno muda. Versões publicadas e histórico são preservados.": {
@@ -1328,7 +1328,7 @@ export const DICIONARIO: Traducoes = {
     es: "Retomar automáticamente el contacto con quien dejó de responder, para que ningún interesado desaparezca sin que nadie lo note.",
   },
   "Habilitar gatilhos automáticos de follow-up": {
-    es: "Habilitar Triggers automáticos de seguimiento",
+    es: "Habilitar disparadores automáticos de seguimiento",
   },
   "Os fluxos abaixo só entram em ação para um cliente se este agente estiver publicado com follow-up habilitado.": {
     es: "Los flujos de abajo solo entran en acción para un cliente si este agente está publicado con el seguimiento habilitado.",
@@ -1847,7 +1847,7 @@ export const DICIONARIO: Traducoes = {
   "Rótulo": { es: "Etiqueta" },
   "Início do fluxo — sem configuração adicional. O disparo (manual, mudança de etapa, silêncio ou fim de conversa) é definido nas configurações do fluxo.":
     {
-      es: "Inicio del flujo. No requiere configuración adicional. El Trigger (manual, cambio de etapa, silencio o fin de conversación) se define en la configuración del flujo.",
+      es: "Inicio del flujo. No requiere configuración adicional. El disparador (manual, cambio de etapa, silencio o fin de conversación) se define en la configuración del flujo.",
     },
   "Condição da aresta": { es: "Condición de la arista" },
   "Excluir nó": { es: "Eliminar nodo" },
@@ -1964,7 +1964,7 @@ export const DICIONARIO: Traducoes = {
   "Silêncio": { es: "Silencio" },
   "Telefone": { es: "Teléfono" },
   "indisponível": { es: "no disponible" },
-  "Tipo de gatilho": { es: "Tipo de Trigger" },
+  "Tipo de gatilho": { es: "Tipo de disparador" },
   "Etapa que dispara o fluxo": { es: "Etapa que dispara el flujo" },
   "Carregando etapas…": { es: "Cargando etapas…" },
   "Escolha a etapa": { es: "Elige la etapa" },
@@ -1987,10 +1987,10 @@ export const DICIONARIO: Traducoes = {
     es: "Esta regla no apunta a una etapa activa del embudo. Abre el nodo y elige la etapa en la lista.",
   },
   "Nenhuma etapa ativa encontrada — crie o funil antes de armar este gatilho.": {
-    es: "No hay ninguna etapa activa. Crea el embudo antes de configurar este Trigger.",
+    es: "No hay ninguna etapa activa. Crea el embudo antes de configurar este disparador.",
   },
   "O gatilho não está disponível — use Etapa do funil, Silêncio ou Manual.": {
-    es: "El Trigger no está disponible — usa Etapa del embudo, Silencio o Manual.",
+    es: "El disparador no está disponible — usa Etapa del embudo, Silencio o Manual.",
   },
   "O fluxo começa quando um negócio entra nesta etapa, por arrasto no quadro ou por automação. A entrada na fila leva poucos minutos, não é instantânea.":
     {
@@ -2014,7 +2014,7 @@ export const DICIONARIO: Traducoes = {
   "Segmentos (tags, opcional)": { es: "Segmentos (tags, opcional)" },
   "ex: vip, carrinho-abandonado": { es: "Ej.: vip, carrito-abandonado" },
   "Cancelar se o lead responder": { es: "Cancelar si el lead responde" },
-  "Salvar gatilho": { es: "Guardar Trigger" },
+  "Salvar gatilho": { es: "Guardar disparador" },
   "Fila de follow-ups": { es: "Cola de seguimientos" },
   "Fluxo removido": { es: "Flujo eliminado" },
   Agente: { es: "Agente" },
@@ -2404,7 +2404,7 @@ export const DICIONARIO: Traducoes = {
     },
   "O número volta a ser atendido pelos gatilhos normais dos agentes (sem roteamento por intenção). As intenções deste roteador são apagadas junto. Não é possível desfazer.":
     {
-      es: "El número volverá a atenderse con los Triggers normales de los agentes, sin enrutamiento por intención. Las intenciones de este enrutador también se borrarán. No se puede deshacer.",
+      es: "El número volverá a atenderse con los disparadores normales de los agentes, sin enrutamiento por intención. Las intenciones de este enrutador también se borrarán. No se puede deshacer.",
     },
   "Nome da intenção": { es: "Nombre de la intención" },
   "Ex.: quer comprar": { es: "Ej.: quiere comprar" },
@@ -3898,7 +3898,7 @@ export const DICIONARIO: Traducoes = {
   "Nome da automação": { es: "Nombre de la automatización" },
   "Boas-vindas a contato novo": { es: "Bienvenida a contacto nuevo" },
   QUANDO: { es: "CUANDO" },
-  "Escolha o gatilho": { es: "Elige el Trigger" },
+  "Escolha o gatilho": { es: "Elige el disparador" },
   "SE (opcional)": { es: "SI (opcional)" },
   "ex: lead.custom_fields.minha_chave": { es: "ej: lead.custom_fields.mi_clave" },
   "usar campo da lista": { es: "usar campo de la lista" },
@@ -6280,7 +6280,7 @@ export const DICIONARIO: Traducoes = {
   },
   "Cancelado porque o caso foi resolvido": { es: "Cancelado porque el caso se resolvió" },
   "Passo registrado pelo motor": { es: "Paso registrado por el motor" },
-  "a etapa escolhida no gatilho deste fluxo": { es: "la etapa elegida en el Trigger de este flujo" },
+  "a etapa escolhida no gatilho deste fluxo": { es: "la etapa elegida en el disparador de este flujo" },
   "o caso foi aberto por uma trava de segurança, não por decisão do agente": {
     es: "el caso se abrió por un bloqueo de seguridad, no por decisión del agente",
   },
@@ -8086,7 +8086,7 @@ export const DICIONARIO: Traducoes = {
   "Faltam nome, idioma ou conteúdo.": { es: "Faltan nombre, idioma o contenido." },
   "Fluxo não encontrado.": { es: "Flujo no encontrado." },
   "Roteiro de atendimento começa por palavra-gatilho ou pelo roteador, não por gatilho de follow-up.": {
-    es: "El guion de atención empieza por palabra clave o por el enrutador, no por un Trigger de seguimiento.",
+    es: "El guion de atención empieza por palabra clave o por el enrutador, no por un disparador de seguimiento.",
   },
   "Fluxo não tem rascunho pronto para publicar.": { es: "El flujo no tiene un borrador listo para publicar." },
   "Fluxo reprovado na validação de publish.": { es: "El flujo no pasó la validación de publicación." },
@@ -9123,7 +9123,7 @@ export const DICIONARIO: Traducoes = {
   "dados inválidos": { es: "datos inválidos" },
   // ─── Fase A: mensagens de erro de rotas de API (codemod + revisão manual) ───
   "A decisão não pôde ser registrada. Nada foi enviado ao cliente.": { es: "No se pudo registrar la decisión. No se envió nada al cliente." },
-  "A etapa escolhida para o gatilho não existe mais neste funil — escolha outra.": { es: "La etapa elegida para el Trigger ya no existe en este embudo — elige otra." },
+  "A etapa escolhida para o gatilho não existe mais neste funil — escolha outra.": { es: "La etapa elegida para el disparador ya no existe en este embudo — elige otra." },
   "A proposta mudou desde que você a leu. Confira a nova antes de decidir.": { es: "La propuesta cambió desde que la leíste. Revisa la nueva antes de decidir." },
   "A régua do abandono precisa ser um número inteiro de horas entre 1 e 2160.": { es: "La regla de abandono debe ser un número entero de horas entre 1 y 2160." },
   "Alguém assumiu esta conversa agora — recarregue e tente de novo.": { es: "Alguien acaba de asumir esta conversación. Recarga e inténtalo de nuevo." },
@@ -9490,7 +9490,7 @@ export const DICIONARIO: Traducoes = {
     es: "Reactiva o detiene la recepción de contactos de una fuente. Si la desactivas, el formulario de tu sitio sigue en línea y nadie del otro lado recibe aviso.",
   },
   "Faz uma regra passar a rodar sozinha, sempre que o gatilho dela acontecer, ou parar de rodar. Ligada, ela pode falar com clientes de verdade.": {
-    es: "Activa una regla para que se ejecute sola cada vez que ocurra su Trigger, o la detiene. Mientras esté activa, puede hablar con clientes de verdad.",
+    es: "Activa una regla para que se ejecute sola cada vez que ocurra su disparador, o la detiene. Mientras esté activa, puede hablar con clientes de verdad.",
   },
   "Fecha a oportunidade dizendo se ela foi ganha ou perdida e por quê, para o que já acabou parar de ser cobrado.": {
     es: "Cierra la oportunidad indicando si se ganó o se perdió y por qué, para que lo que ya terminó deje de aparecer como pendiente.",
@@ -10447,7 +10447,7 @@ export const DICIONARIO: Traducoes = {
   "Etapa do funil que dispara": { es: "Etapa del embudo que dispara" },
   "Não consegui instalar o modelo. Tente de novo.": { es: "No pude instalar el modelo. Inténtalo de nuevo." },
   "Depois de instalar: revise os textos no construtor, clique em Publicar e ligue o fluxo no seu agente (Agentes › Follow-up). Sem um agente publicado armando o fluxo, o gatilho automático não dispara.": {
-    es: "Después de instalar: revisa los textos en el constructor, haz clic en Publicar y conecta el flujo a tu agente (Agentes › Follow-up). Sin un agente publicado que arme el flujo, el Trigger automático no funciona.",
+    es: "Después de instalar: revisa los textos en el constructor, haz clic en Publicar y conecta el flujo a tu agente (Agentes › Follow-up). Sin un agente publicado que arme el flujo, el disparador automático no funciona.",
   },
   // As jornadas e os resumos do catálogo (`lib/followup/modelos/`). Chegam à
   // tela por `t(modelo.resumo)` — chave dinâmica, que o varredor de AST não
@@ -11213,7 +11213,7 @@ export const DICIONARIO: Traducoes = {
     es: "Uno por número. Quien cobra es el agente publicado en ese número — el cobro de un negocio no sale por la línea del otro.",
   },
   "Nenhum fluxo com gatilho de sistema externo. Crie um em Follow-ups.": {
-    es: "Ningún flujo con Trigger de sistema externo. Cree uno en Seguimientos.",
+    es: "Ningún flujo con disparador de sistema externo. Cree uno en Seguimientos.",
   },
   "Este fluxo tem mensagem fixa; recomendamos mensagem do assistente.": {
     es: "Este flujo tiene mensaje fijo; recomendamos mensaje del asistente.",
