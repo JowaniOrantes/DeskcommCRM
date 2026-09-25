@@ -11644,6 +11644,17 @@ export const DICIONARIO: Traducoes = {
   },
   "Versão não encontrada para esta skill.": { es: "No se encontró esa versión para esta skill." },
   "Versão da skill não encontrada.": { es: "No se encontró la versión de la skill." },
+
+  // Motivos de exclusão em campanhas (lib/campanhas/tipos.ts: TEXTO_DA_EXCLUSAO)
+  "Sem telefone no cadastro": { es: "Sin teléfono en el registro" },
+  "Telefone fora do formato de envio": { es: "Teléfono fuera del formato de envío" },
+  "Pediu para não receber mensagens": { es: "Pidió no recibir mensajes" },
+  "Recusou receber contato comercial": { es: "Rechazó recibir contacto comercial" },
+  "Excluído à mão desta campanha": { es: "Excluido manualmente de esta campaña" },
+  "Mesmo telefone de outro contato da lista": { es: "Mismo teléfono que otro contacto de la lista" },
+  "Falta um dado que a mensagem usa": { es: "Falta un dato que usa el mensaje" },
+  "Já está em outra campanha ainda não concluída": { es: "Ya está en otra campaña aún no concluida" },
+  "Está na lista de exclusão de campanhas": { es: "Está en la lista de exclusión de campañas" },
 };
 
 /**
